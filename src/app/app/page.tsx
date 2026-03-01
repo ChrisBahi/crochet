@@ -1,35 +1,24 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { logout } from "./actions";
+import { requireUser } from "@/lib/auth/require-user";
+import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace";
+import { getWorkspaceById } from "@/lib/db/workspaces";
+import { AppShell } from "@/components/app-shell";
 
 export default async function AppPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const user = await requireUser();
+  const wsId = await requireActiveWorkspaceId();
+  const workspace = wsId ? await getWorkspaceById(wsId) : null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-10">
-      <div className="w-full max-w-xl rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-zinc-900">Logged in</h1>
-          <form action={logout}>
-            <button
-              type="submit"
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100"
-            >
-              Logout
-            </button>
-          </form>
+    <AppShell>
+      <main className="p-8">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <p className="opacity-80">Connecté en tant que {user.email}</p>
+
+        <div className="mt-6 rounded-xl border p-6">
+          <h2 className="font-medium">Workspace actif</h2>
+          <p className="opacity-80">{workspace ? workspace.name : "Aucun workspace"}</p>
         </div>
-        <p className="mt-4 text-sm text-zinc-600">
-          Email: <span className="font-medium text-zinc-900">{user.email ?? "No email"}</span>
-        </p>
-      </div>
-    </div>
+      </main>
+    </AppShell>
   );
 }

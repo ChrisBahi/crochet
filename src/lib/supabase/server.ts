@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient as createSSRServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 function getEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
@@ -11,10 +11,10 @@ function getEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KE
   return value;
 }
 
-export async function createClient() {
+export async function createServerClient() {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  return createSSRServerClient(
     getEnv("NEXT_PUBLIC_SUPABASE_URL"),
     getEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     {
@@ -34,4 +34,8 @@ export async function createClient() {
       },
     },
   );
+}
+
+export async function createClient() {
+  return createServerClient();
 }
