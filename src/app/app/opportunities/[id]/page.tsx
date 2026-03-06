@@ -88,17 +88,23 @@ export default async function OpportunityDetailPage({
     .limit(1)
     .maybeSingle()
 
-  const dScore = matchData?.breakdown?.d_score ?? null
+  // D-Score: from deck (set by qualification engine) or fallback to match breakdown
+  const dScore = deck?.d_score ?? matchData?.breakdown?.d_score ?? null
   const mScore = matchData?.fit_score ?? null
 
   const memoText: string | null = deck?.summary ?? null
   const deckStatus: string = deck?.status ?? "pending"
 
+  const deckTags: string[] = Array.isArray(deck?.tags) ? deck.tags : []
+
   const tags = [
-    opp.sector ? (SECTOR_LABELS[opp.sector] ?? opp.sector) : null,
-    opp.geo ? (GEO_LABELS[opp.geo] ?? opp.geo) : null,
-    opp.deal_type ?? null,
-    opp.stage ?? null,
+    ...new Set([
+      opp.sector ? (SECTOR_LABELS[opp.sector] ?? opp.sector) : null,
+      opp.geo ? (GEO_LABELS[opp.geo] ?? opp.geo) : null,
+      opp.deal_type ?? null,
+      opp.stage ?? null,
+      ...deckTags,
+    ]),
   ].filter(Boolean) as string[]
 
   return (
@@ -186,14 +192,28 @@ export default async function OpportunityDetailPage({
                 }}>
                   MEMO
                 </span>
-                <span style={{
-                  fontFamily: "var(--font-jetbrains), monospace",
-                  fontSize: 10,
-                  color: "#7A746E",
-                  letterSpacing: "0.04em",
-                }}>
-                  {deckStatus === "done" ? "Qualifié" : deckStatus === "error" ? "Erreur" : "En cours…"}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  {dScore !== null && deckStatus === "done" && (
+                    <span style={{
+                      fontFamily: "var(--font-jetbrains), monospace",
+                      fontSize: 10,
+                      color: "#0A0A0A",
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                    }}>
+                      D-Score {Math.round(dScore)}
+                    </span>
+                  )}
+                  <span style={{
+                    fontFamily: "var(--font-jetbrains), monospace",
+                    fontSize: 9,
+                    color: "#7A746E",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}>
+                    {deckStatus === "done" ? "IA · Confidentiel" : deckStatus === "error" ? "Erreur" : "Analyse en cours…"}
+                  </span>
+                </div>
               </div>
               <div style={{ padding: "20px" }}>
                 {memoText ? (
