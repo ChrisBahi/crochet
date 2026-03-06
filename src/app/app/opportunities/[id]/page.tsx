@@ -322,21 +322,44 @@ export default async function OpportunityDetailPage({
           </div>
 
           {/* CTA */}
-          <div style={{ display: "flex", gap: 12 }}>
-            <button style={{
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            {/* Voir MEMO officiel */}
+            {deckStatus === "done" && (
+              <Link href={`/app/opportunities/${id}/memo`} style={{
+                padding: "12px 28px",
+                background: "#0A0A0A",
+                color: "#FFFFFF",
+                border: "none",
+                textDecoration: "none",
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+              }}>
+                Voir le MEMO
+              </Link>
+            )}
+
+            {/* Générer / voir NDA */}
+            <Link href={`/app/opportunities/${id}/nda`} style={{
               padding: "12px 28px",
-              background: "#0A0A0A",
-              color: "#FFFFFF",
-              border: "none",
+              background: "transparent",
+              color: "#0A0A0A",
+              border: "1px solid #0A0A0A",
+              textDecoration: "none",
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 12,
               fontWeight: 600,
               letterSpacing: "0.06em",
               textTransform: "uppercase",
-              cursor: "pointer",
             }}>
-              Request intro
-            </button>
+              Générer NDA
+            </Link>
+
             <Link href="/app/matches" style={{
               padding: "12px 28px",
               background: "transparent",
