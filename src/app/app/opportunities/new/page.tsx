@@ -1,8 +1,5 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { AppShell } from "@/components/app-shell"
-import { PageHeader } from "@/components/page-header"
-import { UICard } from "@/components/ui-card"
 import { OpportunityForm } from "./opportunity-form"
 
 export default async function NewOpportunityPage() {
@@ -59,12 +56,39 @@ export default async function NewOpportunityPage() {
   }
 
   return (
-    <AppShell>
-      <PageHeader title="Create Opportunity" subtitle="Add a new opportunity to your workspace." />
-
-      <UICard>
-        <OpportunityForm action={createOpportunity} />
-      </UICard>
-    </AppShell>
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 52px" }}>
+      <div style={{
+        fontFamily: "var(--font-dm-sans), sans-serif",
+        fontSize: 10,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        color: "#7A746E",
+        marginBottom: 12,
+      }}>
+        Nouveau signal
+      </div>
+      <h1 style={{
+        fontFamily: "var(--font-playfair), Georgia, serif",
+        fontStyle: "italic",
+        fontSize: 28,
+        fontWeight: 700,
+        color: "#0A0A0A",
+        margin: "0 0 8px",
+        lineHeight: 1.2,
+      }}>
+        Soumettre un dossier
+      </h1>
+      <p style={{
+        fontFamily: "var(--font-dm-sans), sans-serif",
+        fontSize: 13,
+        color: "#7A746E",
+        margin: "0 0 32px",
+        lineHeight: 1.7,
+      }}>
+        Votre dossier sera qualifié par le moteur et transformé en signal investissable.
+      </p>
+      <div style={{ borderTop: "2px solid #0A0A0A", marginBottom: 32 }} />
+      <OpportunityForm action={createOpportunity} />
+    </div>
   )
 }

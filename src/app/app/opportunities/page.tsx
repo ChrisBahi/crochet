@@ -1,59 +1,180 @@
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
-import { AppShell } from "@/components/app-shell"
-import { PageHeader } from "@/components/page-header"
-import { UICard } from "@/components/ui-card"
+import { requireUser } from "@/lib/auth/require-user"
+import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 
 export default async function OpportunitiesPage() {
+  await requireUser()
+  const workspaceId = await requireActiveWorkspaceId()
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data: settings, error: sErr } = await supabase
-    .from("user_settings")
-    .select("active_workspace_id")
-    .eq("user_id", user.id)
-    .single()
-
-  if (sErr) throw sErr
-  const workspaceId = settings?.active_workspace_id
-  if (!workspaceId) throw new Error("No active workspace")
-
-  const { data: opportunities, error } = await supabase
-    .from("opportunities")
-    .select("id,title,description,created_at")
-    .eq("workspace_id", workspaceId)
-    .order("created_at", { ascending: false })
-
-  if (error) throw error
+  const { data: opportunities } = workspaceId
+    ? await supabase
+        .from("opportunities")
+        .select("id,title,description,sector,geo,deal_type,created_at,status")
+        .eq("workspace_id", workspaceId)
+        .order("created_at", { ascending: false })
+    : { data: [] }
 
   return (
-    <AppShell>
-      <PageHeader
-        title="Opportunities"
-        subtitle="Create & manage opportunities for your workspace."
-        right={
-          <Link href="/app/opportunities/new" style={{ padding: "10px 12px", border: "1px solid #ddd", borderRadius: 10, textDecoration: "none" }}>
-            + New
-          </Link>
-        }
-      />
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "48px 52px" }}>
 
-      <UICard>
-        {opportunities?.length ? (
-          <div style={{ display: "grid", gap: 10 }}>
-            {opportunities.map((o) => (
-              <div key={o.id} style={{ padding: 12, border: "1px solid #eee", borderRadius: 12 }}>
-                <div style={{ fontWeight: 700 }}>{o.title}</div>
-                <div style={{ opacity: 0.75 }}>{o.description}</div>
-              </div>
-            ))}
+      {/* Header */}
+      <div style={{
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "space-between",
+        marginBottom: 32,
+      }}>
+        <div>
+          <div style={{
+            fontFamily: "var(--font-dm-sans), sans-serif",
+            fontSize: 10,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "#7A746E",
+            marginBottom: 8,
+          }}>
+            Pipeline
           </div>
-        ) : (
-          <div style={{ opacity: 0.75 }}>No opportunities yet.</div>
-        )}
-      </UICard>
-    </AppShell>
+          <h1 style={{
+            fontFamily: "var(--font-playfair), Georgia, serif",
+            fontStyle: "italic",
+            fontSize: 28,
+            fontWeight: 700,
+            color: "#0A0A0A",
+            margin: 0,
+            lineHeight: 1,
+          }}>
+            Opportunities
+          </h1>
+        </div>
+        <Link href="/app/opportunities/new" style={{
+          padding: "10px 22px",
+          background: "#0A0A0A",
+          color: "#FFFFFF",
+          textDecoration: "none",
+          fontFamily: "var(--font-dm-sans), sans-serif",
+          fontSize: 12,
+          fontWeight: 600,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+        }}>
+          + Soumettre
+        </Link>
+      </div>
+
+      {/* Thick rule */}
+      <div style={{ borderTop: "2px solid #0A0A0A", marginBottom: 24 }} />
+
+      {/* Table header */}
+      {opportunities && opportunities.length > 0 && (
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 120px 120px 80px",
+          padding: "8px 16px",
+          marginBottom: 4,
+        }}>
+          {["Dossier", "Secteur", "Géographie", "Statut"].map(h => (
+            <span key={h} style={{
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 10,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "#7A746E",
+            }}>
+              {h}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Opportunities list */}
+      {!opportunities || opportunities.length === 0 ? (
+        <div style={{
+          padding: "48px 0",
+          textAlign: "center",
+          fontFamily: "var(--font-dm-sans), sans-serif",
+          fontSize: 13,
+          color: "#7A746E",
+          borderTop: "1px solid #E0DAD0",
+          borderBottom: "1px solid #E0DAD0",
+        }}>
+          Aucun dossier soumis.
+          <br />
+          <span style={{ fontSize: 11, display: "block", marginTop: 8 }}>
+            Utilisez le bouton Soumettre pour initier votre premier signal.
+          </span>
+        </div>
+      ) : (
+        <div>
+          {opportunities.map((o) => (
+            <Link
+              key={o.id}
+              href={`/app/opportunities/${o.id}`}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 120px 120px 80px",
+                padding: "16px",
+                borderTop: "1px solid #E0DAD0",
+                textDecoration: "none",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <div style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#0A0A0A",
+                  marginBottom: 3,
+                }}>
+                  {o.title}
+                </div>
+                {o.description && (
+                  <div style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 12,
+                    color: "#7A746E",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    maxWidth: 400,
+                  }}>
+                    {o.description}
+                  </div>
+                )}
+              </div>
+              <span style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 12,
+                color: "#7A746E",
+              }}>
+                {o.sector ?? "—"}
+              </span>
+              <span style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 12,
+                color: "#7A746E",
+              }}>
+                {o.geo ?? "—"}
+              </span>
+              <span style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 10,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: o.status === "active" ? "#0A0A0A" : "#7A746E",
+                fontWeight: o.status === "active" ? 600 : 400,
+              }}>
+                {o.status ?? "draft"}
+              </span>
+            </Link>
+          ))}
+          <div style={{ borderTop: "1px solid #E0DAD0" }} />
+        </div>
+      )}
+
+    </div>
   )
 }

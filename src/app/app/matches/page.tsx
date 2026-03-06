@@ -1,116 +1,491 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { requireUser } from "@/lib/auth/require-user"
+import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
+import Link from "next/link"
 
-export default async function MatchesPage() {
+type Match = {
+  id: string
+  opportunity_id: string
+  member_id: string
+  fit_score: number
+  ranking_score: number
+  breakdown: { d_score?: number; p_score?: number } | null
+  why: string[] | null
+  created_at: string
+  status?: string
+}
+
+type Opportunity = {
+  id: string
+  title: string
+  description: string
+  sector?: string
+  geo?: string
+  deal_type?: string
+  stage?: string
+}
+
+function ScoreBadge({ label, value }: { label: string; value: number | undefined }) {
+  const display = value !== undefined ? Math.round(value) : "—"
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{
+        fontFamily: "var(--font-jetbrains), monospace",
+        fontSize: 36,
+        fontWeight: 700,
+        color: "#0A0A0A",
+        lineHeight: 1,
+        letterSpacing: "-0.02em",
+      }}>
+        {display}
+      </div>
+      <div style={{
+        fontFamily: "var(--font-dm-sans), sans-serif",
+        fontSize: 10,
+        color: "#7A746E",
+        letterSpacing: "0.1em",
+        textTransform: "uppercase" as const,
+        marginTop: 6,
+      }}>
+        {label}
+      </div>
+    </div>
+  )
+}
+
+function StatusPill({ status }: { status?: string }) {
+  const map: Record<string, { label: string; bg: string; color: string }> = {
+    ready:   { label: "Ready",   bg: "#0A0A0A", color: "#FFFFFF" },
+    pending: { label: "Pending", bg: "#F5F0E8", color: "#7A746E" },
+    review:  { label: "Review",  bg: "#FEF3C7", color: "#92400E" },
+  }
+  const s = map[status ?? "pending"] ?? map.pending
+  return (
+    <span style={{
+      display: "inline-block",
+      padding: "3px 10px",
+      background: s.bg,
+      color: s.color,
+      fontFamily: "var(--font-dm-sans), sans-serif",
+      fontSize: 10,
+      fontWeight: 600,
+      letterSpacing: "0.08em",
+      textTransform: "uppercase" as const,
+    }}>
+      {s.label}
+    </span>
+  )
+}
+
+export default async function MatchesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ match?: string }>
+}) {
+  await requireUser()
+  const wsId = await requireActiveWorkspaceId()
+  const params = await searchParams
 
   const supabase = await createClient()
 
-  const { data: matches } = await supabase
-    .from("matches")
-    .select("*")
-    .order("score", { ascending: false })
+  const { data: rawMatches } = wsId
+    ? await supabase
+        .from("opportunity_matches")
+        .select("*")
+        .eq("workspace_id", wsId)
+        .order("ranking_score", { ascending: false })
+    : { data: [] }
 
-  if (!matches) {
-    return <div style={{ padding: 40 }}>No matches</div>
-  }
+  const typedMatches: Match[] = rawMatches ?? []
 
-  const opportunityIds = [
-    ...new Set([
-      ...matches.map(m => m.opportunity_a),
-      ...matches.map(m => m.opportunity_b)
-    ])
-  ]
+  const opportunityIds = [...new Set(typedMatches.map(m => m.opportunity_id).filter(Boolean))]
 
-  const { data: opportunities } = await supabase
-    .from("opportunities")
-    .select("*")
-    .in("id", opportunityIds)
+  const { data: opportunities } = opportunityIds.length
+    ? await supabase
+        .from("opportunities")
+        .select("id,title,description,sector,geo,deal_type,stage")
+        .in("id", opportunityIds)
+    : { data: [] }
 
-  const opportunityMap = Object.fromEntries(
-    opportunities?.map(o => [o.id, o]) || []
-  )
+  const oppMap = Object.fromEntries((opportunities ?? []).map(o => [o.id, o as Opportunity]))
 
-  async function createRoomFromMatch(matchId: string, workspaceId: string) {
-    "use server"
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) redirect("/login")
+  const selectedId = params.match ?? typedMatches[0]?.id
+  const selected = typedMatches.find(m => m.id === selectedId)
+  const selectedOpp = selected ? oppMap[selected.opportunity_id] : null
 
-    // créer la room (1 par match)
-    const { data: room, error } = await supabase
-      .from("rooms")
-      .insert({
-        match_id: matchId,
-        workspace_id: workspaceId,
-        created_by: user.id
-      })
-      .select("id")
-      .single()
-
-    // si déjà existe (unique match) => on va la récupérer
-    if (error) {
-      const { data: existing } = await supabase
-        .from("rooms")
-        .select("id")
-        .eq("match_id", matchId)
-        .single()
-
-      if (existing?.id) redirect(`/app/rooms/${existing.id}`)
-      throw new Error(error.message)
-    }
-
-    redirect(`/app/rooms/${room.id}`)
-  }
+  const empty = typedMatches.length === 0
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>Matches</h1>
+    <div style={{
+      display: "flex",
+      height: "calc(100vh - 56px)",
+      background: "#FFFFFF",
+    }}>
 
-      {matches.map((m) => {
+      {/* ── LEFT PANEL — Match list ── */}
+      <aside style={{
+        width: 300,
+        flexShrink: 0,
+        borderRight: "1px solid #E0DAD0",
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+      }}>
+        {/* Panel header */}
+        <div style={{
+          padding: "20px 24px 16px",
+          borderBottom: "2px solid #0A0A0A",
+          display: "flex",
+          alignItems: "baseline",
+          gap: 10,
+        }}>
+          <span style={{
+            fontFamily: "var(--font-playfair), Georgia, serif",
+            fontStyle: "italic",
+            fontSize: 18,
+            fontWeight: 700,
+            color: "#0A0A0A",
+          }}>
+            Matches
+          </span>
+          {!empty && (
+            <span style={{
+              fontFamily: "var(--font-jetbrains), monospace",
+              fontSize: 11,
+              color: "#7A746E",
+            }}>
+              {typedMatches.length}
+            </span>
+          )}
+        </div>
 
-        const a = opportunityMap[m.opportunity_a]
-        const b = opportunityMap[m.opportunity_b]
+        {/* Items */}
+        {empty ? (
+          <div style={{
+            padding: 32,
+            fontFamily: "var(--font-dm-sans), sans-serif",
+            fontSize: 13,
+            color: "#7A746E",
+            textAlign: "center",
+            marginTop: 48,
+            lineHeight: 1.7,
+          }}>
+            Aucun match disponible.
+            <br />
+            <span style={{ fontSize: 11, display: "block", marginTop: 8 }}>
+              Soumettez un dossier pour activer le moteur.
+            </span>
+          </div>
+        ) : (
+          typedMatches.map((m, i) => {
+            const opp = oppMap[m.opportunity_id]
+            const isActive = m.id === selectedId
+            return (
+              <Link
+                key={m.id}
+                href={`/app/matches?match=${m.id}`}
+                style={{
+                  display: "block",
+                  textDecoration: "none",
+                  padding: "16px 24px",
+                  borderBottom: "1px solid #E0DAD0",
+                  background: isActive ? "#F5F0E8" : "transparent",
+                  borderLeft: isActive ? "3px solid #0A0A0A" : "3px solid transparent",
+                }}
+              >
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 6,
+                }}>
+                  <span style={{
+                    fontFamily: "var(--font-jetbrains), monospace",
+                    fontSize: 10,
+                    color: "#7A746E",
+                    letterSpacing: "0.06em",
+                  }}>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <StatusPill status={m.status} />
+                </div>
 
-        return (
-          <div
-            key={m.id}
-            style={{
-              border: "1px solid #ddd",
-              padding: 20,
-              borderRadius: 8,
-              marginTop: 20
-            }}
-          >
+                <div style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#0A0A0A",
+                  marginBottom: 4,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}>
+                  {opp?.title ?? "Opportunité sans titre"}
+                </div>
 
-            <h3>{a?.title}</h3>
-            <p>{a?.description}</p>
+                <div style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 11,
+                  color: "#7A746E",
+                  marginBottom: 12,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}>
+                  {[opp?.sector, opp?.geo].filter(Boolean).join(" · ") || "—"}
+                </div>
 
-            <hr style={{ margin: "10px 0" }} />
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}>
+                  <span style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 10,
+                    color: "#7A746E",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}>
+                    M-Score
+                  </span>
+                  <span style={{
+                    fontFamily: "var(--font-jetbrains), monospace",
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: "#0A0A0A",
+                  }}>
+                    {Math.round(m.fit_score ?? 0)}
+                  </span>
+                </div>
+              </Link>
+            )
+          })
+        )}
+      </aside>
 
-            <h3>{b?.title}</h3>
-            <p>{b?.description}</p>
-            <div className="text-sm text-gray-500">
-              Score: {m.score}
+      {/* ── RIGHT PANEL — Match detail ── */}
+      <div style={{ flex: 1, overflowY: "auto", background: "#FFFFFF" }}>
+        {!selected || !selectedOpp ? (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100%",
+            fontFamily: "var(--font-dm-sans), sans-serif",
+            fontSize: 13,
+            color: "#7A746E",
+          }}>
+            {empty
+              ? "Aucun match à afficher."
+              : "Sélectionnez un match."}
+          </div>
+        ) : (
+          <div style={{ maxWidth: 720, padding: "40px 52px" }}>
+
+            {/* Header */}
+            <div style={{ marginBottom: 28 }}>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginBottom: 16,
+                flexWrap: "wrap",
+              }}>
+                <StatusPill status={selected.status} />
+                {[selectedOpp.sector, selectedOpp.geo, selectedOpp.deal_type].filter(Boolean).map((tag, i) => (
+                  <span key={i} style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 10,
+                    color: "#7A746E",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    padding: "3px 10px",
+                    border: "1px solid #E0DAD0",
+                  }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              <h1 style={{
+                fontFamily: "var(--font-playfair), Georgia, serif",
+                fontStyle: "italic",
+                fontSize: 30,
+                fontWeight: 700,
+                color: "#0A0A0A",
+                lineHeight: 1.2,
+                letterSpacing: "-0.01em",
+                margin: "0 0 14px",
+              }}>
+                {selectedOpp.title}
+              </h1>
+
+              {selectedOpp.description && (
+                <p style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 14,
+                  color: "#7A746E",
+                  lineHeight: 1.75,
+                  margin: 0,
+                }}>
+                  {selectedOpp.description}
+                </p>
+              )}
             </div>
 
-            <div className="text-xs text-gray-400">
-              {m.reason}
+            {/* Thick rule */}
+            <div style={{ borderTop: "2px solid #0A0A0A", marginBottom: 28 }} />
+
+            {/* Score strip */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr",
+              border: "1px solid #E0DAD0",
+              marginBottom: 32,
+            }}>
+              {[
+                { label: "M-Score", value: selected.fit_score },
+                { label: "D-Score", value: selected.breakdown?.d_score },
+                { label: "P-Score", value: selected.breakdown?.p_score },
+              ].map((s, i) => (
+                <div key={i} style={{
+                  padding: "28px 16px",
+                  borderRight: i < 2 ? "1px solid #E0DAD0" : "none",
+                }}>
+                  <ScoreBadge label={s.label} value={s.value} />
+                </div>
+              ))}
             </div>
 
-            <form
-              action={async () => {
-                "use server"
-                await createRoomFromMatch(m.id, m.workspace_id)
-              }}
-            >
-              <button style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #ddd", marginTop: 10 }}>
-                Create Room
+            {/* Why this match */}
+            {selected.why && selected.why.length > 0 && (
+              <div style={{ marginBottom: 32 }}>
+                <div style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 10,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "#7A746E",
+                  marginBottom: 14,
+                }}>
+                  Why this match
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {selected.why.map((reason, i) => (
+                    <div key={i} style={{
+                      display: "flex",
+                      gap: 14,
+                      padding: "12px 16px",
+                      background: "#F5F0E8",
+                      border: "1px solid #EDE8DF",
+                    }}>
+                      <span style={{
+                        fontFamily: "var(--font-jetbrains), monospace",
+                        fontSize: 10,
+                        color: "#7A746E",
+                        flexShrink: 0,
+                        paddingTop: 2,
+                      }}>
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span style={{
+                        fontFamily: "var(--font-dm-sans), sans-serif",
+                        fontSize: 13,
+                        color: "#0A0A0A",
+                        lineHeight: 1.65,
+                      }}>
+                        {reason}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* MEMO */}
+            <div style={{
+              border: "1px solid #E0DAD0",
+              marginBottom: 32,
+            }}>
+              <div style={{
+                padding: "12px 20px",
+                borderBottom: "1px solid #E0DAD0",
+                background: "#F5F0E8",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}>
+                <span style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 10,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#0A0A0A",
+                  fontWeight: 700,
+                }}>
+                  MEMO
+                </span>
+                <span style={{
+                  fontFamily: "var(--font-jetbrains), monospace",
+                  fontSize: 10,
+                  color: "#7A746E",
+                  letterSpacing: "0.04em",
+                }}>
+                  IA · Confidentiel
+                </span>
+              </div>
+              <div style={{ padding: "20px" }}>
+                <p style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 13,
+                  color: "#7A746E",
+                  fontStyle: "italic",
+                  margin: 0,
+                  lineHeight: 1.8,
+                }}>
+                  Le MEMO sera disponible après validation du dossier par le moteur de qualification.
+                </p>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div style={{ display: "flex", gap: 12 }}>
+              <Link
+                href={`/app/opportunities/${selected.opportunity_id}`}
+                style={{
+                  padding: "12px 28px",
+                  background: "#0A0A0A",
+                  color: "#FFFFFF",
+                  textDecoration: "none",
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Ouvrir le dossier
+              </Link>
+              <button style={{
+                padding: "12px 28px",
+                background: "transparent",
+                color: "#0A0A0A",
+                border: "1px solid #0A0A0A",
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 12,
+                fontWeight: 500,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+              }}>
+                Request intro
               </button>
-            </form>
+            </div>
 
           </div>
-        )
-      })}
+        )}
+      </div>
     </div>
   )
 }
