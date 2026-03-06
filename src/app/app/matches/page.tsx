@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 import Link from "next/link"
+import { IntroButton } from "@/components/intro-button"
 
 type Match = {
   id: string
@@ -55,9 +56,12 @@ function ScoreBadge({ label, value }: { label: string; value: number | undefined
 
 function StatusPill({ status }: { status?: string }) {
   const map: Record<string, { label: string; bg: string; color: string }> = {
-    ready:   { label: "Ready",   bg: "#0A0A0A", color: "#FFFFFF" },
-    pending: { label: "Pending", bg: "#F5F0E8", color: "#7A746E" },
-    review:  { label: "Review",  bg: "#FEF3C7", color: "#92400E" },
+    ready:            { label: "Ready",          bg: "#0A0A0A", color: "#FFFFFF" },
+    pending:          { label: "Pending",         bg: "#F5F0E8", color: "#7A746E" },
+    review:           { label: "Review",          bg: "#FEF3C7", color: "#92400E" },
+    intro_requested:  { label: "Intro envoyée",   bg: "#EFF6FF", color: "#1D4ED8" },
+    room_active:      { label: "Room active",     bg: "#052e16", color: "#22c55e" },
+    closing:          { label: "Closing",         bg: "#1E1B4B", color: "#818CF8" },
   }
   const s = map[status ?? "pending"] ?? map.pending
   return (
@@ -450,7 +454,7 @@ export default async function MatchesPage({
             </div>
 
             {/* CTA */}
-            <div style={{ display: "flex", gap: 12 }}>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <Link
                 href={`/app/opportunities/${selected.opportunity_id}`}
                 style={{
@@ -467,20 +471,36 @@ export default async function MatchesPage({
               >
                 Ouvrir le dossier
               </Link>
-              <button style={{
-                padding: "12px 28px",
-                background: "transparent",
-                color: "#0A0A0A",
-                border: "1px solid #0A0A0A",
-                fontFamily: "var(--font-dm-sans), sans-serif",
-                fontSize: 12,
-                fontWeight: 500,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-              }}>
-                Request intro
-              </button>
+
+              {selected.status !== "intro_requested" &&
+               selected.status !== "room_active" &&
+               selected.status !== "closing" ? (
+                <IntroButton
+                  matchId={selected.id}
+                  opportunityId={selected.opportunity_id}
+                />
+              ) : (
+                <Link
+                  href="/app/rooms"
+                  style={{
+                    padding: "12px 28px",
+                    background: "transparent",
+                    color: "#1D4ED8",
+                    border: "1px solid #BFDBFE",
+                    textDecoration: "none",
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  🔒 Accéder à la Room
+                </Link>
+              )}
             </div>
 
           </div>
