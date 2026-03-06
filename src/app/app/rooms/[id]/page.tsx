@@ -1,41 +1,94 @@
-// src/app/app/rooms/[id]/page.tsx
-import { createClient } from "@/utils/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { requireUser } from "@/lib/auth/require-user"
 import { redirect } from "next/navigation"
-import RoomChat from "@/components/room-chat"
+import { RoomShell } from "@/components/secure-room/room-shell"
+
+export const dynamic = "force-dynamic"
 
 export default async function RoomPage({
   params,
 }: {
-  params: { id: string } | Promise<{ id: string }>
+  params: Promise<{ id: string }>
 }) {
+  const user = await requireUser()
+  const { id: roomId } = await params
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
-
-  const resolvedParams = await params
-  const roomId = resolvedParams?.id
-  if (!roomId) throw new Error("Missing room id")
-
-  // 1) room (RLS doit autoriser select si membre)
-  const { data: room, error: roomError } = await supabase
+  // Room
+  const { data: room, error: roomErr } = await supabase
     .from("rooms")
-    .select("id, match_id, workspace_id, created_at")
+    .select("*")
     .eq("id", roomId)
     .single()
 
-  if (roomError) throw new Error(roomError.message)
+  if (roomErr || !room) redirect("/app/rooms")
 
-  // 2) messages
+  // Messages
   const { data: messages } = await supabase
     .from("messages")
     .select("*")
     .eq("room_id", roomId)
     .order("created_at", { ascending: true })
 
+  // Opportunity via match → opportunity_a or directly from room.opportunity_id
+  let opportunity: Record<string, unknown> | null = null
+  let deck: Record<string, unknown> | null = null
+
+  if (room.opportunity_id) {
+    const { data: opp } = await supabase
+      .from("opportunities")
+      .select("id, title, deal_type, sector, geo, stage, amount, valuation, pitch_deck_url, website_url")
+      .eq("id", room.opportunity_id)
+      .maybeSingle()
+    opportunity = opp
+
+    if (opp?.id) {
+      const { data: d } = await supabase
+        .from("opportunity_decks")
+        .select("summary, d_score, tags, status, nda_text")
+        .eq("opportunity_id", opp.id as string)
+        .maybeSingle()
+      deck = d
+    }
+  } else if (room.match_id) {
+    // Legacy: resolve through matches table
+    const { data: match } = await supabase
+      .from("matches")
+      .select("opportunity_a")
+      .eq("id", room.match_id)
+      .maybeSingle()
+
+    if (match?.opportunity_a) {
+      const { data: opp } = await supabase
+        .from("opportunities")
+        .select("id, title, deal_type, sector, geo, stage, amount, valuation, pitch_deck_url, website_url")
+        .eq("id", match.opportunity_a)
+        .maybeSingle()
+      opportunity = opp
+    }
+  }
+
+  // Current user profile
+  const { data: profile } = await supabase
+    .from("investor_profiles")
+    .select("name, firm")
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  const displayName = (profile?.name as string) ?? user.email?.split("@")[0] ?? "Vous"
+  const ndaSigned = !!(deck?.nda_text)
+
   return (
-    <div className="p-8">
-      <RoomChat roomId={roomId} myUserId={user.id} initialMessages={messages ?? []} />
-    </div>
+    <RoomShell
+      roomId={roomId}
+      roomRef={`ROOM-${roomId.slice(0, 8).toUpperCase()}`}
+      roomStatus={(room.status as string) ?? "active"}
+      opportunity={opportunity}
+      deck={deck}
+      ndaSigned={ndaSigned}
+      initialMessages={messages ?? []}
+      userId={user.id}
+      displayName={displayName}
+    />
   )
 }
