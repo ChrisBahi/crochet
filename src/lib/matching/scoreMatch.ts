@@ -8,12 +8,12 @@ export function scoreMatch(a: Record<string, unknown>, b: Record<string, unknown
     reason.push("Buyer / Seller fit")
   }
 
-  if (a.industry === b.industry) {
+  if (a.industry && b.industry && a.industry === b.industry) {
     score += 20
     reason.push("Same industry")
   }
 
-  if (a.country === b.country) {
+  if (a.country && b.country && a.country === b.country) {
     score += 10
     reason.push("Same country")
   }
