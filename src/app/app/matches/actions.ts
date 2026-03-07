@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 import { redirect } from "next/navigation"
+import { createNotification } from "@/lib/notifications/create"
 
 export async function requestIntro(matchId: string, opportunityId: string) {
   const user = await requireUser()
@@ -53,6 +54,18 @@ export async function requestIntro(matchId: string, opportunityId: string) {
     .from("opportunity_matches")
     .update({ status: "intro_requested" })
     .eq("id", matchId)
+
+  // 5. Notification
+  await createNotification({
+    supabase,
+    userId: user.id,
+    workspaceId: wsId ?? undefined,
+    type: "intro_requested",
+    title: "Secure Room ouverte",
+    body: "Votre demande d'intro a été confirmée. La Room sécurisée est accessible.",
+    link: `/app/rooms/${room.id}`,
+    email: user.email,
+  })
 
   redirect(`/app/rooms/${room.id}`)
 }

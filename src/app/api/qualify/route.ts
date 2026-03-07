@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { createClient } from "@/lib/supabase/server"
+import { createNotification } from "@/lib/notifications/create"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -85,6 +86,17 @@ export async function POST(req: NextRequest) {
       tags: parsed.tags,
       status: "done",
     }, { onConflict: "opportunity_id" })
+
+    // Notification
+    await createNotification({
+      supabase,
+      userId: user.id,
+      type: "qualification_done",
+      title: `Dossier qualifié — D-Score ${parsed.d_score}`,
+      body: `Le moteur CROCHET a analysé "${opp.title}". Consultez le MEMO de qualification.`,
+      link: `/app/opportunities/${opportunity_id}/memo`,
+      email: user.email ?? undefined,
+    })
 
     return NextResponse.json({ d_score: parsed.d_score, tags: parsed.tags })
   } catch (err) {
