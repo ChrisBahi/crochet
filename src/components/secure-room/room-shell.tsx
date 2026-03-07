@@ -918,7 +918,13 @@ function ClosingSection({
   const hasValidated = validations.some(v => v.user_id === userId)
   const otherValidated = validations.some(v => v.user_id !== userId)
   const isDone = roomStatus === "closed_deal" || roomStatus === "closed_no_deal"
-  const isArchived = roomStatus === "closed_no_deal"
+  const isPendingClose = roomStatus === "pending_close"
+
+  // Qui est en attente de qui ?
+  // A (validé, attend B) : hasValidated && !otherValidated
+  // B (doit décider)     : !hasValidated && otherValidated
+  const iWaitingForOther = hasValidated && !otherValidated && isPendingClose
+  const otherWaitsForMe  = !hasValidated && otherValidated && isPendingClose
 
   async function handleValidate() {
     setLoading(true)
@@ -942,42 +948,53 @@ function ClosingSection({
     <div style={{ height: "100%", overflowY: "auto", padding: "32px 36px" }}>
       <SectionHeader label="Closing & Validation du Deal" />
 
-      {/* Deal status banner */}
+      {/* ── CLOSED DEAL ── */}
       {roomStatus === "closed_deal" && (
         <div style={{
-          padding: "20px 24px", marginBottom: 28,
+          padding: "28px 28px", marginBottom: 28,
           background: "#052e16", border: "1px solid #16a34a",
-          display: "flex", alignItems: "center", gap: 14,
+          display: "flex", alignItems: "center", gap: 18,
         }}>
-          <span style={{ fontSize: 24 }}>✓</span>
+          <div style={{
+            width: 44, height: 44, borderRadius: "50%",
+            border: "2px solid #22c55e",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 20, flexShrink: 0,
+          }}>
+            ✓
+          </div>
           <div>
-            <div style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: "#22c55e", marginBottom: 4 }}>
+            <div style={{ fontFamily: FONT_SANS, fontSize: 15, fontWeight: 700, color: "#22c55e", marginBottom: 6 }}>
               Deal validé par les deux parties
             </div>
-            <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#4ade80", lineHeight: 1.6 }}>
+            <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#4ade80", lineHeight: 1.7 }}>
               La Room est archivée. Les documents sont maintenant téléchargeables.
             </div>
           </div>
         </div>
       )}
 
-      {isArchived && (
+      {/* ── CLOSED NO DEAL ── */}
+      {roomStatus === "closed_no_deal" && (
         <div style={{
-          padding: "20px 24px", marginBottom: 28,
-          background: "#1a0a0a", border: "1px solid #7A746E",
+          padding: "28px 28px", marginBottom: 28,
+          background: "#0f0f0f", border: "1px solid #3a3a3a",
         }}>
-          <div style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: "#7A746E", marginBottom: 4 }}>
+          <div style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#555", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>
+            Room archivée · Lecture seule
+          </div>
+          <div style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: "#7A746E", marginBottom: 6 }}>
             Deal décliné
           </div>
-          <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#555", lineHeight: 1.6 }}>
-            La Room est archivée en lecture seule. Les documents ne sont pas téléchargeables.
+          <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#555", lineHeight: 1.7 }}>
+            La Room est archivée en lecture seule. Les échanges et documents partagés restent visibles pour les deux parties, mais les documents ne sont pas téléchargeables.
           </div>
         </div>
       )}
 
-      {!isDone && (
+      {/* ── ACTIVE — personne n'a encore validé ── */}
+      {!isDone && !isPendingClose && (
         <>
-          {/* How it works */}
           <div style={{ border: `1px solid ${C.border}`, padding: "20px 24px", marginBottom: 28 }}>
             <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 14, paddingBottom: 10, borderBottom: `1px solid ${C.border}` }}>
               Conditions de fermeture
@@ -986,7 +1003,7 @@ function ClosingSection({
               "Les deux parties doivent confirmer le deal indépendamment.",
               "Une fois les deux validations reçues, la Room est clôturée.",
               "Les documents deviennent téléchargeables uniquement après clôture.",
-              "Chaque partie peut révoquer sa validation tant que l'autre n'a pas validé.",
+              "Chaque partie peut révoquer sa validation tant que l'autre n'a pas encore validé.",
             ].map((rule, i) => (
               <div key={i} style={{ display: "flex", gap: 12, marginBottom: 10, alignItems: "flex-start" }}>
                 <span style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted, flexShrink: 0, paddingTop: 2 }}>
@@ -997,69 +1014,26 @@ function ClosingSection({
             ))}
           </div>
 
-          {/* Validation status grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
-            {/* My status */}
-            <div style={{
-              border: `1px solid ${hasValidated ? "#16a34a" : C.border}`,
-              padding: "20px 20px",
-              background: hasValidated ? "#052e16" : C.bg,
-            }}>
-              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
-                Votre position
-              </div>
+            <div style={{ border: `1px solid ${C.border}`, padding: "20px", background: C.bg }}>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Votre position</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <span style={{
-                  width: 8, height: 8, borderRadius: "50%",
-                  background: hasValidated ? "#22c55e" : C.muted,
-                  flexShrink: 0,
-                }} />
-                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: hasValidated ? "#22c55e" : C.muted, letterSpacing: "0.06em" }}>
-                  {hasValidated ? "DEAL CONFIRMÉ" : "EN ATTENTE"}
-                </span>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.muted, flexShrink: 0 }} />
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: C.muted, letterSpacing: "0.06em" }}>EN ATTENTE</span>
               </div>
-              {hasValidated ? (
-                <button
-                  onClick={handleRevoke}
-                  disabled={loading || otherValidated}
-                  style={{ ...btnStyle(true), fontSize: 10, padding: "6px 14px", opacity: otherValidated ? 0.4 : 1 }}
-                >
-                  Révoquer
-                </button>
-              ) : (
-                <button
-                  onClick={handleValidate}
-                  disabled={loading}
-                  style={{ ...btnStyle(false), fontSize: 11, padding: "10px 20px" }}
-                >
-                  {loading ? "…" : "Valider le deal"}
-                </button>
-              )}
+              <button onClick={handleValidate} disabled={loading} style={{ ...btnStyle(false), fontSize: 11, padding: "10px 20px" }}>
+                {loading ? "…" : "Valider le deal"}
+              </button>
             </div>
-
-            {/* Other party status */}
-            <div style={{
-              border: `1px solid ${otherValidated ? "#16a34a" : C.border}`,
-              padding: "20px 20px",
-              background: otherValidated ? "#052e16" : C.bg,
-            }}>
-              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
-                Autre partie
-              </div>
+            <div style={{ border: `1px solid ${C.border}`, padding: "20px", background: C.bg }}>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Autre partie</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{
-                  width: 8, height: 8, borderRadius: "50%",
-                  background: otherValidated ? "#22c55e" : C.muted,
-                  flexShrink: 0,
-                }} />
-                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: otherValidated ? "#22c55e" : C.muted, letterSpacing: "0.06em" }}>
-                  {otherValidated ? "DEAL CONFIRMÉ" : "EN ATTENTE"}
-                </span>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.muted, flexShrink: 0 }} />
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: C.muted, letterSpacing: "0.06em" }}>EN ATTENTE</span>
               </div>
             </div>
           </div>
 
-          {/* Decline zone */}
           <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 20 }}>
             <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: "#dc2626", marginBottom: 12 }}>
               Zone de refus
@@ -1071,17 +1045,123 @@ function ClosingSection({
               onClick={handleDecline}
               disabled={loading}
               style={{
-                padding: "8px 20px",
-                background: "transparent",
-                color: "#dc2626",
-                border: "1px solid #dc2626",
-                fontFamily: FONT_SANS, fontSize: 11,
-                fontWeight: 600, letterSpacing: "0.06em",
-                textTransform: "uppercase", cursor: "pointer",
+                padding: "8px 20px", background: "transparent", color: "#dc2626",
+                border: "1px solid #dc2626", fontFamily: FONT_SANS, fontSize: 11,
+                fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer",
               }}
             >
               Refuser le deal
             </button>
+          </div>
+        </>
+      )}
+
+      {/* ── PENDING CLOSE — J'ai validé, j'attends l'autre ── */}
+      {iWaitingForOther && (
+        <>
+          <div style={{
+            padding: "24px 28px", marginBottom: 28,
+            background: "#1c1000", border: "1px solid #5a4000",
+            display: "flex", alignItems: "center", gap: 16,
+          }}>
+            <div style={{
+              width: 10, height: 10, borderRadius: "50%", background: "#f59e0b", flexShrink: 0,
+              boxShadow: "0 0 0 3px rgba(245,158,11,0.2)",
+            }} />
+            <div>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: "#f59e0b", marginBottom: 4 }}>
+                En attente de confirmation de l&apos;autre partie
+              </div>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#92600a", lineHeight: 1.6 }}>
+                Votre validation a été enregistrée. La Room se fermera automatiquement dès que l&apos;autre partie confirmera.
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+            <div style={{ border: "1px solid #16a34a", padding: "20px", background: "#052e16" }}>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Votre position</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#22c55e", letterSpacing: "0.06em" }}>DEAL CONFIRMÉ</span>
+              </div>
+              <button onClick={handleRevoke} disabled={loading} style={{ ...btnStyle(true), fontSize: 10, padding: "6px 14px" }}>
+                {loading ? "…" : "Révoquer ma validation"}
+              </button>
+            </div>
+            <div style={{ border: `1px solid ${C.border}`, padding: "20px", background: C.bg }}>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Autre partie</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b", flexShrink: 0 }} />
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#f59e0b", letterSpacing: "0.06em" }}>EN ATTENTE</span>
+              </div>
+            </div>
+          </div>
+
+          <p style={{ fontFamily: FONT_SANS, fontSize: 11, color: C.muted, margin: 0, lineHeight: 1.7 }}>
+            Vous pouvez révoquer votre validation tant que l&apos;autre partie n&apos;a pas encore confirmé. Une fois les deux parties validées, le deal est verrouillé.
+          </p>
+        </>
+      )}
+
+      {/* ── PENDING CLOSE — L'autre a validé, c'est à moi de décider ── */}
+      {otherWaitsForMe && (
+        <>
+          <div style={{
+            padding: "28px 28px", marginBottom: 32,
+            border: "1px solid #3b82f6", background: "#0c1a3a",
+          }}>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#3b82f6", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
+              Action requise
+            </div>
+            <div style={{ fontFamily: FONT_SANS, fontSize: 15, fontWeight: 700, color: "#FFFFFF", marginBottom: 8 }}>
+              L&apos;autre partie a validé le deal.
+            </div>
+            <div style={{ fontFamily: FONT_SANS, fontSize: 13, color: "#93c5fd", lineHeight: 1.7, marginBottom: 24 }}>
+              Confirmez-vous le deal ? Si vous confirmez, la Room est clôturée et les documents sont débloqués pour les deux parties. Si vous déclinez, la Room est archivée sans accès aux documents.
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button
+                onClick={handleValidate}
+                disabled={loading}
+                style={{
+                  padding: "14px 32px", background: "#FFFFFF", color: "#0A0A0A", border: "none",
+                  fontFamily: FONT_SANS, fontSize: 12, fontWeight: 700, letterSpacing: "0.08em",
+                  textTransform: "uppercase", cursor: loading ? "wait" : "pointer", opacity: loading ? 0.5 : 1,
+                }}
+              >
+                {loading ? "…" : "Confirmer le deal"}
+              </button>
+              <button
+                onClick={handleDecline}
+                disabled={loading}
+                style={{
+                  padding: "14px 32px", background: "transparent", color: "#ef4444",
+                  border: "1px solid #ef4444", fontFamily: FONT_SANS, fontSize: 12,
+                  fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase",
+                  cursor: loading ? "wait" : "pointer", opacity: loading ? 0.5 : 1,
+                }}
+              >
+                Décliner
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div style={{ border: "1px solid #16a34a", padding: "20px", background: "#052e16" }}>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Autre partie</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#22c55e", letterSpacing: "0.06em" }}>DEAL CONFIRMÉ</span>
+              </div>
+            </div>
+            <div style={{ border: "1px solid #3b82f6", padding: "20px", background: "#0c1a3a" }}>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Votre position</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#3b82f6", flexShrink: 0 }} />
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#3b82f6", letterSpacing: "0.06em" }}>DÉCISION REQUISE</span>
+              </div>
+            </div>
           </div>
         </>
       )}
