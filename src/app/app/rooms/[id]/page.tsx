@@ -75,6 +75,12 @@ export default async function RoomPage({
     .eq("user_id", user.id)
     .maybeSingle()
 
+  // Validations for this room
+  const { data: validations } = await supabase
+    .from("room_validations")
+    .select("user_id, created_at")
+    .eq("room_id", roomId)
+
   const displayName = (profile?.name as string) ?? user.email?.split("@")[0] ?? "Vous"
   const ndaSigned = !!(deck?.nda_text)
 
@@ -89,6 +95,7 @@ export default async function RoomPage({
       initialMessages={messages ?? []}
       userId={user.id}
       displayName={displayName}
+      initialValidations={validations ?? []}
     />
   )
 }

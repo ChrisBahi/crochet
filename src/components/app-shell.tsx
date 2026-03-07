@@ -41,10 +41,10 @@ export function AppShell({
         <Link href="/app" style={{ textDecoration: "none", flexShrink: 0 }}>
           <span style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
-            fontStyle: "italic", fontSize: 20, fontWeight: 700,
-            color: "#0A0A0A", letterSpacing: "-0.02em",
+            fontStyle: "normal", fontSize: 18, fontWeight: 700,
+            color: "#0A0A0A", letterSpacing: "0.06em", textTransform: "uppercase",
           }}>
-            <span style={{ fontSize: 22 }}>C</span>rochet.
+            CROCHET.
           </span>
         </Link>
 

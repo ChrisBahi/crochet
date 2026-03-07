@@ -2,10 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { validateDeal, declineDeal, revokeValidation } from "@/app/app/rooms/[id]/actions"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type Tab = "chat" | "deck" | "vision" | "rdv" | "info"
+type Tab = "chat" | "deck" | "vision" | "rdv" | "closing" | "info"
+
+type Validation = { user_id: string; created_at: string }
 
 type RawMessage = {
   id: string
@@ -75,6 +78,57 @@ const C = {
   accent: "#0A0A0A",
 }
 
+// ─── Black Screen Guard ───────────────────────────────────────────────────────
+
+function BlackScreenGuard({ children }: { children: React.ReactNode }) {
+  const [hidden, setHidden] = useState(false)
+
+  useEffect(() => {
+    const handle = () => setHidden(document.visibilityState === "hidden")
+    document.addEventListener("visibilitychange", handle)
+    return () => document.removeEventListener("visibilitychange", handle)
+  }, [])
+
+  return (
+    <>
+      <style>{`@media print { body { display: none !important; } }`}</style>
+      {children}
+      {hidden && (
+        <div style={{
+          position: "fixed", inset: 0,
+          background: "#000000",
+          zIndex: 999999,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 16,
+          userSelect: "none",
+        }}>
+          <span style={{
+            fontFamily: FONT_SANS,
+            fontSize: 11,
+            letterSpacing: "0.22em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.35)",
+          }}>
+            LE SIGNAL, PAS LE BRUIT.
+          </span>
+          <span style={{
+            fontFamily: FONT_SERIF,
+            fontSize: 32,
+            fontWeight: 700,
+            color: "#FFFFFF",
+            letterSpacing: "0.06em",
+          }}>
+            Crochet.
+          </span>
+        </div>
+      )}
+    </>
+  )
+}
+
 // ─── Header ─────────────────────────────────────────────────────────────────
 
 function RoomHeader({
@@ -87,12 +141,18 @@ function RoomHeader({
     negotiating: "En négociation",
     closing: "Closing",
     closed: "Clôturé",
+    pending_close: "En attente de validation",
+    closed_deal: "Deal validé",
+    closed_no_deal: "Archivé",
   }
   const statusColor: Record<string, string> = {
     active: "#22c55e",
     negotiating: "#f59e0b",
     closing: "#3b82f6",
     closed: "#7A746E",
+    pending_close: "#f59e0b",
+    closed_deal: "#22c55e",
+    closed_no_deal: "#7A746E",
   }
 
   return (
@@ -166,11 +226,12 @@ function RoomHeader({
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: "chat",   icon: "💬", label: "Chat" },
-  { id: "deck",   icon: "📊", label: "Dossier" },
-  { id: "vision", icon: "🎥", label: "Vision" },
-  { id: "rdv",    icon: "📅", label: "Rendez-vous" },
-  { id: "info",   icon: "🔒", label: "Sécurité" },
+  { id: "chat",    icon: "💬", label: "Chat" },
+  { id: "deck",    icon: "📊", label: "Dossier" },
+  { id: "vision",  icon: "🎥", label: "Vision" },
+  { id: "rdv",     icon: "📅", label: "RDV" },
+  { id: "closing", icon: "✓",  label: "Closing" },
+  { id: "info",    icon: "🔒", label: "Sécurité" },
 ]
 
 function Sidebar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
@@ -460,14 +521,16 @@ function ChatSection({
 // ─── Deck ─────────────────────────────────────────────────────────────────────
 
 function DeckSection({
-  opportunity, messages,
+  opportunity, messages, roomStatus,
 }: {
   opportunity: Record<string, unknown> | null
   messages: ParsedMessage[]
+  roomStatus: string
 }) {
   const deckUrl = opportunity?.pitch_deck_url as string | null
   const websiteUrl = opportunity?.website_url as string | null
   const docMessages = messages.filter(m => m.kind === "doc")
+  const isUnlocked = roomStatus === "closed_deal"
 
   return (
     <div style={{ height: "100%", overflowY: "auto", padding: "32px 36px" }}>
@@ -497,6 +560,23 @@ function DeckSection({
         </div>
       )}
 
+      {/* Unlock banner */}
+      {!isUnlocked && (
+        <div style={{
+          marginBottom: 24,
+          padding: "12px 18px",
+          background: "#0A0A0A",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+        }}>
+          <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#555", letterSpacing: "0.1em" }}>🔒 TÉLÉCHARGEMENT VERROUILLÉ</span>
+          <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#888", lineHeight: 1.5 }}>
+            Les documents sont visibles mais non téléchargeables. Le téléchargement sera déverrouillé après validation du deal par les deux parties.
+          </span>
+        </div>
+      )}
+
       {/* Pitch deck embed */}
       {deckUrl && (
         <div style={{ marginBottom: 32 }}>
@@ -507,12 +587,18 @@ function DeckSection({
               display: "flex", justifyContent: "space-between", alignItems: "center",
             }}>
               <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: C.muted, letterSpacing: "0.08em" }}>DECK PARTAGÉ</span>
-              <a href={deckUrl} target="_blank" rel="noopener noreferrer" style={{
-                fontFamily: FONT_SANS, fontSize: 10, color: C.text, textDecoration: "none",
-                border: `1px solid ${C.border}`, padding: "3px 10px",
-              }}>
-                Ouvrir →
-              </a>
+              {isUnlocked ? (
+                <a href={deckUrl} target="_blank" rel="noopener noreferrer" style={{
+                  fontFamily: FONT_SANS, fontSize: 10, color: C.text, textDecoration: "none",
+                  border: `1px solid ${C.border}`, padding: "3px 10px",
+                }}>
+                  Télécharger →
+                </a>
+              ) : (
+                <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#555", letterSpacing: "0.06em" }}>
+                  🔒 Verrouillé
+                </span>
+              )}
             </div>
             <iframe
               src={deckUrl}
@@ -545,22 +631,31 @@ function DeckSection({
           <Label>Documents partagés dans la Room</Label>
           <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
             {docMessages.map(m => (
-              <a
+              <div
                 key={m.id}
-                href={m.docUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 style={{
                   padding: "12px 16px", border: `1px solid ${C.border}`, background: C.bgSubtle,
-                  textDecoration: "none", display: "flex", alignItems: "center", gap: 12,
+                  display: "flex", alignItems: "center", gap: 12,
                 }}
               >
                 <span style={{ fontSize: 18 }}>📎</span>
-                <div>
+                <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C.text }}>{m.docTitle}</div>
                   <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted, marginTop: 2 }}>{formatTime(m.created_at)}</div>
                 </div>
-              </a>
+                {isUnlocked ? (
+                  <a href={m.docUrl} target="_blank" rel="noopener noreferrer" style={{
+                    fontFamily: FONT_SANS, fontSize: 10, color: C.text, textDecoration: "none",
+                    border: `1px solid ${C.border}`, padding: "3px 10px", flexShrink: 0,
+                  }}>
+                    Télécharger →
+                  </a>
+                ) : (
+                  <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#555", letterSpacing: "0.06em", flexShrink: 0 }}>
+                    🔒
+                  </span>
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -805,6 +900,195 @@ function RdvSection({
   )
 }
 
+// ─── Closing / Deal validation ────────────────────────────────────────────────
+
+function ClosingSection({
+  roomId, roomStatus, validations, userId,
+  onStatusChange, onValidationsChange,
+}: {
+  roomId: string
+  roomStatus: string
+  validations: Validation[]
+  userId: string
+  onStatusChange: (s: string) => void
+  onValidationsChange: (v: Validation[]) => void
+}) {
+  const [loading, setLoading] = useState(false)
+
+  const hasValidated = validations.some(v => v.user_id === userId)
+  const otherValidated = validations.some(v => v.user_id !== userId)
+  const isDone = roomStatus === "closed_deal" || roomStatus === "closed_no_deal"
+  const isArchived = roomStatus === "closed_no_deal"
+
+  async function handleValidate() {
+    setLoading(true)
+    try { await validateDeal(roomId) } catch (e) { console.error(e) }
+    setLoading(false)
+  }
+
+  async function handleDecline() {
+    setLoading(true)
+    try { await declineDeal(roomId) } catch (e) { console.error(e) }
+    setLoading(false)
+  }
+
+  async function handleRevoke() {
+    setLoading(true)
+    try { await revokeValidation(roomId) } catch (e) { console.error(e) }
+    setLoading(false)
+  }
+
+  return (
+    <div style={{ height: "100%", overflowY: "auto", padding: "32px 36px" }}>
+      <SectionHeader label="Closing & Validation du Deal" />
+
+      {/* Deal status banner */}
+      {roomStatus === "closed_deal" && (
+        <div style={{
+          padding: "20px 24px", marginBottom: 28,
+          background: "#052e16", border: "1px solid #16a34a",
+          display: "flex", alignItems: "center", gap: 14,
+        }}>
+          <span style={{ fontSize: 24 }}>✓</span>
+          <div>
+            <div style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: "#22c55e", marginBottom: 4 }}>
+              Deal validé par les deux parties
+            </div>
+            <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#4ade80", lineHeight: 1.6 }}>
+              La Room est archivée. Les documents sont maintenant téléchargeables.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isArchived && (
+        <div style={{
+          padding: "20px 24px", marginBottom: 28,
+          background: "#1a0a0a", border: "1px solid #7A746E",
+        }}>
+          <div style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: "#7A746E", marginBottom: 4 }}>
+            Deal décliné
+          </div>
+          <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#555", lineHeight: 1.6 }}>
+            La Room est archivée en lecture seule. Les documents ne sont pas téléchargeables.
+          </div>
+        </div>
+      )}
+
+      {!isDone && (
+        <>
+          {/* How it works */}
+          <div style={{ border: `1px solid ${C.border}`, padding: "20px 24px", marginBottom: 28 }}>
+            <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 14, paddingBottom: 10, borderBottom: `1px solid ${C.border}` }}>
+              Conditions de fermeture
+            </div>
+            {[
+              "Les deux parties doivent confirmer le deal indépendamment.",
+              "Une fois les deux validations reçues, la Room est clôturée.",
+              "Les documents deviennent téléchargeables uniquement après clôture.",
+              "Chaque partie peut révoquer sa validation tant que l'autre n'a pas validé.",
+            ].map((rule, i) => (
+              <div key={i} style={{ display: "flex", gap: 12, marginBottom: 10, alignItems: "flex-start" }}>
+                <span style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted, flexShrink: 0, paddingTop: 2 }}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: C.text, lineHeight: 1.7 }}>{rule}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Validation status grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
+            {/* My status */}
+            <div style={{
+              border: `1px solid ${hasValidated ? "#16a34a" : C.border}`,
+              padding: "20px 20px",
+              background: hasValidated ? "#052e16" : C.bg,
+            }}>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
+                Votre position
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <span style={{
+                  width: 8, height: 8, borderRadius: "50%",
+                  background: hasValidated ? "#22c55e" : C.muted,
+                  flexShrink: 0,
+                }} />
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: hasValidated ? "#22c55e" : C.muted, letterSpacing: "0.06em" }}>
+                  {hasValidated ? "DEAL CONFIRMÉ" : "EN ATTENTE"}
+                </span>
+              </div>
+              {hasValidated ? (
+                <button
+                  onClick={handleRevoke}
+                  disabled={loading || otherValidated}
+                  style={{ ...btnStyle(true), fontSize: 10, padding: "6px 14px", opacity: otherValidated ? 0.4 : 1 }}
+                >
+                  Révoquer
+                </button>
+              ) : (
+                <button
+                  onClick={handleValidate}
+                  disabled={loading}
+                  style={{ ...btnStyle(false), fontSize: 11, padding: "10px 20px" }}
+                >
+                  {loading ? "…" : "Valider le deal"}
+                </button>
+              )}
+            </div>
+
+            {/* Other party status */}
+            <div style={{
+              border: `1px solid ${otherValidated ? "#16a34a" : C.border}`,
+              padding: "20px 20px",
+              background: otherValidated ? "#052e16" : C.bg,
+            }}>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
+                Autre partie
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{
+                  width: 8, height: 8, borderRadius: "50%",
+                  background: otherValidated ? "#22c55e" : C.muted,
+                  flexShrink: 0,
+                }} />
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: otherValidated ? "#22c55e" : C.muted, letterSpacing: "0.06em" }}>
+                  {otherValidated ? "DEAL CONFIRMÉ" : "EN ATTENTE"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Decline zone */}
+          <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 20 }}>
+            <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: "#dc2626", marginBottom: 12 }}>
+              Zone de refus
+            </div>
+            <p style={{ fontFamily: FONT_SANS, fontSize: 12, color: C.muted, marginBottom: 14, lineHeight: 1.7 }}>
+              Refuser le deal ferme la Room immédiatement et l&apos;archive sans débloquer les documents.
+            </p>
+            <button
+              onClick={handleDecline}
+              disabled={loading}
+              style={{
+                padding: "8px 20px",
+                background: "transparent",
+                color: "#dc2626",
+                border: "1px solid #dc2626",
+                fontFamily: FONT_SANS, fontSize: 11,
+                fontWeight: 600, letterSpacing: "0.06em",
+                textTransform: "uppercase", cursor: "pointer",
+              }}
+            >
+              Refuser le deal
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 // ─── Info / Sécurité ──────────────────────────────────────────────────────────
 
 function InfoSection({
@@ -946,8 +1230,8 @@ const fieldStyle: React.CSSProperties = {
 // ─── RoomShell (main export) ──────────────────────────────────────────────────
 
 export function RoomShell({
-  roomId, roomRef, roomStatus, opportunity, deck,
-  ndaSigned, initialMessages, userId, displayName,
+  roomId, roomRef, roomStatus: initialRoomStatus, opportunity, deck,
+  ndaSigned, initialMessages, userId, displayName, initialValidations,
 }: {
   roomId: string
   roomRef: string
@@ -958,25 +1242,52 @@ export function RoomShell({
   initialMessages: RawMessage[]
   userId: string
   displayName: string
+  initialValidations: Validation[]
 }) {
   const supabase = useMemo(() => createClient(), [])
   const [tab, setTab] = useState<Tab>("chat")
   const [rawMessages, setRawMessages] = useState<RawMessage[]>(initialMessages)
+  const [roomStatus, setRoomStatus] = useState(initialRoomStatus)
+  const [validations, setValidations] = useState<Validation[]>(initialValidations)
 
-  // Realtime subscription
+  // Realtime: messages + room status + validations
   useEffect(() => {
     const channel = supabase
       .channel(`secure-room-${roomId}`)
+      // New messages
       .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
+        event: "INSERT", schema: "public", table: "messages",
         filter: `room_id=eq.${roomId}`,
       }, payload => {
         const msg = payload.new as RawMessage
         setRawMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg])
       })
+      // Room status change
+      .on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "rooms",
+        filter: `id=eq.${roomId}`,
+      }, payload => {
+        const updated = payload.new as { status: string }
+        setRoomStatus(updated.status)
+      })
+      // Validation added
+      .on("postgres_changes", {
+        event: "INSERT", schema: "public", table: "room_validations",
+        filter: `room_id=eq.${roomId}`,
+      }, payload => {
+        const v = payload.new as Validation
+        setValidations(prev => prev.some(x => x.user_id === v.user_id) ? prev : [...prev, v])
+      })
+      // Validation removed
+      .on("postgres_changes", {
+        event: "DELETE", schema: "public", table: "room_validations",
+        filter: `room_id=eq.${roomId}`,
+      }, payload => {
+        const v = payload.old as Validation
+        setValidations(prev => prev.filter(x => x.user_id !== v.user_id))
+      })
       .subscribe()
+
     return () => { supabase.removeChannel(channel) }
   }, [roomId, supabase])
 
@@ -984,62 +1295,90 @@ export function RoomShell({
 
   async function sendMessage(content: string) {
     const { error } = await supabase.from("messages").insert({
-      room_id: roomId,
-      content,
-      sender_id: userId,
-      created_by: userId,
+      room_id: roomId, content, sender_id: userId, created_by: userId,
     })
     if (error) console.error("[send]", error)
   }
 
   const opportunityTitle = opportunity?.title as string | undefined
+  const isDone = roomStatus === "closed_deal" || roomStatus === "closed_no_deal"
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", background: C.bg }}>
-      <RoomHeader
-        roomRef={roomRef}
-        status={roomStatus}
-        ndaSigned={ndaSigned}
-        opportunityTitle={opportunityTitle}
-      />
+    <BlackScreenGuard>
+      <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", background: C.bg }}>
+        <RoomHeader
+          roomRef={roomRef}
+          status={roomStatus}
+          ndaSigned={ndaSigned}
+          opportunityTitle={opportunityTitle}
+        />
 
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        <Sidebar tab={tab} setTab={setTab} />
+        {/* Pending close banner */}
+        {roomStatus === "pending_close" && (
+          <div style={{
+            background: "#1c1000", borderBottom: "1px solid #5a4000",
+            padding: "8px 24px",
+            display: "flex", alignItems: "center", gap: 10, flexShrink: 0,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b", flexShrink: 0 }} />
+            <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#fbbf24" }}>
+              Une partie a validé le deal — en attente de confirmation de l&apos;autre partie.
+            </span>
+            <button
+              onClick={() => setTab("closing")}
+              style={{ marginLeft: "auto", ...btnStyle(true), padding: "4px 14px", fontSize: 11, borderColor: "#5a4000", color: "#f59e0b" }}
+            >
+              Voir →
+            </button>
+          </div>
+        )}
 
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-          {tab === "chat" && (
-            <ChatSection
-              messages={messages}
-              userId={userId}
-              displayName={displayName}
-              onSend={sendMessage}
-            />
-          )}
-          {tab === "deck" && (
-            <DeckSection
-              opportunity={opportunity}
-              messages={messages}
-            />
-          )}
-          {tab === "vision" && (
-            <VisionSection roomId={roomId} />
-          )}
-          {tab === "rdv" && (
-            <RdvSection
-              messages={messages}
-              onSend={sendMessage}
-            />
-          )}
-          {tab === "info" && (
-            <InfoSection
-              roomRef={roomRef}
-              ndaSigned={ndaSigned}
-              roomStatus={roomStatus}
-              opportunity={opportunity}
-            />
-          )}
+        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+          <Sidebar tab={tab} setTab={setTab} />
+
+          <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+            {tab === "chat" && (
+              <ChatSection
+                messages={messages}
+                userId={userId}
+                displayName={displayName}
+                onSend={sendMessage}
+              />
+            )}
+            {tab === "deck" && (
+              <DeckSection
+                opportunity={opportunity}
+                messages={messages}
+                roomStatus={roomStatus}
+              />
+            )}
+            {tab === "vision" && (
+              <VisionSection roomId={roomId} />
+            )}
+            {tab === "rdv" && (
+              <RdvSection messages={messages} onSend={sendMessage} />
+            )}
+            {tab === "closing" && (
+              <ClosingSection
+                roomId={roomId}
+                roomStatus={roomStatus}
+                validations={validations}
+                userId={userId}
+                onStatusChange={setRoomStatus}
+                onValidationsChange={setValidations}
+              />
+            )}
+            {tab === "info" && (
+              <InfoSection
+                roomRef={roomRef}
+                ndaSigned={ndaSigned}
+                roomStatus={roomStatus}
+                opportunity={opportunity}
+              />
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </BlackScreenGuard>
   )
 }
