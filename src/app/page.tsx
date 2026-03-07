@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
 
   const appHref = session ? "/app" : "/login";
 

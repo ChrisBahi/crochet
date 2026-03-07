@@ -1,0 +1,80 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
+
+export default function AuthCallbackPage() {
+  const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get("code")
+    const oauthError = params.get("error")
+    const oauthErrorDesc = params.get("error_description")
+
+    if (oauthError) {
+      setError(oauthErrorDesc ?? oauthError)
+      return
+    }
+
+    if (!code) {
+      setError("Code d'autorisation manquant.")
+      return
+    }
+
+    supabase.auth.exchangeCodeForSession(code).then(({ error: exchangeError }) => {
+      if (exchangeError) {
+        setError(exchangeError.message)
+        return
+      }
+      router.replace("/app")
+    })
+  }, [router])
+
+  if (error) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#F5F2EE",
+        fontFamily: "var(--font-dm-sans), sans-serif",
+        gap: 16,
+      }}>
+        <div style={{ fontSize: 13, color: "#B91C1C", maxWidth: 400, textAlign: "center", lineHeight: 1.7 }}>
+          Erreur de connexion : {error}
+        </div>
+        <a href="/login" style={{
+          fontSize: 12,
+          color: "#0A0A0A",
+          textDecoration: "underline",
+          letterSpacing: "0.04em",
+        }}>
+          Retour à la connexion
+        </a>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "#F5F2EE",
+      fontFamily: "var(--font-jetbrains), monospace",
+      fontSize: 11,
+      color: "#7A746E",
+      letterSpacing: "0.08em",
+    }}>
+      Connexion en cours…
+    </div>
+  )
+}
