@@ -217,6 +217,27 @@ create policy if not exists "messages_room" on messages
     )
   );
 
+-- ── ADMISSION REQUESTS (candidatures publiques) ─────────────────
+create table if not exists admission_requests (
+  id          uuid primary key default uuid_generate_v4(),
+  name        text not null,
+  email       text not null,
+  linkedin    text,
+  city        text,
+  role        text not null,
+  siret       text,
+  ticket      text,
+  message     text,
+  status      text default 'pending',
+  created_at  timestamptz default now()
+);
+
+alter table admission_requests enable row level security;
+
+-- Tout le monde peut créer une candidature (formulaire public)
+create policy if not exists "admission_requests_insert" on admission_requests
+  for insert with check (true);
+
 -- ── AUTO-CRÉER user_settings + workspace à l'inscription ────────
 create or replace function handle_new_user()
 returns trigger language plpgsql security definer as $$

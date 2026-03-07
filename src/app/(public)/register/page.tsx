@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -87,8 +88,17 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    // TODO: wire to Supabase admission_requests table
-    await new Promise((r) => setTimeout(r, 800));
+    const supabase = createClient();
+    await supabase.from("admission_requests").insert({
+      name: form.name,
+      email: form.email,
+      linkedin: form.linkedin || null,
+      city: form.city || null,
+      role: form.role,
+      siret: form.siret || null,
+      ticket: form.ticket || null,
+      message: form.message || null,
+    });
     setLoading(false);
     setSubmitted(true);
   }
@@ -138,9 +148,44 @@ export default function RegisterPage() {
   }
 
   return (
+    <div style={{ minHeight: "100vh", background: "#F5F2EE" }}>
+
+      {/* Header */}
+      <header style={{
+        background: "#0A0A0A",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        height: 64,
+        paddingInline: 48,
+      }}>
+        <a href="/" style={{ textDecoration: "none" }}>
+          <span style={{
+            fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
+            fontSize: 20,
+            fontWeight: 700,
+            fontStyle: "normal",
+            color: "#FFFFFF",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase" as const,
+          }}>
+            CROCHET.
+          </span>
+        </a>
+        <a href="/login" style={{
+          fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+          fontSize: 13,
+          fontWeight: 400,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase" as const,
+          color: "#7A746E",
+          textDecoration: "none",
+        }}>
+          Se connecter
+        </a>
+      </header>
+
     <div style={{
-      minHeight: "100vh",
-      background: "#F5F2EE",
       padding: "64px 24px",
     }}>
       <div style={{ maxWidth: 960, margin: "0 auto" }}>
@@ -266,6 +311,7 @@ export default function RegisterPage() {
         </p>
 
       </div>
+    </div>
     </div>
   );
 }
