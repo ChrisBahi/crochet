@@ -7,7 +7,7 @@ export default function LoginButton() {
 
   const onLogin = async () => {
     await supabase.auth.signInWithOAuth({
-      provider: "github",
+      provider: "linkedin_oidc",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -17,9 +17,9 @@ export default function LoginButton() {
   return (
     <button
       onClick={onLogin}
-      className="w-full rounded-xl bg-white text-black px-4 py-2 font-medium hover:bg-white/90"
+      className="w-full rounded-xl bg-[#0A66C2] text-white px-4 py-2 font-medium hover:bg-[#0A66C2]/90"
     >
-      Continuer avec GitHub
+      Continuer avec LinkedIn
     </button>
   );
 }

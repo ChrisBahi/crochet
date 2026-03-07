@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 const inputStyle: React.CSSProperties = {
@@ -159,7 +160,7 @@ export default function RegisterPage() {
         height: 64,
         paddingInline: 48,
       }}>
-        <a href="/" style={{ textDecoration: "none" }}>
+        <Link href="/" style={{ textDecoration: "none" }}>
           <span style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
             fontSize: 20,
@@ -171,7 +172,7 @@ export default function RegisterPage() {
           }}>
             CROCHET.
           </span>
-        </a>
+        </Link>
         <a href="/login" style={{
           fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
           fontSize: 13,

@@ -12,16 +12,16 @@ export default async function RoomsPage() {
     .order("created_at", { ascending: false })
 
   const statusLabel: Record<string, string> = {
-    active: "Actif",
-    negotiating: "En négociation",
-    closing: "Closing",
-    closed: "Clôturé",
+    active: "En négociation",
+    pending_close: "En attente de clôture",
+    closed_deal: "Deal conclu",
+    closed_no_deal: "Archivée",
   }
   const statusColor: Record<string, string> = {
     active: "#22c55e",
-    negotiating: "#f59e0b",
-    closing: "#3b82f6",
-    closed: "#7A746E",
+    pending_close: "#f59e0b",
+    closed_deal: "#3b82f6",
+    closed_no_deal: "#7A746E",
   }
 
   return (

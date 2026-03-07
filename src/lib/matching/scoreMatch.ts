@@ -1,7 +1,7 @@
-export function scoreMatch(a: any, b: any) {
+export function scoreMatch(a: Record<string, unknown>, b: Record<string, unknown>) {
 
   let score = 0
-  let reason = []
+  const reason: string[] = []
 
   if (a.type === "buyer" && b.type === "seller") {
     score += 60
