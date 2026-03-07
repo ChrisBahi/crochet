@@ -159,31 +159,37 @@ alter table messages enable row level security;
 alter table notifications enable row level security;
 
 -- Policies : chaque user voit ses propres données
-create policy if not exists "user_settings_self" on user_settings
+drop policy if exists "user_settings_self" on user_settings;
+create policy "user_settings_self" on user_settings
   for all using (auth.uid() = user_id);
 
-create policy if not exists "investor_profiles_self" on investor_profiles
+drop policy if exists "investor_profiles_self" on investor_profiles;
+create policy "investor_profiles_self" on investor_profiles
   for all using (auth.uid() = user_id);
 
-create policy if not exists "notifications_self" on notifications
+drop policy if exists "notifications_self" on notifications;
+create policy "notifications_self" on notifications
   for all using (auth.uid() = user_id);
 
 -- Workspaces : créateur + membres
-create policy if not exists "workspaces_member" on workspaces
+drop policy if exists "workspaces_member" on workspaces;
+create policy "workspaces_member" on workspaces
   for select using (
     auth.uid() = created_by or
     exists (select 1 from workspace_members where workspace_id = workspaces.id and user_id = auth.uid())
   );
 
 -- Opportunities : membres du workspace
-create policy if not exists "opportunities_workspace" on opportunities
+drop policy if exists "opportunities_workspace" on opportunities;
+create policy "opportunities_workspace" on opportunities
   for all using (
     auth.uid() = created_by or
     exists (select 1 from workspace_members where workspace_id = opportunities.workspace_id and user_id = auth.uid())
   );
 
 -- Decks : lié à l'opportunity
-create policy if not exists "decks_via_opportunity" on opportunity_decks
+drop policy if exists "decks_via_opportunity" on opportunity_decks;
+create policy "decks_via_opportunity" on opportunity_decks
   for all using (
     exists (
       select 1 from opportunities o
@@ -194,20 +200,23 @@ create policy if not exists "decks_via_opportunity" on opportunity_decks
   );
 
 -- Matches : membres du workspace
-create policy if not exists "matches_workspace" on opportunity_matches
+drop policy if exists "matches_workspace" on opportunity_matches;
+create policy "matches_workspace" on opportunity_matches
   for all using (
     auth.uid() = member_id or
     exists (select 1 from workspace_members where workspace_id = opportunity_matches.workspace_id and user_id = auth.uid())
   );
 
 -- Rooms : via workspace
-create policy if not exists "rooms_workspace" on rooms
+drop policy if exists "rooms_workspace" on rooms;
+create policy "rooms_workspace" on rooms
   for all using (
     exists (select 1 from workspace_members where workspace_id = rooms.workspace_id and user_id = auth.uid())
   );
 
 -- Messages : via room → workspace
-create policy if not exists "messages_room" on messages
+drop policy if exists "messages_room" on messages;
+create policy "messages_room" on messages
   for all using (
     auth.uid() = sender_id or
     exists (
@@ -228,7 +237,8 @@ create table if not exists room_validations (
 
 alter table room_validations enable row level security;
 
-create policy if not exists "room_validations_member" on room_validations
+drop policy if exists "room_validations_member" on room_validations;
+create policy "room_validations_member" on room_validations
   for all using (
     auth.uid() = user_id or
     exists (
@@ -258,7 +268,8 @@ create table if not exists admission_requests (
 alter table admission_requests enable row level security;
 
 -- Tout le monde peut créer une candidature (formulaire public)
-create policy if not exists "admission_requests_insert" on admission_requests
+drop policy if exists "admission_requests_insert" on admission_requests;
+create policy "admission_requests_insert" on admission_requests
   for insert with check (true);
 
 -- L'admin accède via service_role (bypass RLS), pas besoin de policy SELECT ici.
