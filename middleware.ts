@@ -39,5 +39,30 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
+  if (session && req.nextUrl.pathname.startsWith("/app")) {
+    const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+
+    const isAdmin = adminEmails.includes(session.user.email ?? "");
+
+    if (!isAdmin) {
+      const { data } = await supabase
+        .from("admission_requests")
+        .select("status")
+        .eq("email", session.user.email)
+        .single();
+
+      if (!data || data.status !== "approved") {
+        return NextResponse.redirect(new URL("/unauthorized", req.url));
+      }
+    }
+  }
+
   return res;
 }
+
+export const config = {
+  matcher: ["/app/:path*"],
+};

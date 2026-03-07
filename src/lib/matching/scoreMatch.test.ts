@@ -1,69 +1,85 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
+
+vi.mock("@anthropic-ai/sdk", () => {
+  const mockCreate = vi.fn()
+  return {
+    default: vi.fn(() => ({
+      messages: { create: mockCreate },
+    })),
+    __mockCreate: mockCreate,
+  }
+})
+
+import Anthropic from "@anthropic-ai/sdk"
 import { scoreMatch } from "./scoreMatch"
 
+const mockCreate = (Anthropic as unknown as { __mockCreate: ReturnType<typeof vi.fn> }).__mockCreate
+
+function makeResponse(p_score: number, why: string[]) {
+  return {
+    content: [{ type: "text", text: JSON.stringify({ p_score, why }) }],
+  }
+}
+
+beforeEach(() => {
+  mockCreate.mockReset()
+})
+
 describe("scoreMatch", () => {
-  it("donne 60 points pour un match buyer/seller", () => {
-    const a = { type: "buyer", industry: "tech", country: "FR" }
-    const b = { type: "seller", industry: "tech", country: "FR" }
-    const result = scoreMatch(a, b)
-    expect(result.score).toBeGreaterThanOrEqual(60)
+  it("retourne p_score et why[] depuis Claude", async () => {
+    mockCreate.mockResolvedValue(makeResponse(82, [
+      "Acheteur industriel cherchant une acquisition en France",
+      "Vendeur PME industrielle rentable avec historique financier solide",
+    ]))
+
+    const result = await scoreMatch(
+      { title: "Acquéreur industriel", deal_type: "cession", sector: "industrie", geo: "france" },
+      { title: "PME industrielle à céder", deal_type: "cession", sector: "industrie", geo: "france" }
+    )
+
+    expect(result.p_score).toBe(82)
+    expect(result.why).toHaveLength(2)
+    expect(result.why[0]).toContain("Acheteur")
   })
 
-  it("donne 0 si les rôles sont inversés (seller vs buyer)", () => {
-    const a = { type: "seller", industry: "tech" }
-    const b = { type: "buyer", industry: "tech" }
-    const result = scoreMatch(a, b)
-    expect(result.score).toBe(20) // uniquement same industry
+  it("retourne p_score 0 et why vide si la réponse Claude est invalide", async () => {
+    mockCreate.mockResolvedValue({ content: [{ type: "text", text: "{}" }] })
+
+    const result = await scoreMatch({}, {})
+
+    expect(result.p_score).toBe(0)
+    expect(result.why).toEqual([])
   })
 
-  it("ajoute 20 points si même industrie", () => {
-    const a = { type: "buyer", industry: "fintech" }
-    const b = { type: "seller", industry: "fintech" }
-    const result = scoreMatch(a, b)
-    expect(result.score).toBe(80) // 60 + 20
+  it("arrondit p_score à l'entier le plus proche", async () => {
+    mockCreate.mockResolvedValue(makeResponse(73.6, ["Match partiel"]))
+
+    const result = await scoreMatch({}, {})
+
+    expect(result.p_score).toBe(74)
   })
 
-  it("ajoute 10 points si même pays", () => {
-    const a = { type: "buyer", country: "FR" }
-    const b = { type: "seller", country: "FR" }
-    const result = scoreMatch(a, b)
-    expect(result.score).toBe(70) // 60 + 10
+  it("filtre les éléments non-string dans why[]", async () => {
+    mockCreate.mockResolvedValue({
+      content: [{ type: "text", text: JSON.stringify({ p_score: 70, why: ["Raison valide", null, 42, "Autre raison"] }) }],
+    })
+
+    const result = await scoreMatch({}, {})
+
+    expect(result.why).toEqual(["Raison valide", "Autre raison"])
   })
 
-  it("ajoute 10 points si budget >= prix", () => {
-    const a = { type: "buyer", budget: 500000 }
-    const b = { type: "seller", price: 300000 }
-    const result = scoreMatch(a, b)
-    expect(result.score).toBe(70) // 60 + 10
-  })
+  it("passe title, deal_type, sector, geo, stage, description au prompt", async () => {
+    mockCreate.mockResolvedValue(makeResponse(70, ["Ok"]))
 
-  it("n'ajoute pas de points budget si budget < prix", () => {
-    const a = { type: "buyer", budget: 100000 }
-    const b = { type: "seller", price: 500000 }
-    const result = scoreMatch(a, b)
-    expect(result.score).toBe(60) // seulement buyer/seller
-  })
+    await scoreMatch(
+      { title: "Fonds Growth A", deal_type: "equity", sector: "tech", geo: "europe", stage: "series-a", description: "Cherche SaaS" },
+      { title: "SaaS B2B", deal_type: "equity", sector: "tech", geo: "france", stage: "series-a", description: "Lève 5M€" }
+    )
 
-  it("score maximal : buyer/seller + même industrie + même pays + budget ok", () => {
-    const a = { type: "buyer", industry: "saas", country: "FR", budget: 1000000 }
-    const b = { type: "seller", industry: "saas", country: "FR", price: 800000 }
-    const result = scoreMatch(a, b)
-    expect(result.score).toBe(100)
-  })
-
-  it("retourne une raison lisible", () => {
-    const a = { type: "buyer", industry: "saas" }
-    const b = { type: "seller", industry: "saas" }
-    const result = scoreMatch(a, b)
-    expect(result.reason).toContain("Buyer / Seller fit")
-    expect(result.reason).toContain("Same industry")
-  })
-
-  it("retourne raison vide si aucun match", () => {
-    const a = { type: "seller" }
-    const b = { type: "seller" }
-    const result = scoreMatch(a, b)
-    expect(result.score).toBe(0)
-    expect(result.reason).toBe("")
+    const prompt = mockCreate.mock.calls[0][0].messages[0].content as string
+    expect(prompt).toContain("Fonds Growth A")
+    expect(prompt).toContain("SaaS B2B")
+    expect(prompt).toContain("series-a")
   })
 })

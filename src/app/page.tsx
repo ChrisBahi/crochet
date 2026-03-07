@@ -23,16 +23,23 @@ export default async function Home() {
         zIndex: 100,
         borderBottom: "1px solid #1A1A1A",
       }}>
-        <Link href="/" style={{ textDecoration: "none" }}>
+        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M20 11A9 9 0 1 1 11 2"
+              stroke="#FFFFFF"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+          </svg>
           <span style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
             fontSize: 20,
             fontWeight: 700,
             color: "#FFFFFF",
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
+            letterSpacing: "0.02em",
           }}>
-            CROCHET.
+            rochet.
           </span>
         </Link>
 
@@ -486,15 +493,24 @@ export default async function Home() {
         alignItems: "center",
         justifyContent: "space-between",
       }}>
-        <span style={{
-          fontFamily: "var(--font-playfair), Georgia, serif",
-          fontSize: 14,
-          fontWeight: 700,
-          color: "#2A2A2A",
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-        }}>
-          CROCHET.
+        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <svg width="16" height="16" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M20 11A9 9 0 1 1 11 2"
+              stroke="#444"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+          </svg>
+          <span style={{
+            fontFamily: "var(--font-playfair), Georgia, serif",
+            fontSize: 14,
+            fontWeight: 700,
+            color: "#444",
+            letterSpacing: "0.02em",
+          }}>
+            rochet.
+          </span>
         </span>
         <div style={{ display: "flex", gap: 28 }}>
           {[
