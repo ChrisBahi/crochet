@@ -12,16 +12,21 @@ const NAV = [
   { href: "/app/profile",       label: "Profil" },
 ]
 
+const ADMIN_NAV = { href: "/app/admin", label: "Admin" }
+
 export function AppShell({
   children,
   userId,
+  isAdmin = false,
 }: {
   children: React.ReactNode
   userId: string | null
+  isAdmin?: boolean
 }) {
   const pathname = usePathname()
   const router   = useRouter()
   const supabase = createClient()
+  const nav = isAdmin ? [...NAV, ADMIN_NAV] : NAV
 
   async function logout() {
     await supabase.auth.signOut()
@@ -50,7 +55,7 @@ export function AppShell({
 
         {/* Nav */}
         <nav style={{ display: "flex", gap: 0, flex: 1 }}>
-          {NAV.map(({ href, label }) => {
+          {nav.map(({ href, label }) => {
             const active = pathname === href || pathname.startsWith(href + "/")
             return (
               <Link
