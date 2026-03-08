@@ -82,15 +82,38 @@ export default async function RoomPage({
     .eq("room_id", roomId)
 
   const displayName = (profile?.name as string) ?? user.email?.split("@")[0] ?? "Vous"
-  const ndaSigned = !!(deck?.nda_text)
+
+  // Demo fallback: if no real opportunity, inject mock data so the room is explorable
+  const isDemo = !opportunity && !room.match_id && !room.opportunity_id
+  const resolvedOpportunity = opportunity ?? (isDemo ? {
+    id: "demo",
+    title: "Services industriels · Lyon",
+    deal_type: "Cession majoritaire 65%",
+    sector: "Industrie B2B",
+    geo: "Lyon, France",
+    stage: "NDA signé",
+    amount: "12–18M€",
+    valuation: "15M€",
+    pitch_deck_url: null,
+    website_url: null,
+  } : null)
+  const resolvedDeck = deck ?? (isDemo ? {
+    summary: "Société de services industriels B2B basée à Lyon. Leader régional dans la maintenance avec un carnet de commandes récurrent (85% de récurrence). CA 4,2M€ stable sur 5 ans, croissance organique 8%/an. EBITDA 22%. Cession majoritaire initiée par le fondateur pour transmission patrimoniale.",
+    d_score: 87,
+    tags: ["Industrie", "B2B", "Récurrent", "PME", "Lyon"],
+    status: "qualified",
+    nda_text: "NDA-DEMO-CROCHET-V1",
+  } : null)
+
+  const ndaSigned = !!(resolvedDeck?.nda_text)
 
   return (
     <RoomShell
       roomId={roomId}
-      roomRef={`ROOM-${roomId.slice(0, 8).toUpperCase()}`}
+      roomRef={isDemo ? "ROOM-DEMO" : `ROOM-${roomId.slice(0, 8).toUpperCase()}`}
       roomStatus={(room.status as string) ?? "active"}
-      opportunity={opportunity}
-      deck={deck}
+      opportunity={resolvedOpportunity}
+      deck={resolvedDeck}
       ndaSigned={ndaSigned}
       initialMessages={messages ?? []}
       userId={user.id}

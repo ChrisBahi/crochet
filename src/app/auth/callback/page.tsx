@@ -70,13 +70,31 @@ export default function AuthCallbackPage() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      background: "#F5F2EE",
-      fontFamily: "var(--font-jetbrains), monospace",
-      fontSize: 11,
-      color: "#7A746E",
-      letterSpacing: "0.08em",
+      background: "#0A0A0A",
     }}>
-      Connexion en cours…
+      <div>
+        <div style={{
+          fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
+          fontSize: "clamp(36px, 5vw, 60px)",
+          fontWeight: 800,
+          color: "#FFFFFF",
+          lineHeight: 1.05,
+          letterSpacing: "-0.02em",
+        }}>
+          Le signal,
+        </div>
+        <div style={{
+          fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
+          fontStyle: "italic",
+          fontSize: "clamp(36px, 5vw, 60px)",
+          fontWeight: 800,
+          color: "#FFFFFF",
+          lineHeight: 1.05,
+          letterSpacing: "-0.02em",
+        }}>
+          pas le bruit.
+        </div>
+      </div>
     </div>
   )
 }

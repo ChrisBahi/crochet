@@ -23,14 +23,28 @@ export default async function Home() {
         zIndex: 100,
       }}>
         {/* Logo */}
-        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="#FFFFFF" strokeWidth="1.5" />
-            <path d="M17 8.5A6 6 0 1 0 17 15.5" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
+        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Crochet hook icon */}
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M17 4C17 4 14 2 11 2C7.13 2 4 5.13 4 9C4 12.87 7.13 16 11 16L11 19C11 19 8 19.5 6 18"
+              stroke="#FFFFFF"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+            <path
+              d="M11 16C13.21 16 15 14.21 15 12C15 9.79 13.21 8 11 8"
+              stroke="#FFFFFF"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              fill="none"
+            />
           </svg>
           <span style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
-            fontSize: 20,
+            fontSize: 19,
             fontWeight: 700,
             color: "#FFFFFF",
             letterSpacing: "0.01em",
@@ -39,30 +53,54 @@ export default async function Home() {
           </span>
         </Link>
 
-        {/* Right nav — no middle links */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {/* Center nav */}
+        <nav style={{ display: "flex", alignItems: "center", gap: 36 }}>
+          <Link href="#plateforme" style={{
+            fontFamily: "var(--font-dm-sans), sans-serif",
+            fontSize: 13,
+            fontWeight: 400,
+            color: "#888",
+            textDecoration: "none",
+            letterSpacing: "0.02em",
+          }}>
+            Plateforme
+          </Link>
+          <Link href="/register" style={{
+            fontFamily: "var(--font-dm-sans), sans-serif",
+            fontSize: 13,
+            fontWeight: 400,
+            color: "#888",
+            textDecoration: "none",
+            letterSpacing: "0.02em",
+          }}>
+            Candidater
+          </Link>
+        </nav>
+
+        {/* Right CTAs */}
+        <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
           <Link href={appHref} style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
             fontSize: 13,
             fontWeight: 500,
             color: "#FFFFFF",
+            background: "#0A0A0A",
             textDecoration: "none",
-            padding: "8px 20px",
+            padding: "10px 24px",
             border: "1px solid #3A3A3A",
+            display: "inline-block",
           }}>
-            {session ? "Tableau de bord" : "Accès privé"}
+            Accès privé
           </Link>
           <Link href="/register" style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
             fontSize: 13,
-            fontWeight: 600,
-            color: "#0A0A0A",
+            fontWeight: 500,
+            color: "#000000",
             background: "#FFFFFF",
             textDecoration: "none",
-            padding: "8px 20px",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
+            padding: "10px 24px",
+            display: "inline-block",
           }}>
             Candidater →
           </Link>
@@ -137,7 +175,7 @@ export default async function Home() {
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 16,
               color: "#5A5450",
-              margin: "0 0 44px",
+              margin: "0 0 20px",
               lineHeight: 1.75,
               maxWidth: 480,
             }}>
@@ -146,36 +184,8 @@ export default async function Home() {
               algorithmique. Discrétion absolue.
             </p>
 
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <Link href={appHref} style={{
-                fontFamily: "var(--font-dm-sans), sans-serif",
-                fontSize: 13,
-                fontWeight: 700,
-                letterSpacing: "0.02em",
-                color: "#FFFFFF",
-                background: "#0A0A0A",
-                padding: "14px 32px",
-                textDecoration: "none",
-              }}>
-                Accéder à la plateforme
-              </Link>
-              <Link href="/register" style={{
-                fontFamily: "var(--font-dm-sans), sans-serif",
-                fontSize: 13,
-                fontWeight: 500,
-                letterSpacing: "0.02em",
-                color: "#0A0A0A",
-                background: "transparent",
-                border: "1px solid #C8C2B8",
-                padding: "14px 32px",
-                textDecoration: "none",
-              }}>
-                Soumettre une demande
-              </Link>
-            </div>
-
             <div style={{
-              marginTop: 36,
+              marginTop: 16,
               fontFamily: "var(--font-jetbrains), monospace",
               fontSize: 9,
               letterSpacing: "0.1em",
@@ -308,8 +318,51 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── TROIS PILIERS ── */}
+      {/* ── STATS BAR ── */}
       <section style={{
+        background: "#0A0A0A",
+        padding: "48px 48px",
+        borderTop: "1px solid #F0EDE8",
+      }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 0 }}>
+          {[
+            { value: "NDA", label: "Signé avant chaque room" },
+            { value: "IA", label: "Qualification automatique" },
+            { value: "2", label: "Parties pour clôturer" },
+            { value: "48h", label: "Délai de réponse admission" },
+          ].map((stat, i) => (
+            <div key={i} style={{
+              textAlign: "center",
+              padding: "0 32px",
+              borderLeft: i > 0 ? "1px solid #1A1A1A" : "none",
+            }}>
+              <div style={{
+                fontFamily: "var(--font-playfair), Georgia, serif",
+                fontSize: 42,
+                fontWeight: 800,
+                color: "#FFFFFF",
+                letterSpacing: "-0.02em",
+                lineHeight: 1,
+                marginBottom: 10,
+              }}>
+                {stat.value}
+              </div>
+              <div style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 10,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "#555",
+              }}>
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── TROIS PILIERS ── */}
+      <section id="plateforme" style={{
         background: "#FFFFFF",
         padding: "80px 48px",
         borderTop: "1px solid #E0DAD0",
@@ -400,7 +453,7 @@ export default async function Home() {
       </section>
 
       {/* ── ADMISSION ── */}
-      <section style={{ background: "#0A0A0A", padding: "100px 48px" }}>
+      <section style={{ background: "#111111", padding: "100px 48px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 64 }}>
           <div style={{ flex: 1 }}>
             <div style={{
@@ -408,7 +461,7 @@ export default async function Home() {
               fontSize: 9,
               letterSpacing: "0.16em",
               textTransform: "uppercase",
-              color: "#555",
+              color: "#666",
               marginBottom: 24,
             }}>
               Admission sélective
@@ -427,7 +480,7 @@ export default async function Home() {
             <p style={{
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 15,
-              color: "#555",
+              color: "#888",
               lineHeight: 1.8,
               margin: 0,
               maxWidth: 440,
@@ -438,7 +491,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <div style={{ flex: "0 0 380px", border: "1px solid #1A1A1A", padding: "40px" }}>
+          <div style={{ flex: "0 0 380px", border: "1px solid #222", padding: "40px", background: "#0D0D0D" }}>
             <div style={{
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 10,
@@ -447,7 +500,7 @@ export default async function Home() {
               color: "#555",
               marginBottom: 24,
               paddingBottom: 16,
-              borderBottom: "1px solid #1A1A1A",
+              borderBottom: "1px solid #1E1E1E",
             }}>
               Profils admis
             </div>
@@ -460,16 +513,16 @@ export default async function Home() {
               "Sociétés en levée de fonds",
             ].map((profil, i) => (
               <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 16 }}>
-                <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "#333", flexShrink: 0, paddingTop: 2 }}>
+                <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "#444", flexShrink: 0, paddingTop: 2 }}>
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 13, color: "#888", lineHeight: 1.5 }}>
+                <span style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 13, color: "#999", lineHeight: 1.5 }}>
                   {profil}
                 </span>
               </div>
             ))}
 
-            <div style={{ borderTop: "1px solid #1A1A1A", paddingTop: 24, marginTop: 8 }}>
+            <div style={{ borderTop: "1px solid #1E1E1E", paddingTop: 24, marginTop: 8 }}>
               <Link href="/register" style={{
                 display: "block",
                 textAlign: "center",
@@ -499,12 +552,25 @@ export default async function Home() {
         alignItems: "center",
         justifyContent: "space-between",
       }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="#333" strokeWidth="1.5" />
-            <path d="M17 8.5A6 6 0 1 0 17 15.5" stroke="#333" strokeWidth="1.5" strokeLinecap="round" />
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <svg width="16" height="16" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M17 4C17 4 14 2 11 2C7.13 2 4 5.13 4 9C4 12.87 7.13 16 11 16L11 19C11 19 8 19.5 6 18"
+              stroke="#444"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+            <path
+              d="M11 16C13.21 16 15 14.21 15 12C15 9.79 13.21 8 11 8"
+              stroke="#444"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              fill="none"
+            />
           </svg>
-          <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 14, fontWeight: 700, color: "#444", letterSpacing: "0.02em" }}>
+          <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 14, fontWeight: 700, color: "#555", letterSpacing: "0.02em" }}>
             rochet.
           </span>
         </span>
@@ -518,14 +584,14 @@ export default async function Home() {
               fontSize: 11,
               letterSpacing: "0.06em",
               textTransform: "uppercase",
-              color: "#3A3A3A",
+              color: "#555",
               textDecoration: "none",
             }}>
               {label}
             </Link>
           ))}
         </div>
-        <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "#2A2A2A", letterSpacing: "0.08em" }}>
+        <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "#333", letterSpacing: "0.08em" }}>
           © 2025 CROCHET — CONFIDENTIEL
         </span>
       </footer>
