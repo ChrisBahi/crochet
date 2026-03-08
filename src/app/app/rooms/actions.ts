@@ -19,7 +19,7 @@ export async function createDemoRoom() {
 
   const { data: room, error } = await supabase
     .from("rooms")
-    .insert({ workspace_id: workspaceId, status: "active" })
+    .insert({ workspace_id: workspaceId, status: "active", created_by: user.id })
     .select("id")
     .single()
 
