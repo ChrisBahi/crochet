@@ -9,10 +9,8 @@ export default function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-
+    // Check for OAuth error in URL params
     const params = new URLSearchParams(window.location.search)
-    const code = params.get("code")
     const oauthError = params.get("error")
     const oauthErrorDesc = params.get("error_description")
 
@@ -21,18 +19,22 @@ export default function AuthCallbackPage() {
       return
     }
 
-    if (!code) {
-      setError("Code d'autorisation manquant.")
-      return
-    }
+    const supabase = createClient()
 
-    supabase.auth.exchangeCodeForSession(code).then(({ error: exchangeError }) => {
-      if (exchangeError) {
-        setError(exchangeError.message)
-        return
+    // createBrowserClient auto-detects ?code= and handles PKCE exchange.
+    // We just listen for the result.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        router.replace("/app")
       }
-      router.replace("/app")
     })
+
+    // In case the session is already set (fast exchange), check immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace("/app")
+    })
+
+    return () => subscription.unsubscribe()
   }, [router])
 
   if (error) {
