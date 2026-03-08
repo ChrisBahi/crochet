@@ -8,7 +8,7 @@ export default async function Home() {
   const appHref = session ? "/app" : "/login";
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#F5F2EE" }}>
 
       {/* ── HEADER ── */}
       <header style={{
@@ -16,191 +16,306 @@ export default async function Home() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        height: 64,
+        height: 72,
         paddingInline: 48,
         position: "sticky",
         top: 0,
         zIndex: 100,
-        borderBottom: "1px solid #1A1A1A",
       }}>
-        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M20 11A9 9 0 1 1 11 2"
-              stroke="#FFFFFF"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
+        {/* Logo */}
+        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="#FFFFFF" strokeWidth="1.5" />
+            <path d="M17 8.5A6 6 0 1 0 17 15.5" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           <span style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
             fontSize: 20,
             fontWeight: 700,
             color: "#FFFFFF",
-            letterSpacing: "0.02em",
+            letterSpacing: "0.01em",
           }}>
             rochet.
           </span>
         </Link>
 
-        <nav style={{ display: "flex", alignItems: "center", gap: 32 }}>
+        {/* Right nav — no middle links */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Link href={appHref} style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 12,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            color: "#7A746E",
+            fontSize: 13,
+            fontWeight: 500,
+            color: "#FFFFFF",
             textDecoration: "none",
+            padding: "8px 20px",
+            border: "1px solid #3A3A3A",
           }}>
-            {session ? "Tableau de bord" : "Se connecter"}
+            {session ? "Tableau de bord" : "Accès privé"}
           </Link>
           <Link href="/register" style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 600,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
             color: "#0A0A0A",
             background: "#FFFFFF",
-            padding: "8px 20px",
             textDecoration: "none",
+            padding: "8px 20px",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
           }}>
-            Demander l&apos;accès
+            Candidater →
           </Link>
-        </nav>
+        </div>
       </header>
 
       {/* ── HERO ── */}
       <section style={{
-        background: "#0A0A0A",
-        padding: "100px 48px 80px",
-        borderBottom: "1px solid #1A1A1A",
+        background: "#F5F2EE",
+        padding: "80px 48px 0",
+        flex: 1,
+        position: "relative",
+        overflow: "hidden",
       }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        {/* Background watermark C */}
+        <div style={{
+          position: "absolute",
+          right: -60,
+          top: -40,
+          fontSize: 600,
+          fontFamily: "var(--font-playfair), Georgia, serif",
+          fontWeight: 700,
+          color: "rgba(0,0,0,0.04)",
+          lineHeight: 1,
+          userSelect: "none",
+          pointerEvents: "none",
+          letterSpacing: "-0.05em",
+        }}>
+          C
+        </div>
 
-          {/* Overline */}
-          <div style={{
-            fontFamily: "var(--font-jetbrains), monospace",
-            fontSize: 10,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            color: "#555",
-            marginBottom: 32,
-          }}>
-            Infrastructure privée · Transactions M&amp;A · Accès sur sélection
-          </div>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "flex-start" }}>
 
-          {/* Headline */}
-          <h1 style={{
-            fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
-            fontStyle: "italic",
-            fontSize: "clamp(48px, 6vw, 80px)",
-            fontWeight: 700,
-            color: "#FFFFFF",
-            margin: "0 0 16px",
-            lineHeight: 1.1,
-            letterSpacing: "-0.01em",
-            maxWidth: 820,
-          }}>
-            Le signal, pas le bruit.
-          </h1>
-
-          <p style={{
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 18,
-            color: "#555",
-            margin: "0 0 56px",
-            lineHeight: 1.7,
-            maxWidth: 560,
-          }}>
-            CROCHET transforme un dossier brut en signal investissable —
-            qualification IA, matching ciblé, Secure Room pour chaque deal.
-          </p>
-
-          {/* CTAs */}
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <Link href="/register" style={{
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#0A0A0A",
-              background: "#FFFFFF",
-              padding: "16px 40px",
-              textDecoration: "none",
-            }}>
-              Demander l&apos;accès
-            </Link>
-            <Link href={appHref} style={{
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 13,
-              fontWeight: 400,
-              letterSpacing: "0.06em",
+          {/* Left */}
+          <div style={{ paddingBottom: 80 }}>
+            <div style={{
+              fontFamily: "var(--font-jetbrains), monospace",
+              fontSize: 10,
+              letterSpacing: "0.14em",
               textTransform: "uppercase",
               color: "#7A746E",
-              border: "1px solid #2A2A2A",
-              padding: "16px 40px",
-              textDecoration: "none",
+              marginBottom: 36,
             }}>
-              {session ? "Accéder à la plateforme" : "Se connecter →"}
-            </Link>
+              Infrastructure · Transactions privées
+            </div>
+
+            <h1 style={{
+              fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
+              fontSize: "clamp(52px, 5.5vw, 76px)",
+              fontWeight: 800,
+              color: "#0A0A0A",
+              margin: "0 0 0",
+              lineHeight: 1.05,
+              letterSpacing: "-0.02em",
+            }}>
+              Le signal,
+            </h1>
+            <h1 style={{
+              fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
+              fontStyle: "italic",
+              fontSize: "clamp(52px, 5.5vw, 76px)",
+              fontWeight: 800,
+              color: "#0A0A0A",
+              margin: "0 0 40px",
+              lineHeight: 1.05,
+              letterSpacing: "-0.02em",
+            }}>
+              pas le bruit.
+            </h1>
+
+            <p style={{
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 16,
+              color: "#5A5450",
+              margin: "0 0 44px",
+              lineHeight: 1.75,
+              maxWidth: 480,
+            }}>
+              Crochet. organise les introductions qualifiées entre acteurs
+              sérieux du marché privé. Accès sur invitation. Matching
+              algorithmique. Discrétion absolue.
+            </p>
+
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <Link href={appHref} style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.02em",
+                color: "#FFFFFF",
+                background: "#0A0A0A",
+                padding: "14px 32px",
+                textDecoration: "none",
+              }}>
+                Accéder à la plateforme
+              </Link>
+              <Link href="/register" style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 13,
+                fontWeight: 500,
+                letterSpacing: "0.02em",
+                color: "#0A0A0A",
+                background: "transparent",
+                border: "1px solid #C8C2B8",
+                padding: "14px 32px",
+                textDecoration: "none",
+              }}>
+                Soumettre une demande
+              </Link>
+            </div>
+
+            <div style={{
+              marginTop: 36,
+              fontFamily: "var(--font-jetbrains), monospace",
+              fontSize: 9,
+              letterSpacing: "0.1em",
+              color: "#B0AA9E",
+              textTransform: "uppercase",
+            }}>
+              Accès sur invitation · Données confidentielles · Infrastructure sécurisée
+            </div>
           </div>
 
-          {/* KPIs */}
-          <div style={{
-            display: "flex",
-            gap: 0,
-            marginTop: 72,
-            borderTop: "1px solid #1A1A1A",
-            paddingTop: 40,
-          }}>
-            {[
-              { value: "NDA", label: "Signé avant chaque room" },
-              { value: "IA", label: "Qualification automatique" },
-              { value: "2", label: "Parties pour clôturer" },
-              { value: "48h", label: "Délai de réponse admission" },
-            ].map((kpi, i) => (
-              <div key={i} style={{
-                flex: 1,
-                paddingRight: 32,
-                borderRight: i < 3 ? "1px solid #1A1A1A" : "none",
-                paddingLeft: i > 0 ? 32 : 0,
+          {/* Right — Deal card mockup */}
+          <div style={{ paddingTop: 40, paddingBottom: 0 }}>
+            <div style={{
+              background: "#FFFFFF",
+              border: "1px solid #E0DAD0",
+              padding: "28px 32px",
+              boxShadow: "0 4px 32px rgba(0,0,0,0.06)",
+            }}>
+              {/* Card header */}
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 20,
+                paddingBottom: 16,
+                borderBottom: "1px solid #F0EDE8",
               }}>
-                <div style={{
+                <span style={{
                   fontFamily: "var(--font-jetbrains), monospace",
-                  fontSize: 36,
-                  fontWeight: 700,
-                  color: "#FFFFFF",
-                  letterSpacing: "-0.02em",
-                  lineHeight: 1,
-                  marginBottom: 8,
+                  fontSize: 9,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#7A746E",
                 }}>
-                  {kpi.value}
-                </div>
-                <div style={{
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 11,
-                  color: "#555",
-                  letterSpacing: "0.06em",
+                  Signal actif — OPP-2847
+                </span>
+                <span style={{
+                  fontFamily: "var(--font-jetbrains), monospace",
+                  fontSize: 9,
+                  letterSpacing: "0.1em",
+                  color: "#16A34A",
                   textTransform: "uppercase",
                 }}>
-                  {kpi.label}
+                  ● Live
+                </span>
+              </div>
+
+              {/* Title */}
+              <div style={{
+                fontFamily: "var(--font-playfair), Georgia, serif",
+                fontSize: 22,
+                fontWeight: 700,
+                color: "#0A0A0A",
+                marginBottom: 6,
+              }}>
+                Services industriels · Lyon
+              </div>
+              <div style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 12,
+                color: "#7A746E",
+                marginBottom: 28,
+              }}>
+                Cession majoritaire 65% · CA 4.2M€ · EBITDA 22%
+              </div>
+
+              {/* Scores */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 0, marginBottom: 24 }}>
+                {[
+                  { label: "Taille", value: "12–18M€" },
+                  { label: "D-Score", value: "87" },
+                  { label: "M-Score", value: "79" },
+                ].map((item, i) => (
+                  <div key={i} style={{ paddingRight: i < 2 ? 16 : 0, paddingLeft: i > 0 ? 16 : 0, borderLeft: i > 0 ? "1px solid #F0EDE8" : "none" }}>
+                    <div style={{
+                      fontFamily: "var(--font-dm-sans), sans-serif",
+                      fontSize: 9,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color: "#B0AA9E",
+                      marginBottom: 6,
+                    }}>
+                      {item.label}
+                    </div>
+                    <div style={{
+                      fontFamily: "var(--font-jetbrains), monospace",
+                      fontSize: 24,
+                      fontWeight: 700,
+                      color: "#0A0A0A",
+                      letterSpacing: "-0.02em",
+                    }}>
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Progress bar */}
+              <div style={{ borderTop: "1px solid #F0EDE8", paddingTop: 16 }}>
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
+                }}>
+                  <span style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 9,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: "#B0AA9E",
+                  }}>
+                    Probabilité closing
+                  </span>
+                  <span style={{
+                    fontFamily: "var(--font-jetbrains), monospace",
+                    fontSize: 11,
+                    color: "#0A0A0A",
+                    fontWeight: 600,
+                  }}>
+                    79%
+                  </span>
+                </div>
+                <div style={{ height: 3, background: "#F0EDE8", borderRadius: 2 }}>
+                  <div style={{ height: 3, width: "79%", background: "#0A0A0A", borderRadius: 2 }} />
                 </div>
               </div>
-            ))}
+            </div>
           </div>
+
         </div>
       </section>
 
       {/* ── TROIS PILIERS ── */}
       <section style={{
-        background: "#F5F2EE",
+        background: "#FFFFFF",
         padding: "80px 48px",
+        borderTop: "1px solid #E0DAD0",
         borderBottom: "1px solid #E0DAD0",
       }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
             fontSize: 10,
@@ -229,7 +344,7 @@ export default async function Home() {
               {
                 num: "03",
                 title: "Secure Room",
-                body: "Un match validé ouvre une Room privée. Chat chiffré, partage de documents, appel Vision, propositions de RDV, et validation bilatérale du deal. Tout en un seul endroit.",
+                body: "Un match validé ouvre une Room privée. Chat chiffré, partage de documents, appel Vision, propositions de RDV, et validation bilatérale du deal.",
                 tag: "NDA signé · Closing intégré",
               },
             ].map((pillar, i) => (
@@ -284,97 +399,9 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── COMMENT ÇA MARCHE ── */}
-      <section style={{
-        background: "#FFFFFF",
-        padding: "80px 48px",
-        borderBottom: "1px solid #E0DAD0",
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-
-          <div style={{
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 10,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "#7A746E",
-            marginBottom: 48,
-          }}>
-            Protocole
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 0 }}>
-            {[
-              {
-                step: "01",
-                title: "Soumission",
-                body: "Déposez un document ou remplissez le formulaire. Le moteur IA qualifie en temps réel.",
-              },
-              {
-                step: "02",
-                title: "Qualification",
-                body: "MEMO structuré généré. D-Score attribué. Le dossier est rendu visible aux membres correspondants.",
-              },
-              {
-                step: "03",
-                title: "Match",
-                body: "Une contrepartie identifiée valide le match. Les deux parties confirment l'intérêt.",
-              },
-              {
-                step: "04",
-                title: "Closing",
-                body: "La Secure Room s'ouvre. NDA signé. Négociation. Validation bilatérale. Documents déverrouillés.",
-              },
-            ].map((s, i) => (
-              <div key={i} style={{
-                padding: "0 32px 0",
-                borderLeft: "1px solid #E0DAD0",
-                paddingLeft: 32,
-                paddingRight: i < 3 ? 32 : 0,
-                position: "relative",
-              }}>
-                <div style={{
-                  fontFamily: "var(--font-jetbrains), monospace",
-                  fontSize: 48,
-                  fontWeight: 700,
-                  color: "#F0EDE8",
-                  lineHeight: 1,
-                  marginBottom: 16,
-                  letterSpacing: "-0.02em",
-                }}>
-                  {s.step}
-                </div>
-                <div style={{
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "#0A0A0A",
-                  marginBottom: 10,
-                }}>
-                  {s.title}
-                </div>
-                <p style={{
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 13,
-                  color: "#7A746E",
-                  lineHeight: 1.7,
-                  margin: 0,
-                }}>
-                  {s.body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── ADMISSION ── */}
-      <section style={{
-        background: "#0A0A0A",
-        padding: "100px 48px",
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 64 }}>
-
+      <section style={{ background: "#0A0A0A", padding: "100px 48px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 64 }}>
           <div style={{ flex: 1 }}>
             <div style={{
               fontFamily: "var(--font-jetbrains), monospace",
@@ -405,17 +432,13 @@ export default async function Home() {
               margin: 0,
               maxWidth: 440,
             }}>
-              Chaque membre est vérifié avant admission. CROCHET est réservé aux
+              Chaque membre est vérifié avant admission. Crochet. est réservé aux
               professionnels du deal — fonds d&apos;investissement, family offices,
               advisors M&A, dirigeants de sociétés en cession ou en croissance.
             </p>
           </div>
 
-          <div style={{
-            flex: "0 0 380px",
-            border: "1px solid #1A1A1A",
-            padding: "40px",
-          }}>
+          <div style={{ flex: "0 0 380px", border: "1px solid #1A1A1A", padding: "40px" }}>
             <div style={{
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 10,
@@ -436,27 +459,11 @@ export default async function Home() {
               "Dirigeants en cession / transmission",
               "Sociétés en levée de fonds",
             ].map((profil, i) => (
-              <div key={i} style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 14,
-                marginBottom: 16,
-              }}>
-                <span style={{
-                  fontFamily: "var(--font-jetbrains), monospace",
-                  fontSize: 9,
-                  color: "#333",
-                  flexShrink: 0,
-                  paddingTop: 2,
-                }}>
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 16 }}>
+                <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "#333", flexShrink: 0, paddingTop: 2 }}>
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span style={{
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 13,
-                  color: "#888",
-                  lineHeight: 1.5,
-                }}>
+                <span style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 13, color: "#888", lineHeight: 1.5 }}>
                   {profil}
                 </span>
               </div>
@@ -480,7 +487,6 @@ export default async function Home() {
               </Link>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -494,21 +500,11 @@ export default async function Home() {
         justifyContent: "space-between",
       }}>
         <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <svg width="16" height="16" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M20 11A9 9 0 1 1 11 2"
-              stroke="#444"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="#333" strokeWidth="1.5" />
+            <path d="M17 8.5A6 6 0 1 0 17 15.5" stroke="#333" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          <span style={{
-            fontFamily: "var(--font-playfair), Georgia, serif",
-            fontSize: 14,
-            fontWeight: 700,
-            color: "#444",
-            letterSpacing: "0.02em",
-          }}>
+          <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 14, fontWeight: 700, color: "#444", letterSpacing: "0.02em" }}>
             rochet.
           </span>
         </span>
@@ -529,12 +525,7 @@ export default async function Home() {
             </Link>
           ))}
         </div>
-        <span style={{
-          fontFamily: "var(--font-jetbrains), monospace",
-          fontSize: 9,
-          color: "#2A2A2A",
-          letterSpacing: "0.08em",
-        }}>
+        <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "#2A2A2A", letterSpacing: "0.08em" }}>
           © 2025 CROCHET — CONFIDENTIEL
         </span>
       </footer>
