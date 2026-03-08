@@ -23,33 +23,16 @@ export default async function Home() {
         zIndex: 100,
       }}>
         {/* Logo */}
-        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-          {/* Crochet hook icon */}
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M17 4C17 4 14 2 11 2C7.13 2 4 5.13 4 9C4 12.87 7.13 16 11 16L11 19C11 19 8 19.5 6 18"
-              stroke="#FFFFFF"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-            <path
-              d="M11 16C13.21 16 15 14.21 15 12C15 9.79 13.21 8 11 8"
-              stroke="#FFFFFF"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              fill="none"
-            />
-          </svg>
+        <Link href="/" style={{ textDecoration: "none" }}>
           <span style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
-            fontSize: 19,
+            fontSize: 18,
             fontWeight: 700,
             color: "#FFFFFF",
-            letterSpacing: "0.01em",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
           }}>
-            rochet.
+            CROCHET.
           </span>
         </Link>
 
@@ -68,7 +51,7 @@ export default async function Home() {
         </nav>
 
         {/* Right CTAs */}
-        <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Link href={appHref} style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
             fontSize: 13,
@@ -544,27 +527,15 @@ export default async function Home() {
         alignItems: "center",
         justifyContent: "space-between",
       }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <svg width="16" height="16" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M17 4C17 4 14 2 11 2C7.13 2 4 5.13 4 9C4 12.87 7.13 16 11 16L11 19C11 19 8 19.5 6 18"
-              stroke="#999"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-            <path
-              d="M11 16C13.21 16 15 14.21 15 12C15 9.79 13.21 8 11 8"
-              stroke="#999"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              fill="none"
-            />
-          </svg>
-          <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 14, fontWeight: 700, color: "#AAA", letterSpacing: "0.02em" }}>
-            rochet.
-          </span>
+        <span style={{
+          fontFamily: "var(--font-playfair), Georgia, serif",
+          fontSize: 14,
+          fontWeight: 700,
+          color: "#AAA",
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+        }}>
+          CROCHET.
         </span>
         <div style={{ display: "flex", gap: 28 }}>
           {[
