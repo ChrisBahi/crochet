@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { validateDeal, declineDeal, revokeValidation } from "@/app/app/rooms/[id]/actions"
 
@@ -225,13 +225,57 @@ function RoomHeader({
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 
-const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: "chat",    icon: "💬", label: "Chat" },
-  { id: "deck",    icon: "📊", label: "Dossier" },
-  { id: "vision",  icon: "🎥", label: "Vision" },
-  { id: "rdv",     icon: "📅", label: "RDV" },
-  { id: "closing", icon: "✓",  label: "Closing" },
-  { id: "info",    icon: "🔒", label: "Sécurité" },
+const SvgChat = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter">
+    <rect x="2" y="2" width="16" height="13" />
+    <polyline points="2,15 2,18 5,15" />
+  </svg>
+)
+
+const SvgDossier = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter">
+    <rect x="2" y="6" width="16" height="12" />
+    <polyline points="7,6 7,3 13,3 13,6" />
+    <line x1="2" y1="12" x2="18" y2="12" />
+  </svg>
+)
+
+const SvgVision = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter">
+    <path d="M2 10 Q10 4 18 10 Q10 16 2 10" strokeLinecap="square" />
+    <circle cx="10" cy="10" r="2.5" />
+  </svg>
+)
+
+const SvgRdv = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter">
+    <rect x="2" y="4" width="16" height="14" />
+    <line x1="2" y1="9" x2="18" y2="9" />
+    <line x1="6" y1="2" x2="6" y2="6" />
+    <line x1="14" y1="2" x2="14" y2="6" />
+  </svg>
+)
+
+const SvgClosing = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter">
+    <polyline points="4,10 8,15 16,6" />
+  </svg>
+)
+
+const SvgSecurite = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="square" strokeLinejoin="miter">
+    <rect x="4" y="9" width="12" height="9" />
+    <path d="M7 9 L7 6 Q7 3 10 3 Q13 3 13 6 L13 9" strokeLinecap="square" />
+  </svg>
+)
+
+const TABS: { id: Tab; icon: React.ReactNode; label: string }[] = [
+  { id: "chat",    icon: <SvgChat />,     label: "Chat" },
+  { id: "deck",    icon: <SvgDossier />,  label: "Dossier" },
+  { id: "vision",  icon: <SvgVision />,   label: "Vision" },
+  { id: "rdv",     icon: <SvgRdv />,      label: "RDV" },
+  { id: "closing", icon: <SvgClosing />,  label: "Closing" },
+  { id: "info",    icon: <SvgSecurite />, label: "Sécurité" },
 ]
 
 function Sidebar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
@@ -265,9 +309,10 @@ function Sidebar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
             cursor: "pointer",
             borderLeft: `2px solid ${tab === t.id ? C.accent : "transparent"}`,
             transition: "all 0.1s",
+            color: tab === t.id ? C.text : C.muted,
           }}
         >
-          <span style={{ fontSize: 16 }}>{t.icon}</span>
+          {t.icon}
           <span style={{
             fontFamily: FONT_SANS, fontSize: 8,
             color: tab === t.id ? C.text : C.muted,
