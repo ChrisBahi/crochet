@@ -8,15 +8,14 @@ export default async function NewOpportunityPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: settings, error: sErr } = await supabase
+  const { data: settings } = await supabase
     .from("user_settings")
     .select("active_workspace_id")
     .eq("user_id", user.id)
-    .single()
+    .maybeSingle()
 
-  if (sErr) throw sErr
   const workspaceId = settings?.active_workspace_id
-  if (!workspaceId) throw new Error("No active workspace")
+  if (!workspaceId) redirect("/app")
 
   async function createOpportunity(
     prevState: { error?: string | null },

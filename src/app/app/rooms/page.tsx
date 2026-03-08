@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/auth/require-user"
+import { createDemoRoom } from "./actions"
 
 export default async function RoomsPage() {
   await requireUser()
@@ -111,18 +112,35 @@ export default async function RoomsPage() {
           }}>
             Aucune Secure Room active. Les rooms sont créées automatiquement lors d&apos;une demande d&apos;intro.
           </p>
-          <Link href="/app/matches" style={{
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 11,
-            color: "#0A0A0A",
-            textDecoration: "none",
-            border: "1px solid #E0DAD0",
-            padding: "8px 18px",
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}>
-            Voir mes matches →
-          </Link>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/app/matches" style={{
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 11,
+              color: "#0A0A0A",
+              textDecoration: "none",
+              border: "1px solid #E0DAD0",
+              padding: "8px 18px",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+            }}>
+              Voir mes matches →
+            </Link>
+            <form action={createDemoRoom}>
+              <button type="submit" style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 11,
+                color: "#FFFFFF",
+                background: "#0A0A0A",
+                border: "none",
+                padding: "8px 18px",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+              }}>
+                Ouvrir une room démo →
+              </button>
+            </form>
+          </div>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
