@@ -90,10 +90,11 @@ export async function generateNda(input: NdaInput): Promise<NdaResult> {
     messages: [{ role: "user", content: buildNdaPrompt(input, date) }],
   })
 
-  let raw = (message.content[0] as { type: string; text: string }).text.trim()
-  // Strip markdown code fences if present
-  raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim()
-  const parsed = JSON.parse(raw) as { sections: DocSection[] }
+  const rawText = (message.content[0] as { type: string; text: string }).text.trim()
+  // Extract JSON object from response (handles markdown fences or extra text)
+  const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) throw new Error("No JSON object found in NDA response")
+  const parsed = JSON.parse(jsonMatch[0]) as { sections?: DocSection[] }
 
   return {
     reference: ref,
