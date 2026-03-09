@@ -105,7 +105,21 @@ export default async function RoomPage({
     nda_text: "NDA-DEMO-CROCHET-V1",
   } : null)
 
-  const ndaSigned = !!(resolvedDeck?.nda_text)
+  // Vérification réelle de la signature NDA en base
+  const opportunityId = (resolvedOpportunity as { id?: string } | null)?.id
+  let ndaSigned = false
+  if (isDemo) {
+    // En démo : NDA toujours considéré signé pour pouvoir explorer la room
+    ndaSigned = true
+  } else if (opportunityId) {
+    const { data: sig } = await supabase
+      .from("nda_signatures")
+      .select("id")
+      .eq("opportunity_id", opportunityId)
+      .eq("user_id", user.id)
+      .maybeSingle()
+    ndaSigned = !!sig
+  }
 
   return (
     <RoomShell
