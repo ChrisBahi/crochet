@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth/require-user"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { OfficialDoc, type DocSection } from "@/components/official-doc"
+import { PrintButton } from "@/components/print-button"
 
 function formatDate(d: Date) {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
@@ -94,23 +95,7 @@ export default async function MemoPage({
         }}>
           ← Retour au dossier
         </Link>
-        <a
-          href="javascript:window.print()"
-          style={{
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 11,
-            color: "#FFFFFF",
-            background: "transparent",
-            border: "1px solid #3A3A3A",
-            padding: "6px 16px",
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            textDecoration: "none",
-            display: "inline-block",
-          }}
-        >
-          Imprimer / PDF
-        </a>
+        <PrintButton />
       </div>
 
       {status !== "done" ? (

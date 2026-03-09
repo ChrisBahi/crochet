@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth/require-user"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { OfficialDoc, type DocSection } from "@/components/official-doc"
+import { PrintButton } from "@/components/print-button"
 import { generateNda, type NdaParty } from "@/lib/nda/generate"
 import { signNda } from "./actions"
 
@@ -156,23 +157,7 @@ export default async function NdaPage({
           }}>
             IA · CONFIDENTIEL
           </span>
-          <a
-            href="javascript:window.print()"
-            style={{
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 11,
-              color: "#FFFFFF",
-              background: "transparent",
-              border: "1px solid #3A3A3A",
-              padding: "6px 16px",
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              textDecoration: "none",
-              display: "inline-block",
-            }}
-          >
-            Imprimer / PDF
-          </a>
+          <PrintButton />
         </div>
       </div>
 
