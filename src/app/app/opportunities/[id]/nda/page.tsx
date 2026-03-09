@@ -4,7 +4,7 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { OfficialDoc, type DocSection } from "@/components/official-doc"
 import { generateNda, type NdaParty } from "@/lib/nda/generate"
-import { NdaSignButton } from "./nda-sign-button"
+import { signNda } from "./actions"
 
 export const dynamic = "force-dynamic"
 
@@ -214,12 +214,20 @@ export default async function NdaPage({
 
           {/* ── Bloc signatures ── */}
           <div style={{ marginBottom: 40 }}>
-            <NdaSignButton
-              opportunityId={id}
-              ndaReference={ndaReference}
-              alreadySigned={!!mySignature}
-              signedAt={mySignature?.signed_at ?? null}
-            />
+            {mySignature ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
+                <span style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 11, color: "#22c55e", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                  Signé électroniquement · {new Date(mySignature.signed_at).toLocaleDateString("fr-FR")}
+                </span>
+              </div>
+            ) : (
+              <form action={signNda.bind(null, id, ndaReference)}>
+                <button type="submit" style={{ padding: "10px 28px", background: "#0A0A0A", color: "#FFFFFF", border: "none", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
+                  Signer électroniquement
+                </button>
+              </form>
+            )}
           </div>
 
           {/* Deux boîtes de signature */}
