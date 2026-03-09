@@ -25,22 +25,24 @@ interface OfficialDocProps {
   children?: React.ReactNode
 }
 
-// Rend le texte avec les noms de parties en gras + majuscules
+// Rend le texte avec les noms de parties + termes contractuels en gras
 function renderContent(text: string, partyNames: string[]): React.ReactNode {
-  if (partyNames.length === 0) return text
-  const escaped = partyNames.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+  const contractTerms = ["La Partie Divulgatrice", "La Partie Réceptrice", "les Parties", "l'Accord"]
+  const allTerms = [...new Set([...partyNames, ...contractTerms])].filter(Boolean)
+  if (allTerms.length === 0) return text
+  const escaped = allTerms.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
   const pattern = new RegExp(`(${escaped.join("|")})`, "gi")
   const parts = text.split(pattern)
   return (
     <>
       {parts.map((part, i) => {
-        const hit = partyNames.find(n => n.toLowerCase() === part.toLowerCase())
-        if (hit) {
-          return (
-            <strong key={i} style={{ fontWeight: 700 }}>
-              {part.toUpperCase()}
-            </strong>
-          )
+        const isPartyName = partyNames.find(n => n.toLowerCase() === part.toLowerCase())
+        const isContractTerm = contractTerms.find(n => n.toLowerCase() === part.toLowerCase())
+        if (isPartyName) {
+          return <strong key={i} style={{ fontWeight: 700 }}>{part.toUpperCase()}</strong>
+        }
+        if (isContractTerm) {
+          return <strong key={i} style={{ fontWeight: 700 }}>{part}</strong>
         }
         return <span key={i}>{part}</span>
       })}
@@ -113,9 +115,13 @@ export function OfficialDoc({
           .doc-watermark {
             position: fixed !important;
             top: 50% !important;
-            right: -1% !important;
-            transform: translateY(-50%) !important;
+            left: 50% !important;
+            right: auto !important;
+            transform: translate(-50%, -50%) !important;
           }
+
+          /* Masquer le header app (AppShell) à l'impression */
+          header.no-print { display: none !important; }
 
           /* Corps : marge pour header + footer */
           .doc-body {
@@ -193,17 +199,17 @@ export function OfficialDoc({
         </span>
       </div>
 
-      {/* ── Grand C filigrane transparent (répété à l'impression via position: fixed) ── */}
+      {/* ── Grand C filigrane transparent centré (répété à l'impression via position: fixed) ── */}
       <div className="doc-watermark" style={{
         position: "fixed",
         top: "50%",
-        right: "-1%",
-        transform: "translateY(-50%)",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
         fontFamily: "var(--font-playfair), Georgia, serif",
-        fontSize: 360,
+        fontSize: 520,
         fontWeight: 700,
         fontStyle: "italic",
-        color: "rgba(10,10,10,0.055)",
+        color: "rgba(10,10,10,0.05)",
         userSelect: "none",
         pointerEvents: "none",
         zIndex: 0,

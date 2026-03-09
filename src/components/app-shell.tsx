@@ -36,7 +36,7 @@ export function AppShell({
   return (
     <div style={{ minHeight: "100vh", background: "#FFFFFF", color: "#0A0A0A" }}>
       {/* Header */}
-      <header style={{
+      <header className="no-print" style={{
         position: "sticky", top: 0, zIndex: 50,
         background: "#FFFFFF", borderBottom: "2px solid #0A0A0A",
         display: "flex", alignItems: "center",
