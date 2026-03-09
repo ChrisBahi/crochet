@@ -1,58 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import Anthropic from "@anthropic-ai/sdk"
 import { createClient } from "@/lib/supabase/server"
-import { createNotification } from "@/lib/notifications/create"
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
-function buildPrompt(opp: Record<string, unknown>): string {
-  const lines: string[] = [
-    `Titre : ${opp.title ?? "—"}`,
-    `Description : ${opp.description ?? "—"}`,
-    `Secteur : ${opp.sector ?? "—"}`,
-    `Géographie : ${opp.geo ?? "—"}`,
-    `Type de deal : ${opp.deal_type ?? "—"}`,
-    `Stade : ${opp.stage ?? "—"}`,
-    opp.amount ? `Levée / Prix cible : ${opp.amount} €` : null,
-    opp.valuation ? `Valorisation : ${opp.valuation} €` : null,
-    opp.revenue ? `Revenus / CA : ${opp.revenue} €` : null,
-    opp.pitch_deck_url ? `Lien deck/teaser : ${opp.pitch_deck_url}` : null,
-    opp.website_url ? `Site web : ${opp.website_url}` : null,
-  ].filter(Boolean) as string[]
-
-  return `Tu es le moteur de qualification CROCHET, expert en M&A, private equity et capital-investissement. Analyse ce dossier et rédige un MÉMORANDUM DE QUALIFICATION professionnel, dense et analytique.
-
-DOSSIER :
-${lines.join("\n")}
-
-Génère une réponse JSON avec exactement ce format :
-{
-  "memo": "...",
-  "d_score": 72,
-  "tags": ["tag1", "tag2", "tag3"]
-}
-
-STRUCTURE DU MEMO (champ "memo") — rédige en continu, paragraphes séparés par \\n\\n :
-
-§1 SYNTHÈSE EXÉCUTIVE (2-3 phrases) : Nature du dossier, positionnement marché, opportunité clé pour un acquéreur/investisseur.
-
-§2 PROPOSITION DE VALEUR & MODÈLE ÉCONOMIQUE : Analyse du business model, avantages concurrentiels, propriété intellectuelle ou barrières à l'entrée, différenciation.
-
-§3 TRACTION & DONNÉES FINANCIÈRES : Revenus, croissance, rentabilité, historique client, KPIs opérationnels. Si données manquantes, le noter explicitement.
-
-§4 STRUCTURATION DU DEAL : Type de deal, valorisation implicite, multiples estimés (EV/CA, EV/EBITDA si applicable), conditions envisagées, niveau de risque deal.
-
-§5 FACTEURS D'ATTRACTIVITÉ & RISQUES : 3 points forts pour un acquéreur stratégique ou financier. 2-3 risques identifiés (exécution, marché, dépendance, réglementaire).
-
-§6 VERDICT CROCHET : Appréciation synthétique. Profil d'acquéreur/investisseur idéal (stratégique sectoriel, fonds PE, family office, etc.). Recommandation de priorité.
-
-RÈGLES :
-- Ton : professionnel, factuel, sans superlatif creux. Style mémorandum bancaire.
-- Longueur : 400 à 600 mots minimum.
-- D-Score (0–100) : 0–30 dossier insuffisant, 31–60 correct, 61–80 solide, 81–100 exceptionnel. Pénalise fortement les informations manquantes.
-- Tags : 4 à 6 mots-clés précis (secteur, stade, géo, type, thèse).
-- Réponds UNIQUEMENT avec le JSON brut, sans markdown, sans backticks, sans texte avant ou après.`
-}
+import { runQualification } from "@/lib/qualify/run"
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -67,60 +15,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "opportunity_id required" }, { status: 400 })
   }
 
-  // Fetch opportunity
-  const { data: opp, error: oppErr } = await supabase
-    .from("opportunities")
-    .select("*")
-    .eq("id", opportunity_id)
-    .maybeSingle()
-
-  if (oppErr || !opp) {
-    return NextResponse.json({ error: "opportunity not found" }, { status: 404 })
-  }
-
-  // Set deck to processing
-  await supabase.from("opportunity_decks").upsert({
-    opportunity_id,
-    status: "processing",
-  }, { onConflict: "opportunity_id" })
-
   try {
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
-      messages: [{ role: "user", content: buildPrompt(opp) }],
-    })
-
-    let raw = (message.content[0] as { type: string; text: string }).text.trim()
-    // Strip possible markdown code fences
-    raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim()
-    const parsed = JSON.parse(raw) as { memo: string; d_score: number; tags: string[] }
-
-    await supabase.from("opportunity_decks").upsert({
-      opportunity_id,
-      summary: parsed.memo,
-      d_score: parsed.d_score,
-      tags: parsed.tags,
-      status: "done",
-    }, { onConflict: "opportunity_id" })
-
-    // Notification
-    await createNotification({
-      supabase,
-      userId: user.id,
-      type: "qualification_done",
-      title: `Dossier qualifié — D-Score ${parsed.d_score}`,
-      body: `Le moteur CROCHET a analysé "${opp.title}". Consultez le MEMO de qualification.`,
-      link: `/app/opportunities/${opportunity_id}/memo`,
-      email: user.email ?? undefined,
-    })
-
-    return NextResponse.json({ d_score: parsed.d_score, tags: parsed.tags })
+    const result = await runQualification(supabase, opportunity_id, { id: user.id, email: user.email ?? undefined })
+    return NextResponse.json(result)
   } catch (err) {
-    await supabase.from("opportunity_decks").upsert({
-      opportunity_id,
-      status: "error",
-    }, { onConflict: "opportunity_id" })
     console.error("[qualify]", err)
     return NextResponse.json({ error: "qualification failed" }, { status: 500 })
   }

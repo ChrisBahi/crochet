@@ -327,15 +327,15 @@ export default async function OpportunityDetailPage({
             {(deckStatus === "error" || deckStatus === "pending") && (
               <form action={async () => {
                 "use server"
-                const { cookies } = await import("next/headers")
-                const cookieStore = await cookies()
-                const cookieHeader = cookieStore.getAll().map((c: { name: string; value: string }) => `${c.name}=${c.value}`).join("; ")
-                const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-                await fetch(`${baseUrl}/api/qualify`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", Cookie: cookieHeader },
-                  body: JSON.stringify({ opportunity_id: id }),
-                })
+                const { createClient } = await import("@/lib/supabase/server")
+                const { runQualification } = await import("@/lib/qualify/run")
+                const supabase = await createClient()
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                  try {
+                    await runQualification(supabase, id, { id: user.id, email: user.email ?? undefined })
+                  } catch (_) { /* error status set by runQualification */ }
+                }
                 const { revalidatePath } = await import("next/cache")
                 revalidatePath(`/app/opportunities/${id}`)
               }}>
