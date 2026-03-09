@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview — Filigrane C</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,700&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #FAF7F2; }
+
+    .page {
+      position: relative;
+      width: 820px;
+      min-height: 1160px;
+      margin: 0 auto;
+      padding: 48px 72px 80px;
+      overflow: hidden;
+    }
+
+    /* ── Filigrane ACTUEL (Playfair Display) ── */
+    .watermark-current {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: Georgia, serif;
+      font-size: 520px;
+      font-weight: 700;
+      font-style: italic;
+      color: rgba(10,10,10,0.05);
+      user-select: none;
+      pointer-events: none;
+      z-index: 0;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    /* ── Filigrane NOUVEAU (Cormorant Garamond) ── */
+    .watermark-new {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 500pt;
+      opacity: 0.06;
+      color: #888;
+      user-select: none;
+      pointer-events: none;
+      z-index: 0;
+      line-height: 1;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #7A746E;
+      margin-bottom: 12px;
+    }
+
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .logo {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #0A0A0A;
+    }
+    .top-rule { border-top: 2px solid #0A0A0A; margin-bottom: 48px; }
+
+    h1 {
+      font-family: Georgia, serif;
+      font-size: 64px;
+      font-weight: 700;
+      color: #0A0A0A;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+    h1.italic { font-style: italic; }
+
+    .thin-rule { border-top: 1px solid #C8C2B8; margin: 16px 0; }
+
+    p {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: #0A0A0A;
+      line-height: 1.9;
+      margin-bottom: 16px;
+      text-align: justify;
+    }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 16px;
+      align-items: baseline;
+      border-top: 1px solid #C8C2B8;
+      padding-top: 16px;
+      margin: 32px 0 16px;
+    }
+    .section-num {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      color: #7A746E;
+    }
+    .section-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #0A0A0A;
+    }
+
+    /* Comparaison côte à côte */
+    .compare {
+      display: flex;
+      gap: 0;
+      width: 100%;
+    }
+    .compare .page {
+      flex: 1;
+      width: 50%;
+    }
+    .compare-label {
+      text-align: center;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 16px;
+      background: #0A0A0A;
+      color: #FAF7F2;
+      letter-spacing: 0.06em;
+    }
+    .divider {
+      width: 2px;
+      background: #0A0A0A;
+    }
+  </style>
+</head>
+<body>
+
+<div class="compare">
+
+  <!-- ACTUEL -->
+  <div>
+    <div class="compare-label">ACTUEL — Playfair / opacity 0.05</div>
+    <div class="page">
+      <div class="watermark-current">C</div>
+      <div class="content">
+        <div class="header-bar">
+          <span class="logo">crochet.</span>
+          <span class="label">Accord de Confidentialité</span>
+        </div>
+        <div class="top-rule"></div>
+        <h1>Accord de</h1>
+        <h1 class="italic">Confidentialité.</h1>
+        <div class="thin-rule"></div>
+        <div class="label" style="margin-top:8px">NDA-CROCHET-V1 · Accord Bilatéral · Droit Français</div>
+        <div style="margin-bottom:48px"></div>
+        <p>Le présent document constitue un Accord de Confidentialité juridiquement contraignant, établi et signé électroniquement via la plateforme Crochet. dans le cadre d'une mise en relation structurée.</p>
+        <div class="section-header">
+          <span class="section-num">01</span>
+          <span class="section-title">Parties</span>
+        </div>
+        <p><strong>MEDTECH SAS</strong> et <strong>DUPONT CAPITAL</strong> conviennent des dispositions suivantes relatives à la confidentialité des informations échangées dans le cadre de cette opportunité.</p>
+        <div class="section-header">
+          <span class="section-num">02</span>
+          <span class="section-title">Objet</span>
+        </div>
+        <p>Le présent Accord a pour objet de définir les conditions dans lesquelles les informations peuvent être communiquées, utilisées et protégées.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- NOUVEAU -->
+  <div>
+    <div class="compare-label">NOUVEAU — Cormorant Garamond / opacity 0.06</div>
+    <div class="page">
+      <div class="watermark-new">C</div>
+      <div class="content">
+        <div class="header-bar">
+          <span class="logo">crochet.</span>
+          <span class="label">Accord de Confidentialité</span>
+        </div>
+        <div class="top-rule"></div>
+        <h1>Accord de</h1>
+        <h1 class="italic">Confidentialité.</h1>
+        <div class="thin-rule"></div>
+        <div class="label" style="margin-top:8px">NDA-CROCHET-V1 · Accord Bilatéral · Droit Français</div>
+        <div style="margin-bottom:48px"></div>
+        <p>Le présent document constitue un Accord de Confidentialité juridiquement contraignant, établi et signé électroniquement via la plateforme Crochet. dans le cadre d'une mise en relation structurée.</p>
+        <div class="section-header">
+          <span class="section-num">01</span>
+          <span class="section-title">Parties</span>
+        </div>
+        <p><strong>MEDTECH SAS</strong> et <strong>DUPONT CAPITAL</strong> conviennent des dispositions suivantes relatives à la confidentialité des informations échangées dans le cadre de cette opportunité.</p>
+        <div class="section-header">
+          <span class="section-num">02</span>
+          <span class="section-title">Objet</span>
+        </div>
+        <p>Le présent Accord a pour objet de définir les conditions dans lesquelles les informations peuvent être communiquées, utilisées et protégées.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
