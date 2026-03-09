@@ -38,14 +38,14 @@ export default async function NdaPage({
     : { data: { user } }
 
   const divulgateur: NdaParty = {
-    name: divulgateurProfile?.name ?? (divulgateurUser as { user?: { email?: string } })?.user?.email?.split("@")[0] ?? "Partie Divulgatrice",
+    name: divulgateurProfile?.name ?? divulgateurProfile?.firm ?? "Partie Divulgatrice",
     firm: divulgateurProfile?.firm ?? null,
     role: divulgateurProfile?.role ?? null,
     country: divulgateurProfile?.country ?? "France",
   }
 
   const recepteur: NdaParty = {
-    name: recepteurProfile?.name ?? user.email?.split("@")[0] ?? "Partie Réceptrice",
+    name: recepteurProfile?.name ?? recepteurProfile?.firm ?? "Partie Réceptrice",
     firm: recepteurProfile?.firm ?? null,
     role: recepteurProfile?.role ?? null,
     country: recepteurProfile?.country ?? "France",

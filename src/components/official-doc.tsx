@@ -27,7 +27,7 @@ interface OfficialDocProps {
 
 // Rend le texte avec les noms de parties + termes contractuels en gras
 function renderContent(text: string, partyNames: string[]): React.ReactNode {
-  const contractTerms = ["La Partie Divulgatrice", "La Partie Réceptrice", "les Parties", "l'Accord"]
+  const contractTerms: string[] = []
   const allTerms = [...new Set([...partyNames, ...contractTerms])].filter(Boolean)
   if (allTerms.length === 0) return text
   const escaped = allTerms.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))

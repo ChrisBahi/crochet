@@ -11,7 +11,6 @@ export async function signNda(opportunityId: string, ndaReference: string) {
   const { error } = await supabase.from("nda_signatures").upsert({
     opportunity_id: opportunityId,
     user_id: user.id,
-    nda_reference: ndaReference,
   }, { onConflict: "opportunity_id,user_id" })
 
   if (error) throw new Error(error.message)
