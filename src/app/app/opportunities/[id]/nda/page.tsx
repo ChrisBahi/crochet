@@ -300,26 +300,15 @@ export default async function NdaPage({
             alignItems: "center",
             gap: 24,
           }}>
-            <div>
-              <div style={{
-                fontFamily: "var(--font-dm-sans), sans-serif",
-                fontSize: 11,
-                fontWeight: 700,
-                color: "#0A0A0A",
-                letterSpacing: "-0.01em",
-                lineHeight: 1.2,
-              }}>
-                crochet.
-              </div>
-              <div style={{
-                fontFamily: "var(--font-playfair), Georgia, serif",
-                fontSize: 11,
-                fontStyle: "italic",
-                color: "#0A0A0A",
-                lineHeight: 1,
-              }}>
-                C
-              </div>
+            <div style={{
+              fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#0A0A0A",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+            }}>
+              CROCHET.
             </div>
             <div style={{ flex: 1 }}>
               <div style={{
