@@ -23,15 +23,36 @@ export default function AuthCallbackPage() {
 
     // createBrowserClient auto-detects ?code= and handles PKCE exchange.
     // We just listen for the result.
+    async function checkAndRedirect(session: { user: { email?: string } }) {
+      const email = session.user.email
+      if (!email) {
+        await supabase.auth.signOut()
+        router.replace("/unauthorized")
+        return
+      }
+      const { data } = await supabase
+        .from("admission_requests")
+        .select("status")
+        .eq("email", email)
+        .eq("status", "approved")
+        .maybeSingle()
+      if (!data) {
+        await supabase.auth.signOut()
+        router.replace("/unauthorized")
+      } else {
+        router.replace("/app")
+      }
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
-        router.replace("/app")
+        checkAndRedirect(session)
       }
     })
 
     // In case the session is already set (fast exchange), check immediately
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace("/app")
+      if (session) checkAndRedirect(session)
     })
 
     return () => subscription.unsubscribe()
