@@ -188,34 +188,36 @@ export function OfficialDoc({
         </span>
       </div>
 
-      {/* ── Grand C filigrane transparent centré (répété à l'impression via position: fixed) ── */}
-      <div className="doc-watermark" style={{
-        position: "fixed",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        fontFamily: "var(--font-playfair), Georgia, serif",
-        fontSize: 520,
-        fontWeight: 700,
-        fontStyle: "italic",
-        color: "rgba(10,10,10,0.05)",
-        userSelect: "none",
-        pointerEvents: "none",
-        zIndex: 0,
-        lineHeight: 1,
-        letterSpacing: "-0.04em",
-      }}>
-        C
-      </div>
-
       {/* ── Corps principal ── */}
       <div className="doc-body" style={{
         maxWidth: 820,
         margin: "0 auto",
         padding: "48px 72px 80px",
         position: "relative",
-        zIndex: 1,
       }}>
+
+        {/* ── Grand C filigrane — absolute dans le corps pour être visible ── */}
+        <div className="doc-watermark" style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          fontFamily: "var(--font-playfair), Georgia, serif",
+          fontSize: 560,
+          fontWeight: 700,
+          fontStyle: "italic",
+          color: "rgba(10,10,10,0.06)",
+          userSelect: "none",
+          pointerEvents: "none",
+          zIndex: 0,
+          lineHeight: 1,
+          letterSpacing: "-0.04em",
+        }}>
+          C
+        </div>
+
+        {/* ── Contenu au-dessus du filigrane ── */}
+        <div style={{ position: "relative", zIndex: 1 }}>
 
         {/* En-tête visible à l'écran */}
         <div style={{
@@ -226,10 +228,10 @@ export function OfficialDoc({
         }}>
           <span style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
-            fontSize: 15,
+            fontSize: 18,
             fontWeight: 700,
             color: "#0A0A0A",
-            letterSpacing: "0.06em",
+            letterSpacing: "0.08em",
             textTransform: "uppercase",
           }}>
             CROCHET.
@@ -411,13 +413,16 @@ export function OfficialDoc({
           </span>
           <span style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 9,
-            color: "#B0A898",
+            fontSize: 10,
+            color: "#7A746E",
+            letterSpacing: "0.04em",
+            fontWeight: 500,
           }}>
             contact@crochett.ai
           </span>
         </div>
 
+        </div>{/* fin wrapper zIndex:1 */}
       </div>
     </div>
   )

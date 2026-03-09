@@ -29,7 +29,7 @@ CANDIDATURE :
 - Rôle : ${req.role}
 - Ville : ${req.city ?? "—"}
 - LinkedIn : ${req.linkedin ?? "—"}
-- SIRET : ${req.siret ?? "—"}
+- SIREN : ${req.siret ?? "—"}
 - Ticket moyen : ${req.ticket ?? "—"}
 - Message : ${req.message ?? "—"}
 
@@ -37,7 +37,7 @@ CRITÈRES D'ÉVALUATION (pondérés) :
 - Rôle professionnel cohérent avec l'investissement ou la cession d'entreprise (30%)
 - Ticket déclaré crédible et pertinent pour du M&A (25%)
 - Email professionnel (pas gmail/hotmail générique) (15%)
-- Présence LinkedIn ou SIRET (légitimité) (15%)
+- Présence LinkedIn ou SIREN (légitimité) (15%)
 - Message contextuel qualitatif (15%)
 
 Réponds UNIQUEMENT en JSON :

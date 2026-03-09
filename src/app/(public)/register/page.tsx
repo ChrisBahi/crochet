@@ -242,11 +242,11 @@ export default function RegisterPage() {
             <div style={{ borderTop: "1px solid #E0DAD0", margin: "8px 0 28px" }} />
 
             <Field
-              label="SIRET"
+              label="SIREN"
               name="siret"
               value={form.siret}
               onChange={set("siret")}
-              placeholder="123 456 789 00012"
+              placeholder="123 456 789"
               hint="Requis pour les professionnels. Permet la vérification de votre structure."
             />
             <Field
