@@ -223,10 +223,12 @@ export default async function OpportunityDetailPage({
                     color: "#0A0A0A",
                     lineHeight: 1.85,
                     margin: 0,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
                   }}>
-                    {memoText && memoText.length > 420
-                      ? memoText.slice(0, 420).replace(/\s+\S*$/, "") + "…"
-                      : memoText}
+                    {memoText}
                   </p>
                 ) : (
                   <p style={{
