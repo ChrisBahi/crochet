@@ -184,7 +184,7 @@ export function OfficialDoc({
           color: "#B0A898",
           letterSpacing: "0.04em",
         }}>
-          contact@crochet.app
+          contact@crochett.ai
         </span>
       </div>
 
@@ -414,7 +414,7 @@ export function OfficialDoc({
             fontSize: 9,
             color: "#B0A898",
           }}>
-            contact@crochet.app
+            contact@crochett.ai
           </span>
         </div>
 
