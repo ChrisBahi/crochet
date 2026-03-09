@@ -86,11 +86,13 @@ export async function generateNda(input: NdaInput): Promise<NdaResult> {
 
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 2048,
+    max_tokens: 4096,
     messages: [{ role: "user", content: buildNdaPrompt(input, date) }],
   })
 
-  const raw = (message.content[0] as { type: string; text: string }).text.trim()
+  let raw = (message.content[0] as { type: string; text: string }).text.trim()
+  // Strip markdown code fences if present
+  raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim()
   const parsed = JSON.parse(raw) as { sections: DocSection[] }
 
   return {

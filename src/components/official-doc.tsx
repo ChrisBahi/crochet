@@ -1,3 +1,4 @@
+"use client"
 /**
  * OfficialDoc — mise en page document officiel CROCHET
  * Utilisé pour le MEMO de qualification et le NDA.
