@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
 import { AdmissionActions } from "./admission-actions";
+import { runAiAnalysis } from "./actions";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "En attente",
@@ -78,6 +79,23 @@ export default async function AdminPage({
 
   const requests = allRequests ?? [];
   const totalCount = (pendingCount ?? 0) + (approvedCount ?? 0) + (rejectedCount ?? 0);
+
+  // Auto-analyse IA des candidatures sans note
+  const unanalyzed = requests
+    .filter((r: { ai_score: number | null }) => r.ai_score === null || r.ai_score === undefined)
+    .map((r: { id: string }) => r.id);
+  if (unanalyzed.length > 0) {
+    await runAiAnalysis(unanalyzed);
+    // Re-fetch après analyse (avec le même filtre de statut)
+    const query = admin
+      .from("admission_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+    const { data: refreshed } = filterStatus
+      ? await query.eq("status", filterStatus)
+      : await query;
+    if (refreshed) requests.splice(0, requests.length, ...refreshed);
+  }
 
   const tabs = [
     { label: "Tout", value: undefined, count: totalCount },
@@ -214,6 +232,8 @@ export default async function AdminPage({
             message: string | null;
             status: string;
             created_at: string;
+            ai_score: number | null;
+            ai_note: string | null;
           }) => (
             <div key={req.id} style={{ borderBottom: "1px solid #E0DAD0" }}>
               {/* Main row */}
@@ -333,8 +353,45 @@ export default async function AdminPage({
                   )}
                 </div>
 
-                {/* Actions */}
-                <div style={{ flexShrink: 0 }}>
+                {/* Score IA + Actions */}
+                <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+                  {req.ai_score !== null && req.ai_score !== undefined && (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{
+                          fontFamily: "var(--font-dm-sans), sans-serif",
+                          fontSize: 10,
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                          color: "#7A746E",
+                        }}>
+                          Score IA
+                        </span>
+                        <span style={{
+                          fontFamily: "var(--font-jetbrains), monospace",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: req.ai_score >= 70 ? "#2D6A4F" : req.ai_score >= 40 ? "#B7791F" : "#C0392B",
+                        }}>
+                          {req.ai_score}/100
+                        </span>
+                      </div>
+                      {req.ai_note && (
+                        <p style={{
+                          fontFamily: "var(--font-dm-sans), sans-serif",
+                          fontSize: 11,
+                          color: "#7A746E",
+                          fontStyle: "italic",
+                          maxWidth: 280,
+                          textAlign: "right",
+                          lineHeight: 1.5,
+                          margin: 0,
+                        }}>
+                          {req.ai_note}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <AdmissionActions
                     id={req.id}
                     email={req.email}
