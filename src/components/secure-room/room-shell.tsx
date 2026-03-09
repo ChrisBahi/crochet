@@ -566,9 +566,10 @@ function ChatSection({
 // ─── Deck ─────────────────────────────────────────────────────────────────────
 
 function DeckSection({
-  opportunity, messages, roomStatus,
+  opportunity, deck, messages, roomStatus,
 }: {
   opportunity: Record<string, unknown> | null
+  deck: Record<string, unknown> | null
   messages: ParsedMessage[]
   roomStatus: string
 }) {
@@ -576,6 +577,10 @@ function DeckSection({
   const websiteUrl = opportunity?.website_url as string | null
   const docMessages = messages.filter(m => m.kind === "doc")
   const isUnlocked = roomStatus === "closed_deal"
+  const oppId = opportunity?.id as string | null
+  const isDemo = oppId === "demo" || !oppId
+  const dScore = deck?.d_score as number | null | undefined
+  const memoReady = deck?.status === "done"
 
   return (
     <div style={{ height: "100%", overflowY: "auto", padding: "32px 36px" }}>
@@ -601,6 +606,72 @@ function DeckSection({
                   </span>
                 ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Documents IA — MEMO + NDA */}
+      {!isDemo && (
+        <div style={{ marginBottom: 32 }}>
+          <Label>Documents IA</Label>
+          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+
+            {/* MEMO */}
+            <a
+              href={memoReady ? `/app/opportunities/${oppId}/memo` : undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "flex", alignItems: "center", gap: 16,
+                padding: "14px 18px", border: `1px solid ${C.border}`,
+                background: C.bgSubtle, textDecoration: "none",
+                opacity: memoReady ? 1 : 0.5,
+                cursor: memoReady ? "pointer" : "default",
+              }}
+            >
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ fontFamily: FONT_SANS, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, marginBottom: 2 }}>MEMO IA</div>
+                <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C.text }}>Mémorandum de qualification</div>
+                <div style={{ fontFamily: FONT_SANS, fontSize: 11, color: C.muted, marginTop: 2 }}>
+                  {memoReady ? "Qualifié · Prêt à lire" : "En attente de qualification"}
+                </div>
+              </div>
+              {dScore != null && (
+                <div style={{ marginLeft: "auto", textAlign: "center", flexShrink: 0 }}>
+                  <div style={{ fontFamily: FONT_MONO, fontSize: 28, fontWeight: 700, color: C.text, lineHeight: 1 }}>{Math.round(dScore)}</div>
+                  <div style={{ fontFamily: FONT_SANS, fontSize: 9, color: C.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 }}>D-Score</div>
+                </div>
+              )}
+              {memoReady && (
+                <div style={{ marginLeft: dScore != null ? 0 : "auto", flexShrink: 0 }}>
+                  <span style={{ fontFamily: FONT_SANS, fontSize: 10, color: C.text, border: `1px solid ${C.border}`, padding: "3px 10px" }}>
+                    Ouvrir →
+                  </span>
+                </div>
+              )}
+            </a>
+
+            {/* NDA */}
+            <a
+              href={`/app/opportunities/${oppId}/nda`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "flex", alignItems: "center", gap: 16,
+                padding: "14px 18px", border: `1px solid ${C.border}`,
+                background: C.bgSubtle, textDecoration: "none",
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: FONT_SANS, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, marginBottom: 2 }}>NDA</div>
+                <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C.text }}>Accord de Confidentialité</div>
+                <div style={{ fontFamily: FONT_SANS, fontSize: 11, color: C.muted, marginTop: 2 }}>Bilatéral · Droit français · eIDAS</div>
+              </div>
+              <span style={{ fontFamily: FONT_SANS, fontSize: 10, color: C.text, border: `1px solid ${C.border}`, padding: "3px 10px", flexShrink: 0 }}>
+                Signer / Lire →
+              </span>
+            </a>
+
           </div>
         </div>
       )}
@@ -1473,6 +1544,7 @@ export function RoomShell({
             {tab === "deck" && (
               <DeckSection
                 opportunity={opportunity}
+                deck={deck}
                 messages={messages}
                 roomStatus={roomStatus}
               />
