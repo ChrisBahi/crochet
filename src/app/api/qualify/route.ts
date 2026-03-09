@@ -20,7 +20,7 @@ function buildPrompt(opp: Record<string, unknown>): string {
     opp.website_url ? `Site web : ${opp.website_url}` : null,
   ].filter(Boolean) as string[]
 
-  return `Tu es le moteur de qualification CROCHET. Analyse ce dossier d'investissement/cession et génère un MEMO de qualification structuré ainsi qu'un score de qualité (D-Score).
+  return `Tu es le moteur de qualification CROCHET, expert en M&A, private equity et capital-investissement. Analyse ce dossier et rédige un MÉMORANDUM DE QUALIFICATION professionnel, dense et analytique.
 
 DOSSIER :
 ${lines.join("\n")}
@@ -32,11 +32,26 @@ Génère une réponse JSON avec exactement ce format :
   "tags": ["tag1", "tag2", "tag3"]
 }
 
-Règles :
-- Le MEMO doit faire 3 à 5 paragraphes, en français, analytique et factuel. Évalue : proposition de valeur, traction/historique financier, risques identifiés, attractivité pour acquéreurs/investisseurs.
-- Le D-Score (0–100) : 0–30 dossier insuffisant, 31–60 correct, 61–80 solide, 81–100 exceptionnel. Pénalise les informations manquantes.
-- Les tags : 3 à 5 mots-clés qualifiant le dossier (secteur, stade, type, géo).
-- Réponds UNIQUEMENT avec le JSON, sans markdown, sans texte avant ou après.`
+STRUCTURE DU MEMO (champ "memo") — rédige en continu, paragraphes séparés par \\n\\n :
+
+§1 SYNTHÈSE EXÉCUTIVE (2-3 phrases) : Nature du dossier, positionnement marché, opportunité clé pour un acquéreur/investisseur.
+
+§2 PROPOSITION DE VALEUR & MODÈLE ÉCONOMIQUE : Analyse du business model, avantages concurrentiels, propriété intellectuelle ou barrières à l'entrée, différenciation.
+
+§3 TRACTION & DONNÉES FINANCIÈRES : Revenus, croissance, rentabilité, historique client, KPIs opérationnels. Si données manquantes, le noter explicitement.
+
+§4 STRUCTURATION DU DEAL : Type de deal, valorisation implicite, multiples estimés (EV/CA, EV/EBITDA si applicable), conditions envisagées, niveau de risque deal.
+
+§5 FACTEURS D'ATTRACTIVITÉ & RISQUES : 3 points forts pour un acquéreur stratégique ou financier. 2-3 risques identifiés (exécution, marché, dépendance, réglementaire).
+
+§6 VERDICT CROCHET : Appréciation synthétique. Profil d'acquéreur/investisseur idéal (stratégique sectoriel, fonds PE, family office, etc.). Recommandation de priorité.
+
+RÈGLES :
+- Ton : professionnel, factuel, sans superlatif creux. Style mémorandum bancaire.
+- Longueur : 400 à 600 mots minimum.
+- D-Score (0–100) : 0–30 dossier insuffisant, 31–60 correct, 61–80 solide, 81–100 exceptionnel. Pénalise fortement les informations manquantes.
+- Tags : 4 à 6 mots-clés précis (secteur, stade, géo, type, thèse).
+- Réponds UNIQUEMENT avec le JSON brut, sans markdown, sans backticks, sans texte avant ou après.`
 }
 
 export async function POST(req: NextRequest) {
@@ -72,11 +87,13 @@ export async function POST(req: NextRequest) {
   try {
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 1024,
+      max_tokens: 4096,
       messages: [{ role: "user", content: buildPrompt(opp) }],
     })
 
-    const raw = (message.content[0] as { type: string; text: string }).text.trim()
+    let raw = (message.content[0] as { type: string; text: string }).text.trim()
+    // Strip possible markdown code fences
+    raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim()
     const parsed = JSON.parse(raw) as { memo: string; d_score: number; tags: string[] }
 
     await supabase.from("opportunity_decks").upsert({

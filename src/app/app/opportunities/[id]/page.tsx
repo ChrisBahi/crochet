@@ -239,7 +239,7 @@ export default async function OpportunityDetailPage({
                     {deckStatus === "pending"
                       ? "Le moteur analyse le dossier. Le MEMO sera disponible sous peu."
                       : deckStatus === "error"
-                      ? "Une erreur est survenue lors de l'analyse. Veuillez recontacter l'équipe."
+                      ? "L'analyse a échoué. Cliquez sur « Relancer » ci-dessous pour réessayer."
                       : "Aucun MEMO disponible pour ce dossier."}
                   </p>
                 )}
@@ -323,6 +323,39 @@ export default async function OpportunityDetailPage({
 
           {/* CTA */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            {/* Relancer analyse si erreur ou pending */}
+            {(deckStatus === "error" || deckStatus === "pending") && (
+              <form action={async () => {
+                "use server"
+                const { cookies } = await import("next/headers")
+                const cookieStore = await cookies()
+                const cookieHeader = cookieStore.getAll().map((c: { name: string; value: string }) => `${c.name}=${c.value}`).join("; ")
+                const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+                await fetch(`${baseUrl}/api/qualify`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", Cookie: cookieHeader },
+                  body: JSON.stringify({ opportunity_id: id }),
+                })
+                const { revalidatePath } = await import("next/cache")
+                revalidatePath(`/app/opportunities/${id}`)
+              }}>
+                <button type="submit" style={{
+                  padding: "12px 28px",
+                  background: "#0A0A0A",
+                  color: "#FFFFFF",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                }}>
+                  Relancer l&apos;analyse
+                </button>
+              </form>
+            )}
+
             {/* Voir MEMO officiel */}
             {deckStatus === "done" && (
               <Link href={`/app/opportunities/${id}/memo`} style={{
