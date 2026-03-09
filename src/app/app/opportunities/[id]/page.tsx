@@ -223,9 +223,10 @@ export default async function OpportunityDetailPage({
                     color: "#0A0A0A",
                     lineHeight: 1.85,
                     margin: 0,
-                    whiteSpace: "pre-wrap",
                   }}>
-                    {memoText}
+                    {memoText && memoText.length > 420
+                      ? memoText.slice(0, 420).replace(/\s+\S*$/, "") + "…"
+                      : memoText}
                   </p>
                 ) : (
                   <p style={{
@@ -373,7 +374,7 @@ export default async function OpportunityDetailPage({
                 alignItems: "center",
                 gap: 8,
               }}>
-                Voir le MEMO
+                Mémo officiel →
               </Link>
             )}
 
