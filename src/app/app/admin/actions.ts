@@ -50,6 +50,21 @@ export async function resetAdmission(id: string) {
   revalidatePath("/app/admin");
 }
 
+export async function setVerificationStatus(
+  userId: string,
+  status: "unverified" | "pending" | "verified"
+) {
+  await requireAdmin();
+  const admin = createAdminClient();
+
+  await admin
+    .from("investor_profiles")
+    .update({ verification_status: status })
+    .eq("user_id", userId);
+
+  revalidatePath("/app/admin");
+}
+
 export async function runAiAnalysis(ids: string[]) {
   await requireAdmin();
   const admin = createAdminClient();

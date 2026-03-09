@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
 import { AdmissionActions } from "./admission-actions";
+import { KycActions } from "./kyc-actions";
 import { runAiAnalysis } from "./actions";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -40,10 +41,11 @@ function formatDate(iso: string) {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; view?: string }>;
 }) {
   await requireAdmin();
-  const { status: filterStatus } = await searchParams;
+  const { status: filterStatus, view } = await searchParams;
+  const isMembersView = view === "members";
 
   const admin = createAdminClient();
 
@@ -52,6 +54,10 @@ export default async function AdminPage({
     { count: pendingCount },
     { count: approvedCount },
     { count: rejectedCount },
+    { count: membersCount },
+    { count: matchesCount },
+    { count: activeRoomsCount },
+    { count: activeOppsCount },
   ] = await Promise.all([
     filterStatus
       ? admin
@@ -75,10 +81,41 @@ export default async function AdminPage({
       .from("admission_requests")
       .select("id", { count: "exact", head: true })
       .eq("status", "rejected"),
+    admin
+      .from("workspace_members")
+      .select("id", { count: "exact", head: true }),
+    admin
+      .from("opportunity_matches")
+      .select("id", { count: "exact", head: true }),
+    admin
+      .from("rooms")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["active", "negotiating"]),
+    admin
+      .from("opportunities")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "active"),
   ]);
 
   const requests = allRequests ?? [];
   const totalCount = (pendingCount ?? 0) + (approvedCount ?? 0) + (rejectedCount ?? 0);
+
+  // Membres (vue KYC)
+  let members: {
+    user_id: string;
+    name: string | null;
+    firm: string | null;
+    role: string | null;
+    verification_status: string | null;
+    email: string | null;
+  }[] = [];
+  if (isMembersView) {
+    const { data: memberProfiles } = await admin
+      .from("investor_profiles")
+      .select("user_id, name, firm, role, verification_status, email")
+      .order("name", { ascending: true });
+    members = memberProfiles ?? [];
+  }
 
   // Auto-analyse IA des candidatures sans note
   const unanalyzed = requests
@@ -142,47 +179,200 @@ export default async function AdminPage({
 
       <div style={{ borderTop: "2px solid #0A0A0A", marginBottom: 32 }} />
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 0, marginBottom: 32, borderBottom: "1px solid #E0DAD0" }}>
-        {tabs.map((tab) => {
-          const isActive = filterStatus === tab.value || (!filterStatus && tab.value === undefined);
-          return (
-            <Link
-              key={String(tab.value)}
-              href={tab.value ? `/app/admin?status=${tab.value}` : "/app/admin"}
-              style={{
-                padding: "10px 20px",
-                textDecoration: "none",
-                fontFamily: "var(--font-dm-sans), sans-serif",
-                fontSize: 12,
-                fontWeight: isActive ? 600 : 400,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: isActive ? "#0A0A0A" : "#7A746E",
-                borderBottom: isActive ? "2px solid #0A0A0A" : "2px solid transparent",
-                marginBottom: "-1px",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              {tab.label}
-              <span style={{
-                fontFamily: "var(--font-jetbrains), monospace",
-                fontSize: 11,
-                background: isActive ? "#0A0A0A" : "#E0DAD0",
-                color: isActive ? "#FFFFFF" : "#7A746E",
-                padding: "1px 6px",
-                borderRadius: 2,
-                minWidth: 20,
-                textAlign: "center",
-              }}>
-                {tab.count}
-              </span>
-            </Link>
-          );
-        })}
+      {/* Stats globales */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 40 }}>
+        {[
+          { label: "Membres actifs", value: membersCount ?? 0 },
+          { label: "Opportunités actives", value: activeOppsCount ?? 0 },
+          { label: "Matches créés", value: matchesCount ?? 0 },
+          { label: "Rooms en cours", value: activeRoomsCount ?? 0 },
+        ].map(({ label, value }) => (
+          <div key={label} style={{
+            border: "1px solid #E0DAD0",
+            padding: "16px 20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+          }}>
+            <div style={{
+              fontFamily: "var(--font-jetbrains), monospace",
+              fontSize: 28,
+              fontWeight: 700,
+              color: "#0A0A0A",
+              lineHeight: 1,
+            }}>
+              {value}
+            </div>
+            <div style={{
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 11,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "#7A746E",
+            }}>
+              {label}
+            </div>
+          </div>
+        ))}
       </div>
+
+      {/* Vue switcher */}
+      <div style={{ display: "flex", gap: 0, marginBottom: 0, borderBottom: "1px solid #E0DAD0" }}>
+        {[
+          { label: "Candidatures", href: "/app/admin", active: !isMembersView },
+          { label: "Membres", href: "/app/admin?view=members", active: isMembersView },
+        ].map(({ label, href, active }) => (
+          <Link
+            key={label}
+            href={href}
+            style={{
+              padding: "10px 20px",
+              textDecoration: "none",
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 12,
+              fontWeight: active ? 600 : 400,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: active ? "#0A0A0A" : "#7A746E",
+              borderBottom: active ? "2px solid #0A0A0A" : "2px solid transparent",
+              marginBottom: "-1px",
+            }}
+          >
+            {label}
+          </Link>
+        ))}
+      </div>
+
+      {isMembersView ? (
+        /* ——— Vue Membres (KYC) ——— */
+        <div style={{ marginTop: 32 }}>
+          {members.length === 0 ? (
+            <div style={{
+              padding: "64px 0",
+              textAlign: "center",
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 13,
+              color: "#7A746E",
+              fontStyle: "italic",
+            }}>
+              Aucun membre inscrit.
+            </div>
+          ) : (
+            <div>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr 1fr 2fr",
+                gap: 16,
+                padding: "8px 0 12px",
+                borderBottom: "1px solid #E0DAD0",
+              }}>
+                {["Membre", "Rôle", "Société", "Vérification KYC"].map((h) => (
+                  <div key={h} style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 10,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: "#7A746E",
+                  }}>
+                    {h}
+                  </div>
+                ))}
+              </div>
+              {members.map((m) => (
+                <div key={m.user_id} style={{
+                  display: "grid",
+                  gridTemplateColumns: "2fr 1fr 1fr 2fr",
+                  gap: 16,
+                  padding: "16px 0",
+                  borderBottom: "1px solid #E0DAD0",
+                  alignItems: "center",
+                }}>
+                  <div>
+                    <div style={{
+                      fontFamily: "var(--font-dm-sans), sans-serif",
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: "#0A0A0A",
+                      marginBottom: 2,
+                    }}>
+                      {m.name ?? "—"}
+                    </div>
+                    {m.email && (
+                      <div style={{
+                        fontFamily: "var(--font-dm-sans), sans-serif",
+                        fontSize: 12,
+                        color: "#7A746E",
+                      }}>
+                        {m.email}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 13,
+                    color: "#0A0A0A",
+                  }}>
+                    {m.role ?? "—"}
+                  </div>
+                  <div style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 13,
+                    color: "#0A0A0A",
+                  }}>
+                    {m.firm ?? "—"}
+                  </div>
+                  <KycActions
+                    userId={m.user_id}
+                    current={(m.verification_status ?? "unverified") as "unverified" | "pending" | "verified"}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Tabs candidatures */}
+          <div style={{ display: "flex", gap: 0, marginTop: 32, marginBottom: 32, borderBottom: "1px solid #E0DAD0" }}>
+            {tabs.map((tab) => {
+              const isActive = filterStatus === tab.value || (!filterStatus && tab.value === undefined);
+              return (
+                <Link
+                  key={String(tab.value)}
+                  href={tab.value ? `/app/admin?status=${tab.value}` : "/app/admin"}
+                  style={{
+                    padding: "10px 20px",
+                    textDecoration: "none",
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 12,
+                    fontWeight: isActive ? 600 : 400,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    color: isActive ? "#0A0A0A" : "#7A746E",
+                    borderBottom: isActive ? "2px solid #0A0A0A" : "2px solid transparent",
+                    marginBottom: "-1px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  {tab.label}
+                  <span style={{
+                    fontFamily: "var(--font-jetbrains), monospace",
+                    fontSize: 11,
+                    background: isActive ? "#0A0A0A" : "#E0DAD0",
+                    color: isActive ? "#FFFFFF" : "#7A746E",
+                    padding: "1px 6px",
+                    borderRadius: 2,
+                    minWidth: 20,
+                    textAlign: "center",
+                  }}>
+                    {tab.count}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
 
       {/* List */}
       {requests.length === 0 ? (
@@ -403,6 +593,8 @@ export default async function AdminPage({
             </div>
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   );

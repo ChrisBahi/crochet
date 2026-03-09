@@ -52,6 +52,7 @@ export async function POST(req: Request) {
   let skipped_structured = 0
   let skipped_mscore = 0
   let skipped_duplicate = 0
+  const updatedUserIds = new Set<string>()
 
   for (let i = 0; i < opportunities.length; i++) {
     for (let j = i + 1; j < opportunities.length; j++) {
@@ -131,6 +132,7 @@ export async function POST(req: Request) {
         if (!error && insertedMatch) {
           created++
           existingPairs.add(pairKey)
+          if (row.member_id) updatedUserIds.add(row.member_id)
 
           // Notify the recipient workspace owner
           if (row.workspace_id) {
@@ -154,6 +156,29 @@ export async function POST(req: Request) {
           }
         }
       }
+    }
+  }
+
+  // Mise à jour du P-Score dans workspace_members pour chaque user concerné
+  for (const userId of updatedUserIds) {
+    const { data: recent } = await supabase
+      .from("opportunity_matches")
+      .select("breakdown")
+      .eq("member_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    if (recent?.length) {
+      const avg = Math.round(
+        recent.reduce((sum, m) => {
+          const b = m.breakdown as { p_score?: number } | null
+          return sum + (b?.p_score ?? 0)
+        }, 0) / recent.length
+      )
+      await supabase
+        .from("workspace_members")
+        .update({ p_score: avg })
+        .eq("user_id", userId)
     }
   }
 
