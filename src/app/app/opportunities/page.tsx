@@ -11,7 +11,7 @@ export default async function OpportunitiesPage() {
   const { data: opportunities } = workspaceId
     ? await supabase
         .from("opportunities")
-        .select("id,title,description,sector,geo,deal_type,created_at,status")
+        .select("id,title,description,sector,geo,deal_type,created_at,status,opportunity_decks(d_score)")
         .eq("workspace_id", workspaceId)
         .order("created_at", { ascending: false })
     : { data: [] }
@@ -71,11 +71,11 @@ export default async function OpportunitiesPage() {
       {opportunities && opportunities.length > 0 && (
         <div style={{
           display: "grid",
-          gridTemplateColumns: "1fr 120px 120px 80px",
+          gridTemplateColumns: "1fr 120px 120px 80px 80px",
           padding: "8px 16px",
           marginBottom: 4,
         }}>
-          {["Dossier", "Secteur", "Géographie", "Statut"].map(h => (
+          {["Dossier", "Secteur", "Géographie", "Statut", "D-Score"].map(h => (
             <span key={h} style={{
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 10,
@@ -114,7 +114,7 @@ export default async function OpportunitiesPage() {
               href={`/app/opportunities/${o.id}`}
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 120px 120px 80px",
+                gridTemplateColumns: "1fr 120px 120px 80px 80px",
                 padding: "16px",
                 borderTop: "1px solid #E0DAD0",
                 textDecoration: "none",
@@ -168,6 +168,18 @@ export default async function OpportunitiesPage() {
                 fontWeight: o.status === "active" ? 600 : 400,
               }}>
                 {o.status ?? "draft"}
+              </span>
+              <span style={{
+                fontFamily: "var(--font-jetbrains), monospace",
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#0A0A0A",
+              }}>
+                {(() => {
+                  const decks = (o as { opportunity_decks?: { d_score?: number }[] }).opportunity_decks
+                  const d = Array.isArray(decks) ? decks[0]?.d_score : undefined
+                  return d != null ? Math.round(d) : "—"
+                })()}
               </span>
             </Link>
           ))}

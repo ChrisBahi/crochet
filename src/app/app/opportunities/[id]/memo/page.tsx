@@ -27,7 +27,7 @@ export default async function MemoPage({
 
   const { data: deck } = await supabase
     .from("opportunity_decks")
-    .select("summary, d_score, tags, status")
+    .select("summary, d_score, tags, status, created_at")
     .eq("opportunity_id", id)
     .maybeSingle()
 
@@ -35,6 +35,7 @@ export default async function MemoPage({
   const dScore: number | null = deck?.d_score ?? null
   const tags: string[] = Array.isArray(deck?.tags) ? deck.tags : []
   const status = deck?.status ?? "pending"
+  const generatedAt: string = deck?.created_at ?? new Date().toISOString()
 
   // Parse memo paragraphs into numbered sections for the official layout
   const rawParagraphs = memoText
@@ -93,8 +94,8 @@ export default async function MemoPage({
         }}>
           ← Retour au dossier
         </Link>
-        <button
-          onClick={() => window.print()}
+        <a
+          href="javascript:window.print()"
           style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
             fontSize: 11,
@@ -102,13 +103,14 @@ export default async function MemoPage({
             background: "transparent",
             border: "1px solid #3A3A3A",
             padding: "6px 16px",
-            cursor: "pointer",
             letterSpacing: "0.06em",
             textTransform: "uppercase",
+            textDecoration: "none",
+            display: "inline-block",
           }}
         >
           Imprimer / PDF
-        </button>
+        </a>
       </div>
 
       {status !== "done" ? (
@@ -144,6 +146,7 @@ export default async function MemoPage({
           metaLine={`${ref} · CONFIDENTIEL · IA · MOTEUR CROCHET`}
           reference={ref}
           date={date}
+          generatedAt={generatedAt}
           sections={sections}
         />
       )}

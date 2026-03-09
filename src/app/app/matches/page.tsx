@@ -239,28 +239,55 @@ export default async function MatchesPage({
                   {[opp?.sector, opp?.geo].filter(Boolean).join(" · ") || "—"}
                 </div>
 
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}>
-                  <span style={{
-                    fontFamily: "var(--font-dm-sans), sans-serif",
-                    fontSize: 10,
-                    color: "#7A746E",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                   }}>
-                    M-Score
-                  </span>
-                  <span style={{
-                    fontFamily: "var(--font-jetbrains), monospace",
-                    fontSize: 18,
-                    fontWeight: 700,
-                    color: "#0A0A0A",
-                  }}>
-                    {Math.round(m.fit_score ?? 0)}
-                  </span>
+                    <span style={{
+                      fontFamily: "var(--font-dm-sans), sans-serif",
+                      fontSize: 10,
+                      color: "#7A746E",
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                    }}>
+                      M-Score
+                    </span>
+                    <span style={{
+                      fontFamily: "var(--font-jetbrains), monospace",
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: "#0A0A0A",
+                    }}>
+                      {Math.round(m.fit_score ?? 0)}
+                    </span>
+                  </div>
+                  {m.breakdown?.d_score != null && (
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}>
+                      <span style={{
+                        fontFamily: "var(--font-dm-sans), sans-serif",
+                        fontSize: 10,
+                        color: "#7A746E",
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                      }}>
+                        D-Score
+                      </span>
+                      <span style={{
+                        fontFamily: "var(--font-jetbrains), monospace",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#7A746E",
+                      }}>
+                        {Math.round(m.breakdown.d_score)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </Link>
             )

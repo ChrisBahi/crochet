@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 import { createClient } from "@/lib/supabase/server"
@@ -134,10 +135,27 @@ export default async function ProfilePage() {
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 13,
               color: "#7A746E",
-              margin: 0,
+              margin: "0 0 16px",
             }}>
               {user.email}
             </p>
+            <Link
+              href="/app/profile/edit"
+              style={{
+                display: "inline-block",
+                padding: "8px 20px",
+                border: "1px solid #E0DAD0",
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "#0A0A0A",
+                textDecoration: "none",
+              }}
+            >
+              Éditer le profil
+            </Link>
           </div>
 
           {/* P-Score */}

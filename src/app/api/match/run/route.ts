@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createAdminClient as createClient } from "@/lib/supabase/admin"
 import { scoreMatch, areComplementary, structuredScore } from "@/lib/matching/scoreMatch"
+import { createNotification } from "@/lib/notifications/create"
 
 // Only call Claude when the structured pre-score is high enough
 const STRUCTURED_THRESHOLD = 30
@@ -121,10 +122,36 @@ export async function POST(req: Request) {
           continue
         }
 
-        const { error } = await supabase.from("opportunity_matches").insert(row)
-        if (!error) {
+        const { error, data: insertedMatch } = await supabase
+          .from("opportunity_matches")
+          .insert(row)
+          .select("id")
+          .single()
+
+        if (!error && insertedMatch) {
           created++
           existingPairs.add(pairKey)
+
+          // Notify the recipient workspace owner
+          if (row.workspace_id) {
+            try {
+              const { data: authUser } = await supabase.auth.admin.getUserById(
+                row.member_id ?? row.workspace_id
+              )
+              await createNotification({
+                supabase,
+                userId: row.member_id ?? row.workspace_id,
+                workspaceId: row.workspace_id,
+                type: "new_match",
+                title: "Nouveau match disponible",
+                body: `Un nouveau match avec un M-Score de ${fitScore} vient d'être identifié pour votre dossier.`,
+                link: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/app/matches?match=${insertedMatch.id}`,
+                email: authUser?.user?.email,
+              })
+            } catch (err) {
+              console.error("[match/run] notification failed:", err)
+            }
+          }
         }
       }
     }
