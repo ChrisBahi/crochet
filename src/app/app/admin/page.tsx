@@ -526,7 +526,7 @@ export default async function AdminPage({
                       fontSize: 11,
                       color: "#7A746E",
                     }}>
-                      SIREN {req.siret}
+                      Siren {req.siret}
                     </span>
                   )}
                   {req.message && (

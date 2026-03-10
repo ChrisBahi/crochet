@@ -242,7 +242,7 @@ export default function RegisterPage() {
             <div style={{ borderTop: "1px solid #E0DAD0", margin: "8px 0 28px" }} />
 
             <Field
-              label="SIREN"
+              label="Siren"
               name="siret"
               value={form.siret}
               onChange={set("siret")}
