@@ -90,7 +90,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     const supabase = createClient();
-    await supabase.from("admission_requests").insert({
+    const { error } = await supabase.from("admission_requests").insert({
       name: form.name,
       email: form.email,
       linkedin: form.linkedin || null,
@@ -101,6 +101,10 @@ export default function RegisterPage() {
       message: form.message || null,
     });
     setLoading(false);
+    if (error) {
+      alert("Erreur lors de l'envoi : " + error.message);
+      return;
+    }
     setSubmitted(true);
   }
 
