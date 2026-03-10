@@ -335,13 +335,15 @@ export default async function ProfilePage() {
         borderTop: "1px solid #E0DAD0",
         paddingTop: 20,
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-end",
         justifyContent: "space-between",
+        gap: 24,
       }}>
         <span style={{
           fontFamily: "var(--font-dm-sans), sans-serif",
           fontSize: 11,
           color: "#7A746E",
+          flex: 1,
         }}>
           Les informations de ce profil sont confidentielles et partagées uniquement dans le cadre de transactions autorisées.
         </span>
@@ -351,7 +353,6 @@ export default async function ProfilePage() {
           color: "#7A746E",
           letterSpacing: "0.06em",
           flexShrink: 0,
-          marginLeft: 24,
         }}>
           crochett.ai
         </span>
