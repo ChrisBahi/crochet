@@ -180,7 +180,7 @@ export default async function AdminPage({
       <div style={{ borderTop: "2px solid #0A0A0A", marginBottom: 32 }} />
 
       {/* Stats globales */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 40 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12, marginBottom: 40 }}>
         {[
           { label: "Membres actifs", value: membersCount ?? 0 },
           { label: "Opportunités actives", value: activeOppsCount ?? 0 },
