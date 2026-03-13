@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
+import "@fontsource/playfair-display/400.css";
+import "@fontsource/playfair-display/700.css";
+import "@fontsource/playfair-display/400-italic.css";
+import "@fontsource/dm-sans/400.css";
+import "@fontsource/dm-sans/500.css";
+import "@fontsource/jetbrains-mono/400.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Crochet",
-  description: "B2B matching platform",
+  title: "Crochet — Infrastructure privée de transactions",
+  description: "CROCHET transforme un dossier brut en signal investissable.",
 };
 
 export default function RootLayout({
@@ -12,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <body className="antialiased">
         {children}
       </body>
