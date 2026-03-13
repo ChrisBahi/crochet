@@ -31,6 +31,11 @@ export default async function NewOpportunityPage() {
 
     const title = String(formData.get("title") || "").trim()
     const description = String(formData.get("description") || "").trim()
+    const type = String(formData.get("type") || "").trim()
+    const industry = String(formData.get("industry") || "").trim()
+    const country = String(formData.get("country") || "").trim()
+    const budgetRaw = formData.get("budget")
+    const budget = budgetRaw ? Number(budgetRaw) : null
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect("/login")
@@ -45,12 +50,18 @@ export default async function NewOpportunityPage() {
     if (!workspaceId) throw new Error("No active workspace")
 
     if (!title) return { error: "Title is required" }
+    if (!type) return { error: "Type is required" }
 
     const { error } = await supabase.from("opportunities").insert({
       workspace_id: workspaceId,
       created_by: user.id,
       title,
       description,
+      type,
+      industry,
+      country,
+      budget,
+      price: budget,
     })
 
     if (error) return { error: error.message }

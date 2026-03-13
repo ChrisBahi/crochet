@@ -1,6 +1,7 @@
 "use client"
 
-import { useFormState, useFormStatus } from "react-dom"
+import { useActionState } from "react"
+import { useFormStatus } from "react-dom"
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -26,7 +27,7 @@ export function OpportunityForm({
 }: {
   action: (prevState: { error?: string | null }, formData: FormData) => Promise<{ error?: string | null }>
 }) {
-  const [state, formAction] = useFormState(action, { error: null })
+  const [state, formAction] = useActionState(action, { error: null })
 
   return (
     <form action={formAction} style={{ display: "grid", gap: 12, maxWidth: 520 }}>
@@ -43,7 +44,31 @@ export function OpportunityForm({
 
       <div style={{ display: "grid", gap: 6 }}>
         <label htmlFor="description">Description</label>
-        <textarea id="description" name="description" placeholder="Details…" rows={5} />
+        <textarea id="description" name="description" placeholder="Details…" rows={4} />
+      </div>
+
+      <div style={{ display: "grid", gap: 6 }}>
+        <label htmlFor="type">Type</label>
+        <select id="type" name="type" style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #ddd" }}>
+          <option value="">Select type…</option>
+          <option value="buyer">Buyer</option>
+          <option value="seller">Seller</option>
+        </select>
+      </div>
+
+      <div style={{ display: "grid", gap: 6 }}>
+        <label htmlFor="industry">Industry</label>
+        <input id="industry" name="industry" placeholder="e.g. SaaS, FinTech, Healthcare" />
+      </div>
+
+      <div style={{ display: "grid", gap: 6 }}>
+        <label htmlFor="country">Country</label>
+        <input id="country" name="country" placeholder="e.g. France, USA" />
+      </div>
+
+      <div style={{ display: "grid", gap: 6 }}>
+        <label htmlFor="budget">Budget / Price (€)</label>
+        <input id="budget" name="budget" type="number" min="0" placeholder="e.g. 10000" />
       </div>
 
       <SubmitButton />
