@@ -16,7 +16,7 @@ function SubmitButton() {
         cursor: pending ? "not-allowed" : "pointer",
       }}
     >
-      {pending ? "Creating…" : "Create"}
+      {pending ? "Création…" : "Créer"}
     </button>
   )
 }
@@ -37,13 +37,13 @@ export function OpportunityForm({
       ) : null}
 
       <div style={{ display: "grid", gap: 6 }}>
-        <label htmlFor="title">Title</label>
-        <input id="title" name="title" placeholder="e.g. Need a React dev" />
+        <label htmlFor="title">Titre</label>
+        <input id="title" name="title" placeholder="ex. Besoin d'un développeur React" />
       </div>
 
       <div style={{ display: "grid", gap: 6 }}>
         <label htmlFor="description">Description</label>
-        <textarea id="description" name="description" placeholder="Details…" rows={5} />
+        <textarea id="description" name="description" placeholder="Détails…" rows={5} />
       </div>
 
       <SubmitButton />

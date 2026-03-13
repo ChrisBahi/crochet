@@ -6,11 +6,11 @@ import { usePathname } from "next/navigation";
 export default function Sidebar() {
   const pathname = usePathname();
   const links = [
-    { href: "/app", label: "Dashboard" },
-    { href: "/app/opportunities", label: "Opportunities" },
-    { href: "/app/matches", label: "Matches" },
-    { href: "/app/rooms", label: "Rooms" },
-    { href: "/app/settings", label: "Settings" },
+    { href: "/app", label: "Tableau de bord" },
+    { href: "/app/opportunities", label: "Projets" },
+    { href: "/app/matches", label: "Correspondances" },
+    { href: "/app/rooms", label: "Salons" },
+    { href: "/app/settings", label: "Paramètres" },
   ];
 
   return (

@@ -60,7 +60,7 @@ export default async function NewOpportunityPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Create Opportunity" subtitle="Add a new opportunity to your workspace." />
+      <PageHeader title="Créer un projet" subtitle="Ajoutez un nouveau projet à votre espace de travail." />
 
       <UICard>
         <OpportunityForm action={createOpportunity} />

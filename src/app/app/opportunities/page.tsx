@@ -31,11 +31,11 @@ export default async function OpportunitiesPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Opportunities"
-        subtitle="Create & manage opportunities for your workspace."
+        title="Projets"
+        subtitle="Créez et gérez les projets de votre espace de travail."
         right={
           <Link href="/app/opportunities/new" style={{ padding: "10px 12px", border: "1px solid #ddd", borderRadius: 10, textDecoration: "none" }}>
-            + New
+            + Nouveau
           </Link>
         }
       />
@@ -51,7 +51,7 @@ export default async function OpportunitiesPage() {
             ))}
           </div>
         ) : (
-          <div style={{ opacity: 0.75 }}>No opportunities yet.</div>
+          <div style={{ opacity: 0.75 }}>Aucun projet pour le moment.</div>
         )}
       </UICard>
     </AppShell>

@@ -5,11 +5,11 @@ import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
 const tabs = [
-  { href: "/app", label: "Dashboard" },
-  { href: "/app/opportunities", label: "Opportunities" },
-  { href: "/app/matches", label: "Matches" },
-  { href: "/app/rooms", label: "Rooms" },
-  { href: "/app/settings", label: "Settings" },
+  { href: "/app", label: "Tableau de bord" },
+  { href: "/app/opportunities", label: "Projets" },
+  { href: "/app/matches", label: "Correspondances" },
+  { href: "/app/rooms", label: "Salons" },
+  { href: "/app/settings", label: "Paramètres" },
 ]
 
 export function AppShell({ children }: { children: React.ReactNode }) {
