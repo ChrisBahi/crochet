@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/auth/require-user"
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import { DeckStatusPoller } from "@/components/deck-status-poller"
 
 const SECTOR_LABELS: Record<string, string> = {
   sante: "Santé",
@@ -109,6 +110,9 @@ export default async function OpportunityDetailPage({
 
   return (
     <div style={{ display: "flex", background: "#FFFFFF", minHeight: "calc(100vh - 56px)" }}>
+
+      {/* Polling silencieux — s'arrête automatiquement quand status != pending */}
+      <DeckStatusPoller opportunityId={id} deckStatus={deckStatus} />
 
       {/* ── MAIN CONTENT ── */}
       <div style={{ flex: 1, overflowY: "auto" }}>
@@ -230,6 +234,40 @@ export default async function OpportunityDetailPage({
                   }}>
                     {memoText}
                   </p>
+                ) : (deckStatus === "pending" || deckStatus === "processing") ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 0" }}>
+                    <span style={{
+                      display: "inline-block",
+                      width: 16,
+                      height: 16,
+                      border: "2px solid #E0DAD0",
+                      borderTopColor: "#0A0A0A",
+                      borderRadius: "50%",
+                      animation: "crochet-spin 0.8s linear infinite",
+                      flexShrink: 0,
+                    }} />
+                    <style>{`@keyframes crochet-spin { to { transform: rotate(360deg); } }`}</style>
+                    <div>
+                      <p style={{
+                        fontFamily: "var(--font-dm-sans), sans-serif",
+                        fontSize: 13,
+                        color: "#0A0A0A",
+                        margin: "0 0 4px",
+                        fontWeight: 500,
+                      }}>
+                        Qualification en cours…
+                      </p>
+                      <p style={{
+                        fontFamily: "var(--font-dm-sans), sans-serif",
+                        fontSize: 11,
+                        color: "#7A746E",
+                        margin: 0,
+                        lineHeight: 1.6,
+                      }}>
+                        Le moteur génère le MEMO et calcule le D-Score. Cette page se met à jour automatiquement.
+                      </p>
+                    </div>
+                  </div>
                 ) : (
                   <p style={{
                     fontFamily: "var(--font-dm-sans), sans-serif",
@@ -239,9 +277,7 @@ export default async function OpportunityDetailPage({
                     margin: 0,
                     lineHeight: 1.8,
                   }}>
-                    {deckStatus === "pending"
-                      ? "Le moteur analyse le dossier. Le MEMO sera disponible sous peu."
-                      : deckStatus === "error"
+                    {deckStatus === "error"
                       ? "L'analyse a échoué. Cliquez sur « Relancer » ci-dessous pour réessayer."
                       : "Aucun MEMO disponible pour ce dossier."}
                   </p>

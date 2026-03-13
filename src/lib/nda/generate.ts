@@ -99,6 +99,6 @@ export async function generateNda(input: NdaInput): Promise<NdaResult> {
   return {
     reference: ref,
     date,
-    sections: parsed.sections,
+    sections: parsed.sections ?? [],
   }
 }

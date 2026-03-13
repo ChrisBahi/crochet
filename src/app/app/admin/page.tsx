@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { after } from "next/server";
 import Link from "next/link";
 import { AdmissionActions } from "./admission-actions";
 import { KycActions } from "./kyc-actions";
@@ -117,21 +118,14 @@ export default async function AdminPage({
     members = memberProfiles ?? [];
   }
 
-  // Auto-analyse IA des candidatures sans note
+  // Auto-analyse IA — tourne APRÈS l'envoi de la réponse, sans bloquer le rendu
   const unanalyzed = requests
     .filter((r: { ai_score: number | null }) => r.ai_score === null || r.ai_score === undefined)
     .map((r: { id: string }) => r.id);
   if (unanalyzed.length > 0) {
-    await runAiAnalysis(unanalyzed);
-    // Re-fetch après analyse (avec le même filtre de statut)
-    const query = admin
-      .from("admission_requests")
-      .select("*")
-      .order("created_at", { ascending: false });
-    const { data: refreshed } = filterStatus
-      ? await query.eq("status", filterStatus)
-      : await query;
-    if (refreshed) requests.splice(0, requests.length, ...refreshed);
+    after(async () => {
+      await runAiAnalysis(unanalyzed);
+    });
   }
 
   const tabs = [
