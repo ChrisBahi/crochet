@@ -4,6 +4,30 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+const QUESTION_LABELS: Record<string, string> = {
+  q_growth_rate: "Taux de croissance annuel (%)",
+  q_active_customers: "Nombre de clients / abonnés actifs",
+  q_revenue_type: "Nature du revenu",
+  q_runway: "Runway actuel (mois)",
+  q_main_risk: "Principal risque identifié",
+  q_cession_reason: "Motif de cession",
+  q_dependance_dirigeant: "Dépendance vis-à-vis du dirigeant",
+  q_employees: "Nombre d'employés (ETP)",
+  q_dette_bancaire: "Niveau de dette bancaire",
+  q_non_concurrence: "Clause de non-concurrence souhaitée",
+  q_debt_purpose: "Objet du financement",
+  q_repayment_capacity: "Capacité de remboursement annuelle (€)",
+  q_guarantees: "Garanties disponibles",
+  q_revenue_stability: "Stabilité du revenu",
+  q_rev_share_amount: "Part de revenu proposée au partenaire (%)",
+  q_heirs: "Héritiers souhaitant reprendre",
+  q_timeline: "Horizon de transmission",
+  q_fiscal_optim: "Optimisation fiscale planifiée",
+  q_immo_type: "Type de bien immobilier",
+  q_occupancy: "Taux d'occupation actuel (%)",
+  q_bail_duration: "Durée résiduelle du bail principal",
+}
+
 function buildPrompt(opp: Record<string, unknown>): string {
   const lines: string[] = [
     `Titre : ${opp.title ?? "—"}`,
@@ -18,6 +42,18 @@ function buildPrompt(opp: Record<string, unknown>): string {
     opp.pitch_deck_url ? `Lien deck/teaser : ${opp.pitch_deck_url}` : null,
     opp.website_url ? `Site web : ${opp.website_url}` : null,
   ].filter(Boolean) as string[]
+
+  // Include questionnaire answers if present
+  const signal = opp.signal as Record<string, unknown> | null | undefined
+  const questionnaire = signal?.questionnaire as Record<string, string> | undefined
+  if (questionnaire && Object.keys(questionnaire).length > 0) {
+    lines.push("")
+    lines.push("QUESTIONNAIRE DE QUALIFICATION :")
+    for (const [key, value] of Object.entries(questionnaire)) {
+      const label = QUESTION_LABELS[key] ?? key
+      lines.push(`${label} : ${value}`)
+    }
+  }
 
   return `Tu es le moteur de qualification CROCHET, expert en M&A, private equity et capital-investissement. Analyse ce dossier et rédige un MÉMORANDUM DE QUALIFICATION professionnel, dense et analytique.
 

@@ -3,6 +3,50 @@ import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 
+type DeckRow = { d_score?: number | null; status?: string | null }
+type MatchRow = { id: string }
+type RoomRow = { id: string }
+
+type OppRow = {
+  id: string
+  title: string
+  description?: string | null
+  sector?: string | null
+  geo?: string | null
+  deal_type?: string | null
+  status?: string | null
+  opportunity_decks?: DeckRow[] | null
+  opportunity_matches?: MatchRow[] | null
+  rooms?: RoomRow[] | null
+}
+
+type PipelineStatus = {
+  label: string
+  color: string
+  fontWeight: number
+  dot?: boolean
+}
+
+function getPipelineStatus(o: OppRow): PipelineStatus {
+  const deckStatus = Array.isArray(o.opportunity_decks)
+    ? o.opportunity_decks[0]?.status
+    : undefined
+  const hasMatches = (o.opportunity_matches?.length ?? 0) > 0
+  const hasRoom = (o.rooms?.length ?? 0) > 0
+
+  if (hasRoom)
+    return { label: "ROOM OPEN", color: "#0A0A0A", fontWeight: 700 }
+  if (hasMatches)
+    return { label: "MATCHED", color: "#1a7f37", fontWeight: 600 }
+  if (deckStatus === "done")
+    return { label: "QUALIFIED", color: "#0A0A0A", fontWeight: 500 }
+  if (deckStatus === "processing" || deckStatus === "pending")
+    return { label: "ANALYZING", color: "#B45309", fontWeight: 500, dot: true }
+  if (deckStatus === "error")
+    return { label: "ERROR", color: "#b02a37", fontWeight: 400 }
+  return { label: "DRAFT", color: "#7A746E", fontWeight: 400 }
+}
+
 export default async function OpportunitiesPage() {
   await requireUser()
   const workspaceId = await requireActiveWorkspaceId()
@@ -11,7 +55,7 @@ export default async function OpportunitiesPage() {
   const { data: opportunities } = workspaceId
     ? await supabase
         .from("opportunities")
-        .select("id,title,description,sector,geo,deal_type,created_at,status,opportunity_decks(d_score)")
+        .select("id,title,description,sector,geo,deal_type,status,opportunity_decks(d_score,status),opportunity_matches(id),rooms(id)")
         .eq("workspace_id", workspaceId)
         .order("created_at", { ascending: false })
     : { data: [] }
@@ -71,11 +115,11 @@ export default async function OpportunitiesPage() {
       {opportunities && opportunities.length > 0 && (
         <div style={{
           display: "grid",
-          gridTemplateColumns: "1fr 120px 120px 80px 80px",
+          gridTemplateColumns: "1fr 120px 120px 130px 80px",
           padding: "8px 16px",
           marginBottom: 4,
         }}>
-          {["Dossier", "Secteur", "Géographie", "Statut", "D-Score"].map(h => (
+          {["Dossier", "Secteur", "Géographie", "Pipeline", "D-Score"].map(h => (
             <span key={h} style={{
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 10,
@@ -108,84 +152,110 @@ export default async function OpportunitiesPage() {
         </div>
       ) : (
         <div>
-          {opportunities.map((o) => (
-            <Link
-              key={o.id}
-              href={`/app/opportunities/${o.id}`}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 120px 120px 80px 80px",
-                padding: "16px",
-                borderTop: "1px solid #E0DAD0",
-                textDecoration: "none",
-                alignItems: "center",
-              }}
-            >
-              <div>
-                <div style={{
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "#0A0A0A",
-                  marginBottom: 3,
-                }}>
-                  {o.title}
-                </div>
-                {o.description && (
+          {(opportunities as OppRow[]).map((o) => {
+            const pipeline = getPipelineStatus(o)
+            const decks = o.opportunity_decks
+            const d = Array.isArray(decks) ? decks[0]?.d_score : undefined
+            const dScore = d != null ? Math.round(d) : null
+
+            return (
+              <Link
+                key={o.id}
+                href={`/app/opportunities/${o.id}`}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 120px 120px 130px 80px",
+                  padding: "16px",
+                  borderTop: "1px solid #E0DAD0",
+                  textDecoration: "none",
+                  alignItems: "center",
+                }}
+              >
+                <div>
                   <div style={{
                     fontFamily: "var(--font-dm-sans), sans-serif",
-                    fontSize: 12,
-                    color: "#7A746E",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    maxWidth: 400,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "#0A0A0A",
+                    marginBottom: 3,
                   }}>
-                    {o.description}
+                    {o.title}
                   </div>
-                )}
-              </div>
-              <span style={{
-                fontFamily: "var(--font-dm-sans), sans-serif",
-                fontSize: 12,
-                color: "#7A746E",
-              }}>
-                {o.sector ?? "—"}
-              </span>
-              <span style={{
-                fontFamily: "var(--font-dm-sans), sans-serif",
-                fontSize: 12,
-                color: "#7A746E",
-              }}>
-                {o.geo ?? "—"}
-              </span>
-              <span style={{
-                fontFamily: "var(--font-dm-sans), sans-serif",
-                fontSize: 10,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: o.status === "active" ? "#0A0A0A" : "#7A746E",
-                fontWeight: o.status === "active" ? 600 : 400,
-              }}>
-                {o.status ?? "draft"}
-              </span>
-              <span style={{
-                fontFamily: "var(--font-jetbrains), monospace",
-                fontSize: 14,
-                fontWeight: 700,
-                color: "#0A0A0A",
-              }}>
-                {(() => {
-                  const decks = (o as { opportunity_decks?: { d_score?: number }[] }).opportunity_decks
-                  const d = Array.isArray(decks) ? decks[0]?.d_score : undefined
-                  return d != null ? Math.round(d) : "—"
-                })()}
-              </span>
-            </Link>
-          ))}
+                  {o.description && (
+                    <div style={{
+                      fontFamily: "var(--font-dm-sans), sans-serif",
+                      fontSize: 12,
+                      color: "#7A746E",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: 400,
+                    }}>
+                      {o.description}
+                    </div>
+                  )}
+                </div>
+                <span style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 12,
+                  color: "#7A746E",
+                }}>
+                  {o.sector ?? "—"}
+                </span>
+                <span style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 12,
+                  color: "#7A746E",
+                }}>
+                  {o.geo ?? "—"}
+                </span>
+                <span style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 10,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: pipeline.color,
+                  fontWeight: pipeline.fontWeight,
+                }}>
+                  {pipeline.dot && (
+                    <span style={{
+                      display: "inline-block",
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: pipeline.color,
+                      flexShrink: 0,
+                      animation: "crochet-pulse 1.4s ease-in-out infinite",
+                    }} />
+                  )}
+                  {pipeline.label}
+                </span>
+                <span style={{
+                  fontFamily: "var(--font-jetbrains), monospace",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: dScore !== null
+                    ? (dScore >= 80 ? "#1a7f37" : dScore >= 60 ? "#0A0A0A" : "#7A746E")
+                    : "#C8C2B8",
+                }}>
+                  {dScore !== null ? dScore : "—"}
+                </span>
+              </Link>
+            )
+          })}
           <div style={{ borderTop: "1px solid #E0DAD0" }} />
         </div>
       )}
+
+      <style>{`
+        @keyframes crochet-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
 
     </div>
   )

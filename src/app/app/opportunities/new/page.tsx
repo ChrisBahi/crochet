@@ -85,6 +85,20 @@ export default async function NewOpportunityPage() {
     const pitchDeckUrl = links["pitch_deck_url"] ?? null
     const websiteUrl = links["website_url"] ?? null
 
+    // Collect questionnaire answers
+    const questionnaireFields = [
+      "q_growth_rate", "q_active_customers", "q_revenue_type", "q_runway",
+      "q_main_risk", "q_cession_reason", "q_dependance_dirigeant", "q_employees",
+      "q_dette_bancaire", "q_non_concurrence", "q_debt_purpose", "q_repayment_capacity",
+      "q_guarantees", "q_revenue_stability", "q_rev_share_amount", "q_heirs",
+      "q_timeline", "q_fiscal_optim", "q_immo_type", "q_occupancy", "q_bail_duration",
+    ]
+    const questionnaire: Record<string, string> = {}
+    for (const field of questionnaireFields) {
+      const val = String(formData.get(field) || "").trim()
+      if (val) questionnaire[field] = val
+    }
+
     const { data: opp, error } = await supabase
       .from("opportunities")
       .insert({
@@ -101,6 +115,7 @@ export default async function NewOpportunityPage() {
         revenue,
         pitch_deck_url: pitchDeckUrl,
         website_url: websiteUrl,
+        signal: Object.keys(questionnaire).length > 0 ? { questionnaire } : null,
       })
       .select("id")
       .single()

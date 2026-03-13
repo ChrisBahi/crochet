@@ -44,6 +44,219 @@ const sectionTitle: React.CSSProperties = {
   borderBottom: "1px solid #E0DAD0",
 }
 
+// ── Questionnaire de qualification par type de deal ──────────────
+type QuestionField = {
+  name: string
+  label: string
+  type: "text" | "select" | "number"
+  options?: { value: string; label: string }[]
+  placeholder?: string
+}
+
+const QUESTIONNAIRE: Record<string, QuestionField[]> = {
+  equity: [
+    {
+      name: "q_growth_rate",
+      label: "Taux de croissance annuel sur les 12 derniers mois (%)",
+      type: "number",
+      placeholder: "ex. 45",
+    },
+    {
+      name: "q_active_customers",
+      label: "Nombre de clients ou abonnés actifs",
+      type: "number",
+      placeholder: "ex. 120",
+    },
+    {
+      name: "q_revenue_type",
+      label: "Nature du revenu",
+      type: "select",
+      options: [
+        { value: "arr", label: "Majoritairement récurrent (ARR / MRR)" },
+        { value: "mixed", label: "Mixte (récurrent + one-time)" },
+        { value: "project", label: "Majoritairement projet / one-time" },
+      ],
+    },
+    {
+      name: "q_runway",
+      label: "Runway actuel (mois)",
+      type: "number",
+      placeholder: "ex. 18",
+    },
+    {
+      name: "q_main_risk",
+      label: "Principal risque identifié par l'équipe",
+      type: "text",
+      placeholder: "ex. dépendance client, concurrence, réglementation…",
+    },
+  ],
+  cession: [
+    {
+      name: "q_cession_reason",
+      label: "Motif de cession",
+      type: "select",
+      options: [
+        { value: "retraite", label: "Retraite / transmission familiale" },
+        { value: "reorientation", label: "Réorientation stratégique du dirigeant" },
+        { value: "croissance", label: "Apport de capitaux pour accélérer" },
+        { value: "autre", label: "Autre" },
+      ],
+    },
+    {
+      name: "q_dependance_dirigeant",
+      label: "Dépendance de l'entreprise vis-à-vis du dirigeant",
+      type: "select",
+      options: [
+        { value: "faible", label: "Faible — équipe et process autonomes" },
+        { value: "moderee", label: "Modérée — quelques fonctions clés" },
+        { value: "forte", label: "Forte — dirigeant central dans l'opérationnel" },
+      ],
+    },
+    {
+      name: "q_employees",
+      label: "Nombre d'employés (ETP)",
+      type: "number",
+      placeholder: "ex. 25",
+    },
+    {
+      name: "q_dette_bancaire",
+      label: "Niveau de dette bancaire existante",
+      type: "select",
+      options: [
+        { value: "aucune", label: "Aucune" },
+        { value: "moderee", label: "Modérée (< 30 % de la valorisation)" },
+        { value: "significative", label: "Significative (> 30 % de la valorisation)" },
+      ],
+    },
+    {
+      name: "q_non_concurrence",
+      label: "Clause de non-concurrence souhaitée",
+      type: "select",
+      options: [
+        { value: "oui", label: "Oui" },
+        { value: "non", label: "Non" },
+        { value: "negociable", label: "Négociable" },
+      ],
+    },
+  ],
+  debt: [
+    {
+      name: "q_debt_purpose",
+      label: "Objet du financement",
+      type: "select",
+      options: [
+        { value: "bfr", label: "Besoin en fonds de roulement" },
+        { value: "investissement", label: "Investissement (équipement, immobilier)" },
+        { value: "croissance", label: "Croissance (commercial, recrutement)" },
+        { value: "acquisition", label: "Acquisition d'entreprise" },
+      ],
+    },
+    {
+      name: "q_repayment_capacity",
+      label: "Capacité de remboursement annuelle estimée (€)",
+      type: "number",
+      placeholder: "ex. 200000",
+    },
+    {
+      name: "q_guarantees",
+      label: "Garanties disponibles",
+      type: "select",
+      options: [
+        { value: "caution_personnelle", label: "Caution personnelle du dirigeant" },
+        { value: "actifs", label: "Actifs immobiliers / matériels" },
+        { value: "bpifrance", label: "Garantie BPI France / publique" },
+        { value: "aucune", label: "Aucune garantie spécifique" },
+      ],
+    },
+  ],
+  "revenue-share": [
+    {
+      name: "q_revenue_stability",
+      label: "Stabilité du revenu",
+      type: "select",
+      options: [
+        { value: "tres_stable", label: "Très stable — contrats long terme" },
+        { value: "stable", label: "Stable — revenus réguliers" },
+        { value: "variable", label: "Variable — saisonnier ou projet" },
+      ],
+    },
+    {
+      name: "q_growth_rate",
+      label: "Taux de croissance annuel (12 derniers mois, %)",
+      type: "number",
+      placeholder: "ex. 30",
+    },
+    {
+      name: "q_rev_share_amount",
+      label: "Part de revenu proposée au partenaire (%)",
+      type: "number",
+      placeholder: "ex. 15",
+    },
+  ],
+  succession: [
+    {
+      name: "q_heirs",
+      label: "Présence d'héritiers souhaitant reprendre l'activité",
+      type: "select",
+      options: [
+        { value: "oui", label: "Oui" },
+        { value: "non", label: "Non" },
+        { value: "partiel", label: "Partiellement" },
+      ],
+    },
+    {
+      name: "q_timeline",
+      label: "Horizon de transmission souhaité",
+      type: "select",
+      options: [
+        { value: "moins_1an", label: "Moins d'1 an" },
+        { value: "1_3ans", label: "1 à 3 ans" },
+        { value: "3_5ans", label: "3 à 5 ans" },
+      ],
+    },
+    {
+      name: "q_fiscal_optim",
+      label: "Optimisation fiscale déjà planifiée",
+      type: "select",
+      options: [
+        { value: "oui", label: "Oui (avec notaire / avocat)" },
+        { value: "en_cours", label: "En cours" },
+        { value: "non", label: "Non" },
+      ],
+    },
+  ],
+  immobilier: [
+    {
+      name: "q_immo_type",
+      label: "Type de bien",
+      type: "select",
+      options: [
+        { value: "bureau", label: "Bureaux / locaux commerciaux" },
+        { value: "industriel", label: "Industriel / entrepôt" },
+        { value: "mixte", label: "Mixte (commerce + logement)" },
+        { value: "terrain", label: "Terrain / promotion" },
+      ],
+    },
+    {
+      name: "q_occupancy",
+      label: "Taux d'occupation actuel (%)",
+      type: "number",
+      placeholder: "ex. 85",
+    },
+    {
+      name: "q_bail_duration",
+      label: "Durée résiduelle du bail principal",
+      type: "select",
+      options: [
+        { value: "moins_3ans", label: "Moins de 3 ans" },
+        { value: "3_6ans", label: "3 à 6 ans" },
+        { value: "plus_6ans", label: "Plus de 6 ans" },
+        { value: "aucun", label: "Vacant / sans bail" },
+      ],
+    },
+  ],
+}
+
 // ── Deal-type specific doc fields ────────────────────────────────
 const DOC_FIELDS: Record<string, { name: string; label: string; placeholder: string }[]> = {
   cession: [
@@ -591,6 +804,58 @@ export function OpportunityForm({
           <input id="website_url" name="website_url" type="url" placeholder="https://…" style={inputStyle} />
         </Field>
       </div>
+
+      {/* ── Section 5 : Questionnaire de qualification ── */}
+      {dealType && QUESTIONNAIRE[dealType] && (
+        <div style={{ display: "grid", gap: 16 }}>
+          <div style={sectionTitle}>
+            Qualification renforcée
+            <span style={{
+              marginLeft: 10,
+              fontStyle: "italic",
+              fontWeight: 400,
+              letterSpacing: 0,
+              textTransform: "none",
+              color: "#9A948E",
+            }}>
+              — {QUESTIONNAIRE[dealType].length} questions · améliore la précision du D-Score
+            </span>
+          </div>
+
+          <div style={{
+            padding: "10px 14px",
+            background: "#F5F0E8",
+            border: "1px solid #EDE8DF",
+            fontFamily: "var(--font-dm-sans), sans-serif",
+            fontSize: 12,
+            color: "#7A746E",
+            lineHeight: 1.6,
+          }}>
+            Ces informations permettent au moteur de qualifier votre dossier avec précision et d&apos;améliorer le D-Score.
+          </div>
+
+          {QUESTIONNAIRE[dealType].map((q) => (
+            <Field key={q.name} name={q.name} labelText={q.label}>
+              {q.type === "select" ? (
+                <select id={q.name} name={q.name} style={selectStyle}>
+                  <option value="">— Sélectionner —</option>
+                  {q.options?.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  id={q.name}
+                  name={q.name}
+                  type={q.type === "number" ? "number" : "text"}
+                  placeholder={q.placeholder}
+                  style={inputStyle}
+                />
+              )}
+            </Field>
+          ))}
+        </div>
+      )}
 
       {/* ── Notice IA ── */}
       <div style={{
