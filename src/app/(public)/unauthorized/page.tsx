@@ -144,13 +144,14 @@ export default function UnauthorizedPage() {
                 }}>
                   Contact
                 </div>
-                <div style={{
+                <a href="mailto:contact@crochett.ai" style={{
                   fontFamily: "var(--font-dm-sans), sans-serif",
                   fontSize: 12,
                   color: "#7A746E",
+                  textDecoration: "none",
                 }}>
                   contact@crochett.ai
-                </div>
+                </a>
               </div>
             </div>
           </div>
