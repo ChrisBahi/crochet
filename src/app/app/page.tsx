@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
+import { redirect } from "next/navigation"
 import Link from "next/link"
 
 function Stat({ value, label }: { value: number | string; label: string }) {
@@ -38,6 +39,18 @@ export default async function DashboardPage() {
   const user = await requireUser()
   const wsId = await requireActiveWorkspaceId()
   const supabase = await createClient()
+
+  // Onboarding : redirect to profile if not yet filled
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map(e => e.trim()).filter(Boolean)
+  const isAdmin = adminEmails.includes(user.email ?? "")
+  if (!isAdmin) {
+    const { data: profile } = await supabase
+      .from("investor_profiles")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle()
+    if (!profile) redirect("/app/profile/edit?onboarding=1")
+  }
 
   const [
     { count: oppCount },
