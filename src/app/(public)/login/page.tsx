@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import LoginButton from "./login-button"
 import Link from "next/link"
 
