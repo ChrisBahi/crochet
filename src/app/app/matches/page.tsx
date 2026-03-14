@@ -27,21 +27,6 @@ type Opportunity = {
   stage?: string
 }
 
-type InvestorProfile = {
-  name?: string | null
-  firm?: string | null
-  role?: string | null
-  ticket_min?: number | null
-  ticket_max?: number | null
-  sectors?: string[] | null
-  geos?: string[] | null
-  p_score?: number | null
-}
-
-const SECTOR_LABELS: Record<string, string> = {
-  sante: "Santé", tech: "Tech", energie: "Énergie", finance: "Finance",
-  industrie: "Industrie", immobilier: "Immo", education: "Éducation", consumer: "Consumer",
-}
 
 function scoreColor(v: number): string {
   if (v >= 70) return "#22c55e"
@@ -110,26 +95,17 @@ export default async function MatchesPage({
 }: {
   searchParams: Promise<{ match?: string }>
 }) {
-  const user = await requireUser()
+  await requireUser()
   const wsId = await requireActiveWorkspaceId()
   const params = await searchParams
 
   const supabase = await createClient()
 
-  // Fetch matches + investor profile in parallel
-  const [matchesResult, profileResult, memberResult] = await Promise.all([
-    wsId
-      ? supabase.from("opportunity_matches").select("*").eq("workspace_id", wsId).order("ranking_score", { ascending: false })
-      : Promise.resolve({ data: [] }),
-    supabase.from("investor_profiles").select("name,firm,role,ticket_min,ticket_max,sectors,geos,p_score").eq("user_id", user.id).maybeSingle(),
-    wsId
-      ? supabase.from("workspace_members").select("p_score").eq("workspace_id", wsId).eq("user_id", user.id).maybeSingle()
-      : Promise.resolve({ data: null }),
-  ])
+  const matchesResult = wsId
+    ? await supabase.from("opportunity_matches").select("*").eq("workspace_id", wsId).order("ranking_score", { ascending: false })
+    : { data: [] }
 
   const typedMatches: Match[] = matchesResult.data ?? []
-  const profile: InvestorProfile = profileResult.data ?? {}
-  const pScore: number | null = (memberResult.data as { p_score?: number | null } | null)?.p_score ?? profile.p_score ?? null
 
   const opportunityIds = [...new Set(typedMatches.map(m => m.opportunity_id).filter(Boolean))]
 
@@ -145,11 +121,6 @@ export default async function MatchesPage({
 
   const empty = typedMatches.length === 0
 
-  // Stats for investor panel
-  const activeRooms = typedMatches.filter(m => m.status === "room_active" || m.status === "closing").length
-  const pendingIntros = typedMatches.filter(m => m.status === "intro_requested").length
-  const readyMatches = typedMatches.filter(m => !m.status || m.status === "pending" || m.status === "ready").length
-
   return (
     <div style={{
       display: "flex",
@@ -157,7 +128,7 @@ export default async function MatchesPage({
       background: "#FFFFFF",
     }}>
 
-      {/* ── LEFT PANEL — Investor profile + Match list ── */}
+      {/* ── LEFT PANEL — Match list ── */}
       <aside style={{
         width: 300,
         flexShrink: 0,
@@ -166,156 +137,6 @@ export default async function MatchesPage({
         display: "flex",
         flexDirection: "column",
       }}>
-
-        {/* Investor profile panel */}
-        <div style={{
-          padding: "20px 24px",
-          borderBottom: "2px solid #0A0A0A",
-          background: "#F5F0E8",
-        }}>
-          <div style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            marginBottom: 12,
-          }}>
-            <div>
-              <div style={{
-                fontFamily: "var(--font-playfair), Georgia, serif",
-                fontStyle: "italic",
-                fontSize: 15,
-                fontWeight: 700,
-                color: "#0A0A0A",
-                lineHeight: 1.2,
-                marginBottom: 2,
-              }}>
-                {profile.name ?? profile.firm ?? "Mon profil"}
-              </div>
-              {profile.role && (
-                <div style={{
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 10,
-                  color: "#7A746E",
-                  letterSpacing: "0.04em",
-                }}>
-                  {profile.role}{profile.firm ? ` · ${profile.firm}` : ""}
-                </div>
-              )}
-            </div>
-            <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <div style={{
-                fontFamily: "var(--font-jetbrains), monospace",
-                fontSize: 22,
-                fontWeight: 700,
-                color: pScore !== null ? scoreColor(pScore) : "#7A746E",
-                lineHeight: 1,
-                letterSpacing: "-0.02em",
-              }}>
-                {pScore !== null ? Math.round(pScore) : "—"}
-              </div>
-              <div style={{
-                fontFamily: "var(--font-dm-sans), sans-serif",
-                fontSize: 9,
-                color: "#7A746E",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                marginTop: 3,
-              }}>
-                P-Score
-              </div>
-            </div>
-          </div>
-
-          {/* Ticket range */}
-          {(profile.ticket_min || profile.ticket_max) && (
-            <div style={{
-              fontFamily: "var(--font-jetbrains), monospace",
-              fontSize: 11,
-              color: "#0A0A0A",
-              marginBottom: 10,
-              letterSpacing: "-0.01em",
-            }}>
-              {profile.ticket_min ? `${(profile.ticket_min / 1000).toFixed(0)}k` : "—"}
-              {" — "}
-              {profile.ticket_max ? `${(profile.ticket_max / 1000).toFixed(0)}k €` : "—"}
-            </div>
-          )}
-
-          {/* Sectors */}
-          {profile.sectors && profile.sectors.length > 0 && (
-            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 10 }}>
-              {profile.sectors.slice(0, 4).map(s => (
-                <span key={s} style={{
-                  padding: "2px 7px",
-                  border: "1px solid #D6D0C8",
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 9,
-                  color: "#7A746E",
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  background: "#FFFFFF",
-                }}>
-                  {SECTOR_LABELS[s] ?? s}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Activity stats */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: 1,
-            background: "#D6D0C8",
-            marginTop: 4,
-          }}>
-            {[
-              { label: "Matches", value: readyMatches },
-              { label: "En cours", value: pendingIntros },
-              { label: "Rooms", value: activeRooms },
-            ].map(({ label, value }) => (
-              <div key={label} style={{
-                background: "#FFFFFF",
-                padding: "8px 6px",
-                textAlign: "center",
-              }}>
-                <div style={{
-                  fontFamily: "var(--font-jetbrains), monospace",
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: "#0A0A0A",
-                  lineHeight: 1,
-                }}>
-                  {value}
-                </div>
-                <div style={{
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 8,
-                  color: "#7A746E",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  marginTop: 3,
-                }}>
-                  {label}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <Link href="/app/profile/edit" style={{
-            display: "block",
-            marginTop: 10,
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 9,
-            color: "#7A746E",
-            textDecoration: "none",
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            textAlign: "right",
-          }}>
-            Éditer le profil →
-          </Link>
-        </div>
 
         {/* Panel header */}
         <div style={{
