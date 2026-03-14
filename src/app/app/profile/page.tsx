@@ -23,6 +23,12 @@ const GEO_LABELS: Record<string, string> = {
   global: "Global",
 }
 
+function scoreColor(v: number): string {
+  if (v >= 70) return "#22c55e"
+  if (v >= 55) return "#f59e0b"
+  return "#7A746E"
+}
+
 function Tag({ label }: { label: string }) {
   return (
     <span style={{
@@ -66,22 +72,27 @@ export default async function ProfilePage() {
   const wsId = await requireActiveWorkspaceId()
   const supabase = await createClient()
 
-  const { data: profile } = await supabase
-    .from("investor_profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle()
+  const [profileResult, memberResult, matchesResult] = await Promise.all([
+    supabase.from("investor_profiles").select("*").eq("user_id", user.id).maybeSingle(),
+    wsId
+      ? supabase.from("workspace_members").select("role, p_score").eq("workspace_id", wsId).eq("user_id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    wsId
+      ? supabase.from("opportunity_matches").select("id,status,fit_score").eq("workspace_id", wsId)
+      : Promise.resolve({ data: [] }),
+  ])
 
-  const { data: member } = wsId
-    ? await supabase
-        .from("workspace_members")
-        .select("role, p_score")
-        .eq("workspace_id", wsId)
-        .eq("user_id", user.id)
-        .maybeSingle()
-    : { data: null }
+  const profile = profileResult.data
+  const member = memberResult.data as { role?: string; p_score?: number | null } | null
+  const matchList = (matchesResult.data ?? []) as { id: string; status?: string | null; fit_score?: number | null }[]
 
   const pScore = member?.p_score ?? profile?.p_score ?? null
+
+  const readyCount = matchList.filter(m => !m.status || m.status === "pending" || m.status === "ready").length
+  const introCount = matchList.filter(m => m.status === "intro_requested").length
+  const roomCount = matchList.filter(m => m.status === "room_active" || m.status === "closing").length
+  const totalMatches = matchList.length
+  const bestMScore = matchList.length > 0 ? Math.max(...matchList.map(m => m.fit_score ?? 0)) : null
   const sectors: string[] = profile?.sectors ?? []
   const geos: string[] = profile?.geos ?? []
   const verificationStatus = profile?.verification_status ?? "unverified"
@@ -191,6 +202,95 @@ export default async function ProfilePage() {
 
       {/* Thick rule */}
       <div style={{ borderTop: "2px solid #0A0A0A", marginBottom: 40 }} />
+
+      {/* Deal flow actif */}
+      <Section title="Activité investisseur">
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 1,
+          background: "#E0DAD0",
+          marginBottom: 16,
+        }}>
+          {[
+            { label: "Total matches", value: totalMatches, color: "#0A0A0A" },
+            { label: "Prêts", value: readyCount, color: "#0A0A0A" },
+            { label: "Intro en cours", value: introCount, color: introCount > 0 ? "#1D4ED8" : "#0A0A0A" },
+            { label: "Rooms actives", value: roomCount, color: roomCount > 0 ? "#22c55e" : "#0A0A0A" },
+          ].map(({ label, value, color }) => (
+            <div key={label} style={{ background: "#FFFFFF", padding: "16px 12px", textAlign: "center" }}>
+              <div style={{
+                fontFamily: "var(--font-jetbrains), monospace",
+                fontSize: 28,
+                fontWeight: 700,
+                color,
+                lineHeight: 1,
+                letterSpacing: "-0.02em",
+              }}>
+                {value}
+              </div>
+              <div style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 9,
+                color: "#7A746E",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                marginTop: 6,
+              }}>
+                {label}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {bestMScore !== null && bestMScore > 0 && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 16px",
+            background: "#F5F0E8",
+            border: "1px solid #EDE8DF",
+            marginBottom: 12,
+          }}>
+            <span style={{
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 12,
+              color: "#7A746E",
+              letterSpacing: "0.04em",
+            }}>
+              Meilleur M-Score actif
+            </span>
+            <span style={{
+              fontFamily: "var(--font-jetbrains), monospace",
+              fontSize: 22,
+              fontWeight: 700,
+              color: scoreColor(Math.round(bestMScore)),
+              letterSpacing: "-0.02em",
+            }}>
+              {Math.round(bestMScore)}
+            </span>
+          </div>
+        )}
+
+        <Link
+          href="/app/matches"
+          style={{
+            display: "inline-block",
+            padding: "10px 24px",
+            background: "#0A0A0A",
+            color: "#FFFFFF",
+            textDecoration: "none",
+            fontFamily: "var(--font-dm-sans), sans-serif",
+            fontSize: 12,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          Voir le deal flow →
+        </Link>
+      </Section>
 
       {/* Verification */}
       <Section title="Statut de vérification">

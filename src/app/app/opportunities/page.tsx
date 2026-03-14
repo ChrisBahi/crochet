@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 
 type DeckRow = { d_score?: number | null; status?: string | null }
-type MatchRow = { id: string }
+type MatchRow = { id: string; status?: string | null; fit_score?: number | null }
 type RoomRow = { id: string }
 
 type OppRow = {
@@ -31,11 +31,15 @@ function getPipelineStatus(o: OppRow): PipelineStatus {
   const deckStatus = Array.isArray(o.opportunity_decks)
     ? o.opportunity_decks[0]?.status
     : undefined
-  const hasMatches = (o.opportunity_matches?.length ?? 0) > 0
+  const matches = Array.isArray(o.opportunity_matches) ? o.opportunity_matches : []
   const hasRoom = (o.rooms?.length ?? 0) > 0
+  const hasIntro = matches.some(m => m.status === "intro_requested")
+  const hasMatches = matches.length > 0
 
   if (hasRoom)
     return { label: "ROOM OPEN", color: "#0A0A0A", fontWeight: 700 }
+  if (hasIntro)
+    return { label: "INTRO", color: "#1D4ED8", fontWeight: 600 }
   if (hasMatches)
     return { label: "MATCHED", color: "#1a7f37", fontWeight: 600 }
   if (deckStatus === "done")
@@ -47,6 +51,12 @@ function getPipelineStatus(o: OppRow): PipelineStatus {
   return { label: "DRAFT", color: "#7A746E", fontWeight: 400 }
 }
 
+function mScoreColor(v: number): string {
+  if (v >= 70) return "#1a7f37"
+  if (v >= 55) return "#B45309"
+  return "#7A746E"
+}
+
 export default async function OpportunitiesPage() {
   await requireUser()
   const workspaceId = await requireActiveWorkspaceId()
@@ -55,7 +65,7 @@ export default async function OpportunitiesPage() {
   const { data: opportunities } = workspaceId
     ? await supabase
         .from("opportunities")
-        .select("id,title,description,sector,geo,deal_type,status,opportunity_decks(d_score,status),opportunity_matches(id),rooms(id)")
+        .select("id,title,description,sector,geo,deal_type,status,opportunity_decks(d_score,status),opportunity_matches(id,status,fit_score),rooms(id)")
         .eq("workspace_id", workspaceId)
         .order("created_at", { ascending: false })
     : { data: [] }
@@ -115,11 +125,11 @@ export default async function OpportunitiesPage() {
       {opportunities && opportunities.length > 0 && (
         <div style={{
           display: "grid",
-          gridTemplateColumns: "1fr 120px 120px 130px 80px",
+          gridTemplateColumns: "1fr 110px 110px 130px 64px 64px",
           padding: "8px 16px",
           marginBottom: 4,
         }}>
-          {["Dossier", "Secteur", "Géographie", "Pipeline", "D-Score"].map(h => (
+          {["Dossier", "Secteur", "Géographie", "Pipeline", "D-Sc.", "M-Sc."].map(h => (
             <span key={h} style={{
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 10,
@@ -157,6 +167,9 @@ export default async function OpportunitiesPage() {
             const decks = o.opportunity_decks
             const d = Array.isArray(decks) ? decks[0]?.d_score : undefined
             const dScore = d != null ? Math.round(d) : null
+            const matchList = Array.isArray(o.opportunity_matches) ? o.opportunity_matches : []
+            const bestFit = matchList.length > 0 ? Math.max(...matchList.map(m => m.fit_score ?? 0)) : null
+            const mScore = bestFit !== null && bestFit > 0 ? Math.round(bestFit) : null
 
             return (
               <Link
@@ -164,7 +177,7 @@ export default async function OpportunitiesPage() {
                 href={`/app/opportunities/${o.id}`}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 120px 120px 130px 80px",
+                  gridTemplateColumns: "1fr 110px 110px 130px 64px 64px",
                   padding: "16px",
                   borderTop: "1px solid #E0DAD0",
                   textDecoration: "none",
@@ -242,6 +255,14 @@ export default async function OpportunitiesPage() {
                     : "#C8C2B8",
                 }}>
                   {dScore !== null ? dScore : "—"}
+                </span>
+                <span style={{
+                  fontFamily: "var(--font-jetbrains), monospace",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: mScore !== null ? mScoreColor(mScore) : "#C8C2B8",
+                }}>
+                  {mScore !== null ? mScore : "—"}
                 </span>
               </Link>
             )
