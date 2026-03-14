@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  let response = NextResponse.redirect(new URL("/app", request.url));
+  let response = NextResponse.redirect(new URL("/welcome", request.url));
 
   if (code) {
     const supabase = createServerClient(
