@@ -460,65 +460,71 @@ export default async function OpportunityDetailPage({
         overflowY: "auto",
       }}>
 
-        {/* D-Score */}
+        {/* Scores — D-Score + M-Score toujours visibles */}
         <div style={{
-          border: "1px solid #E0DAD0",
-          padding: "20px",
-          textAlign: "center",
-          marginBottom: 12,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 1,
+          background: "#E0DAD0",
+          marginBottom: 28,
         }}>
-          <div style={{
-            fontFamily: "var(--font-jetbrains), monospace",
-            fontSize: 40,
-            fontWeight: 700,
-            color: "#0A0A0A",
-            lineHeight: 1,
-            letterSpacing: "-0.02em",
-          }}>
-            {dScore !== null ? Math.round(dScore) : "—"}
-          </div>
-          <div style={{
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 10,
-            color: "#7A746E",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            marginTop: 6,
-          }}>
-            D-Score
-          </div>
+          {[
+            {
+              label: "D-Score",
+              value: dScore !== null ? Math.round(dScore) : null,
+              color: dScore !== null
+                ? dScore >= 70 ? "#22c55e" : dScore >= 50 ? "#f59e0b" : "#7A746E"
+                : "#7A746E",
+              hint: dScore === null ? "Qualifiez le dossier" : null,
+            },
+            {
+              label: "M-Score",
+              value: mScore !== null ? Math.round(mScore) : null,
+              color: mScore !== null
+                ? mScore >= 70 ? "#22c55e" : mScore >= 55 ? "#f59e0b" : "#7A746E"
+                : "#7A746E",
+              hint: mScore === null ? "En attente de match" : null,
+            },
+          ].map(({ label, value, color, hint }) => (
+            <div key={label} style={{
+              background: "#FFFFFF",
+              padding: "18px 12px",
+              textAlign: "center",
+            }}>
+              <div style={{
+                fontFamily: "var(--font-jetbrains), monospace",
+                fontSize: 34,
+                fontWeight: 700,
+                color,
+                lineHeight: 1,
+                letterSpacing: "-0.02em",
+              }}>
+                {value !== null ? value : "—"}
+              </div>
+              <div style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 9,
+                color: "#7A746E",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                marginTop: 5,
+              }}>
+                {label}
+              </div>
+              {hint && (
+                <div style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 9,
+                  color: "#B0A898",
+                  marginTop: 4,
+                  lineHeight: 1.4,
+                }}>
+                  {hint}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-
-        {/* M-Score */}
-        {mScore !== null && (
-          <div style={{
-            border: "1px solid #E0DAD0",
-            padding: "20px",
-            textAlign: "center",
-            marginBottom: 28,
-          }}>
-            <div style={{
-              fontFamily: "var(--font-jetbrains), monospace",
-              fontSize: 40,
-              fontWeight: 700,
-              color: "#0A0A0A",
-              lineHeight: 1,
-              letterSpacing: "-0.02em",
-            }}>
-              {Math.round(mScore)}
-            </div>
-            <div style={{
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 10,
-              color: "#7A746E",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              marginTop: 6,
-            }}>
-              M-Score
-            </div>
-          </div>
-        )}
 
         {/* Documents */}
         {deck && (

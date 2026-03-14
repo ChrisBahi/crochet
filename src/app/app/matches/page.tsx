@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 import Link from "next/link"
 import { IntroButton } from "@/components/intro-button"
+import { OpenRoomButton } from "@/components/open-room-button"
 
 type Match = {
   id: string
@@ -26,15 +27,38 @@ type Opportunity = {
   stage?: string
 }
 
+type InvestorProfile = {
+  name?: string | null
+  firm?: string | null
+  role?: string | null
+  ticket_min?: number | null
+  ticket_max?: number | null
+  sectors?: string[] | null
+  geos?: string[] | null
+  p_score?: number | null
+}
+
+const SECTOR_LABELS: Record<string, string> = {
+  sante: "Santé", tech: "Tech", energie: "Énergie", finance: "Finance",
+  industrie: "Industrie", immobilier: "Immo", education: "Éducation", consumer: "Consumer",
+}
+
+function scoreColor(v: number): string {
+  if (v >= 70) return "#22c55e"
+  if (v >= 55) return "#f59e0b"
+  return "#7A746E"
+}
+
 function ScoreBadge({ label, value }: { label: string; value: number | undefined }) {
   const display = value !== undefined ? Math.round(value) : "—"
+  const color = value !== undefined ? scoreColor(value) : "#7A746E"
   return (
     <div style={{ textAlign: "center" }}>
       <div style={{
         fontFamily: "var(--font-jetbrains), monospace",
         fontSize: 36,
         fontWeight: 700,
-        color: "#0A0A0A",
+        color,
         lineHeight: 1,
         letterSpacing: "-0.02em",
       }}>
@@ -56,12 +80,12 @@ function ScoreBadge({ label, value }: { label: string; value: number | undefined
 
 function StatusPill({ status }: { status?: string }) {
   const map: Record<string, { label: string; bg: string; color: string }> = {
-    ready:            { label: "Ready",          bg: "#0A0A0A", color: "#FFFFFF" },
-    pending:          { label: "Pending",         bg: "#F5F0E8", color: "#7A746E" },
-    review:           { label: "Review",          bg: "#FEF3C7", color: "#92400E" },
-    intro_requested:  { label: "Intro envoyée",   bg: "#EFF6FF", color: "#1D4ED8" },
-    room_active:      { label: "Room active",     bg: "#052e16", color: "#22c55e" },
-    closing:          { label: "Closing",         bg: "#1E1B4B", color: "#818CF8" },
+    ready:            { label: "Ready",              bg: "#0A0A0A",  color: "#FFFFFF" },
+    pending:          { label: "Pending",             bg: "#F5F0E8",  color: "#7A746E" },
+    review:           { label: "Review",              bg: "#FEF3C7",  color: "#92400E" },
+    intro_requested:  { label: "Intro demandée",      bg: "#EFF6FF",  color: "#1D4ED8" },
+    room_active:      { label: "Room active",         bg: "#052e16",  color: "#22c55e" },
+    closing:          { label: "Closing",             bg: "#1E1B4B",  color: "#818CF8" },
   }
   const s = map[status ?? "pending"] ?? map.pending
   return (
@@ -86,29 +110,31 @@ export default async function MatchesPage({
 }: {
   searchParams: Promise<{ match?: string }>
 }) {
-  await requireUser()
+  const user = await requireUser()
   const wsId = await requireActiveWorkspaceId()
   const params = await searchParams
 
   const supabase = await createClient()
 
-  const { data: rawMatches } = wsId
-    ? await supabase
-        .from("opportunity_matches")
-        .select("*")
-        .eq("workspace_id", wsId)
-        .order("ranking_score", { ascending: false })
-    : { data: [] }
+  // Fetch matches + investor profile in parallel
+  const [matchesResult, profileResult, memberResult] = await Promise.all([
+    wsId
+      ? supabase.from("opportunity_matches").select("*").eq("workspace_id", wsId).order("ranking_score", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    supabase.from("investor_profiles").select("name,firm,role,ticket_min,ticket_max,sectors,geos,p_score").eq("user_id", user.id).maybeSingle(),
+    wsId
+      ? supabase.from("workspace_members").select("p_score").eq("workspace_id", wsId).eq("user_id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
 
-  const typedMatches: Match[] = rawMatches ?? []
+  const typedMatches: Match[] = matchesResult.data ?? []
+  const profile: InvestorProfile = profileResult.data ?? {}
+  const pScore: number | null = (memberResult.data as { p_score?: number | null } | null)?.p_score ?? profile.p_score ?? null
 
   const opportunityIds = [...new Set(typedMatches.map(m => m.opportunity_id).filter(Boolean))]
 
   const { data: opportunities } = opportunityIds.length
-    ? await supabase
-        .from("opportunities")
-        .select("id,title,description,sector,geo,deal_type,stage")
-        .in("id", opportunityIds)
+    ? await supabase.from("opportunities").select("id,title,description,sector,geo,deal_type,stage").in("id", opportunityIds)
     : { data: [] }
 
   const oppMap = Object.fromEntries((opportunities ?? []).map(o => [o.id, o as Opportunity]))
@@ -119,6 +145,11 @@ export default async function MatchesPage({
 
   const empty = typedMatches.length === 0
 
+  // Stats for investor panel
+  const activeRooms = typedMatches.filter(m => m.status === "room_active" || m.status === "closing").length
+  const pendingIntros = typedMatches.filter(m => m.status === "intro_requested").length
+  const readyMatches = typedMatches.filter(m => !m.status || m.status === "pending" || m.status === "ready").length
+
   return (
     <div style={{
       display: "flex",
@@ -126,7 +157,7 @@ export default async function MatchesPage({
       background: "#FFFFFF",
     }}>
 
-      {/* ── LEFT PANEL — Match list ── */}
+      {/* ── LEFT PANEL — Investor profile + Match list ── */}
       <aside style={{
         width: 300,
         flexShrink: 0,
@@ -135,10 +166,161 @@ export default async function MatchesPage({
         display: "flex",
         flexDirection: "column",
       }}>
+
+        {/* Investor profile panel */}
+        <div style={{
+          padding: "20px 24px",
+          borderBottom: "2px solid #0A0A0A",
+          background: "#F5F0E8",
+        }}>
+          <div style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginBottom: 12,
+          }}>
+            <div>
+              <div style={{
+                fontFamily: "var(--font-playfair), Georgia, serif",
+                fontStyle: "italic",
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#0A0A0A",
+                lineHeight: 1.2,
+                marginBottom: 2,
+              }}>
+                {profile.name ?? profile.firm ?? "Mon profil"}
+              </div>
+              {profile.role && (
+                <div style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 10,
+                  color: "#7A746E",
+                  letterSpacing: "0.04em",
+                }}>
+                  {profile.role}{profile.firm ? ` · ${profile.firm}` : ""}
+                </div>
+              )}
+            </div>
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <div style={{
+                fontFamily: "var(--font-jetbrains), monospace",
+                fontSize: 22,
+                fontWeight: 700,
+                color: pScore !== null ? scoreColor(pScore) : "#7A746E",
+                lineHeight: 1,
+                letterSpacing: "-0.02em",
+              }}>
+                {pScore !== null ? Math.round(pScore) : "—"}
+              </div>
+              <div style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 9,
+                color: "#7A746E",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                marginTop: 3,
+              }}>
+                P-Score
+              </div>
+            </div>
+          </div>
+
+          {/* Ticket range */}
+          {(profile.ticket_min || profile.ticket_max) && (
+            <div style={{
+              fontFamily: "var(--font-jetbrains), monospace",
+              fontSize: 11,
+              color: "#0A0A0A",
+              marginBottom: 10,
+              letterSpacing: "-0.01em",
+            }}>
+              {profile.ticket_min ? `${(profile.ticket_min / 1000).toFixed(0)}k` : "—"}
+              {" — "}
+              {profile.ticket_max ? `${(profile.ticket_max / 1000).toFixed(0)}k €` : "—"}
+            </div>
+          )}
+
+          {/* Sectors */}
+          {profile.sectors && profile.sectors.length > 0 && (
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 10 }}>
+              {profile.sectors.slice(0, 4).map(s => (
+                <span key={s} style={{
+                  padding: "2px 7px",
+                  border: "1px solid #D6D0C8",
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 9,
+                  color: "#7A746E",
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  background: "#FFFFFF",
+                }}>
+                  {SECTOR_LABELS[s] ?? s}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Activity stats */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 1,
+            background: "#D6D0C8",
+            marginTop: 4,
+          }}>
+            {[
+              { label: "Matches", value: readyMatches },
+              { label: "En cours", value: pendingIntros },
+              { label: "Rooms", value: activeRooms },
+            ].map(({ label, value }) => (
+              <div key={label} style={{
+                background: "#FFFFFF",
+                padding: "8px 6px",
+                textAlign: "center",
+              }}>
+                <div style={{
+                  fontFamily: "var(--font-jetbrains), monospace",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "#0A0A0A",
+                  lineHeight: 1,
+                }}>
+                  {value}
+                </div>
+                <div style={{
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 8,
+                  color: "#7A746E",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  marginTop: 3,
+                }}>
+                  {label}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Link href="/app/profile/edit" style={{
+            display: "block",
+            marginTop: 10,
+            fontFamily: "var(--font-dm-sans), sans-serif",
+            fontSize: 9,
+            color: "#7A746E",
+            textDecoration: "none",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            textAlign: "right",
+          }}>
+            Éditer le profil →
+          </Link>
+        </div>
+
         {/* Panel header */}
         <div style={{
-          padding: "20px 24px 16px",
-          borderBottom: "2px solid #0A0A0A",
+          padding: "16px 24px 12px",
+          borderBottom: "1px solid #E0DAD0",
           display: "flex",
           alignItems: "baseline",
           gap: 10,
@@ -146,11 +328,11 @@ export default async function MatchesPage({
           <span style={{
             fontFamily: "var(--font-playfair), Georgia, serif",
             fontStyle: "italic",
-            fontSize: 18,
+            fontSize: 15,
             fontWeight: 700,
             color: "#0A0A0A",
           }}>
-            Matches
+            Deal Flow
           </span>
           {!empty && (
             <span style={{
@@ -163,7 +345,7 @@ export default async function MatchesPage({
           )}
         </div>
 
-        {/* Items */}
+        {/* Match items */}
         {empty ? (
           <div style={{
             padding: 32,
@@ -171,7 +353,7 @@ export default async function MatchesPage({
             fontSize: 13,
             color: "#7A746E",
             textAlign: "center",
-            marginTop: 48,
+            marginTop: 32,
             lineHeight: 1.7,
           }}>
             Aucun match disponible.
@@ -184,6 +366,7 @@ export default async function MatchesPage({
           typedMatches.map((m, i) => {
             const opp = oppMap[m.opportunity_id]
             const isActive = m.id === selectedId
+            const mScoreVal = Math.round(m.fit_score ?? 0)
             return (
               <Link
                 key={m.id}
@@ -231,7 +414,7 @@ export default async function MatchesPage({
                   fontFamily: "var(--font-dm-sans), sans-serif",
                   fontSize: 11,
                   color: "#7A746E",
-                  marginBottom: 12,
+                  marginBottom: 10,
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -239,55 +422,28 @@ export default async function MatchesPage({
                   {[opp?.sector, opp?.geo].filter(Boolean).join(" · ") || "—"}
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}>
+                  <span style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 9,
+                    color: "#7A746E",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
                   }}>
-                    <span style={{
-                      fontFamily: "var(--font-dm-sans), sans-serif",
-                      fontSize: 10,
-                      color: "#7A746E",
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                    }}>
-                      M-Score
-                    </span>
-                    <span style={{
-                      fontFamily: "var(--font-jetbrains), monospace",
-                      fontSize: 18,
-                      fontWeight: 700,
-                      color: "#0A0A0A",
-                    }}>
-                      {Math.round(m.fit_score ?? 0)}
-                    </span>
-                  </div>
-                  {m.breakdown?.d_score != null && (
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}>
-                      <span style={{
-                        fontFamily: "var(--font-dm-sans), sans-serif",
-                        fontSize: 10,
-                        color: "#7A746E",
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                      }}>
-                        D-Score
-                      </span>
-                      <span style={{
-                        fontFamily: "var(--font-jetbrains), monospace",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#7A746E",
-                      }}>
-                        {Math.round(m.breakdown.d_score)}
-                      </span>
-                    </div>
-                  )}
+                    M-Score
+                  </span>
+                  <span style={{
+                    fontFamily: "var(--font-jetbrains), monospace",
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: scoreColor(mScoreVal),
+                  }}>
+                    {mScoreVal}
+                  </span>
                 </div>
               </Link>
             )
@@ -307,9 +463,7 @@ export default async function MatchesPage({
             fontSize: 13,
             color: "#7A746E",
           }}>
-            {empty
-              ? "Aucun match à afficher."
-              : "Sélectionnez un match."}
+            {empty ? "Aucun match à afficher." : "Sélectionnez un match."}
           </div>
         ) : (
           <div style={{ maxWidth: 720, padding: "40px 52px" }}>
@@ -400,7 +554,7 @@ export default async function MatchesPage({
                   color: "#7A746E",
                   marginBottom: 14,
                 }}>
-                  Why this match
+                  Pourquoi ce match
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {selected.why.map((reason, i) => (
@@ -434,7 +588,48 @@ export default async function MatchesPage({
               </div>
             )}
 
-            {/* MEMO */}
+            {/* Intro demandée — état intermédiaire */}
+            {selected.status === "intro_requested" && (
+              <div style={{
+                padding: "16px 20px",
+                background: "#EFF6FF",
+                border: "1px solid #BFDBFE",
+                marginBottom: 32,
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 14,
+              }}>
+                <div style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "#3B82F6",
+                  flexShrink: 0,
+                  marginTop: 4,
+                }} />
+                <div>
+                  <div style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#1D4ED8",
+                    marginBottom: 4,
+                  }}>
+                    Intro demandée · En attente d&apos;activation
+                  </div>
+                  <div style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 12,
+                    color: "#3B82F6",
+                    lineHeight: 1.6,
+                  }}>
+                    Une notification a été envoyée à la contrepartie. Vous pouvez également ouvrir la Room directement.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MEMO placeholder */}
             <div style={{
               border: "1px solid #E0DAD0",
               marginBottom: 32,
@@ -475,12 +670,12 @@ export default async function MatchesPage({
                   margin: 0,
                   lineHeight: 1.8,
                 }}>
-                  Le MEMO sera disponible après validation du dossier par le moteur de qualification.
+                  Le MEMO complet est accessible via le dossier ou la Secure Room.
                 </p>
               </div>
             </div>
 
-            {/* CTA */}
+            {/* CTA — dynamic by status */}
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <Link
                 href={`/app/opportunities/${selected.opportunity_id}`}
@@ -499,25 +694,27 @@ export default async function MatchesPage({
                 Ouvrir le dossier
               </Link>
 
-              {selected.status !== "intro_requested" &&
-               selected.status !== "room_active" &&
-               selected.status !== "closing" ? (
-                <IntroButton
-                  matchId={selected.id}
-                  opportunityId={selected.opportunity_id}
-                />
-              ) : (
+              {/* Status-based CTA */}
+              {(!selected.status || selected.status === "pending" || selected.status === "ready" || selected.status === "review") && (
+                <IntroButton matchId={selected.id} opportunityId={selected.opportunity_id} />
+              )}
+
+              {selected.status === "intro_requested" && (
+                <OpenRoomButton matchId={selected.id} opportunityId={selected.opportunity_id} />
+              )}
+
+              {(selected.status === "room_active" || selected.status === "closing") && (
                 <Link
                   href="/app/rooms"
                   style={{
                     padding: "12px 28px",
-                    background: "transparent",
-                    color: "#1D4ED8",
-                    border: "1px solid #BFDBFE",
+                    background: "#052e16",
+                    color: "#22c55e",
+                    border: "1px solid #16a34a",
                     textDecoration: "none",
                     fontFamily: "var(--font-dm-sans), sans-serif",
                     fontSize: 12,
-                    fontWeight: 500,
+                    fontWeight: 600,
                     letterSpacing: "0.06em",
                     textTransform: "uppercase",
                     display: "inline-flex",
