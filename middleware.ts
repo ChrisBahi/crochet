@@ -55,7 +55,7 @@ export async function middleware(req: NextRequest) {
         .single();
 
       if (!data || data.status !== "approved") {
-        return NextResponse.redirect(new URL("/unauthorized", req.url));
+        return NextResponse.redirect(new URL("/register/status", req.url));
       }
     }
   }
