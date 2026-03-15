@@ -37,19 +37,6 @@ export default async function Home() {
           </span>
         </Link>
 
-        {/* Center nav */}
-        <nav style={{ display: "flex", alignItems: "center", gap: 36 }}>
-          <Link href="#plateforme" style={{
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 13,
-            fontWeight: 400,
-            color: "#888",
-            textDecoration: "none",
-            letterSpacing: "0.02em",
-          }}>
-            Plateforme
-          </Link>
-        </nav>
 
         {/* Right CTAs */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
