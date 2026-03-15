@@ -106,6 +106,34 @@ export async function setVerificationStatus(
   revalidatePath("/app/admin");
 }
 
+export async function runMatchEngine(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
+  await requireAdmin();
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const secret = process.env.MATCH_ENGINE_SECRET ?? "";
+
+  const res = await fetch(`${baseUrl}/api/match/run`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${secret}`,
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    return { success: false, message: `Erreur ${res.status}: ${text}` };
+  }
+
+  const data = await res.json();
+  revalidatePath("/app/admin");
+  return {
+    success: true,
+    message: `${data.matches_created ?? 0} match(s) créé(s) sur ${data.opportunities_scanned ?? 0} opportunités analysées.`,
+    details: data,
+  };
+}
+
 export async function runAiAnalysis(ids: string[]) {
   await requireAdmin();
   const admin = createAdminClient();

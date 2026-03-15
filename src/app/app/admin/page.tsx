@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AdmissionActions } from "./admission-actions";
 import { KycActions } from "./kyc-actions";
 import { runAiAnalysis } from "./actions";
+import { MatchEngineButton } from "./match-engine-button";
 import { cookies } from "next/headers";
 
 function formatDate(iso: string, locale: string) {
@@ -239,6 +240,19 @@ export default async function AdminPage({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Match engine trigger */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32, padding: "16px 20px", border: "1px solid #E0DAD0" }}>
+        <div>
+          <div style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 13, fontWeight: 600, color: "#0A0A0A", marginBottom: 4 }}>
+            Moteur de matching
+          </div>
+          <div style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 12, color: "#7A746E" }}>
+            Analyse toutes les opportunités actives et génère les matches.
+          </div>
+        </div>
+        <MatchEngineButton />
       </div>
 
       {/* View switcher */}
