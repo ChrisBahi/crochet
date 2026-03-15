@@ -53,7 +53,6 @@ export default async function Home() {
 
         {/* Right CTAs */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <LangSwitcher />
           <Link href={appHref} style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
             fontSize: 13,

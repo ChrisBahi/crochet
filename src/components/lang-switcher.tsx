@@ -11,15 +11,15 @@ export function LangSwitcher() {
       onClick={() => setLang(l)}
       style={{
         fontFamily: "var(--font-dm-sans), sans-serif",
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: 600,
         letterSpacing: "0.08em",
-        padding: "6px 14px",
+        padding: 0,
         border: "none",
+        background: "transparent",
         cursor: "pointer",
-        background: lang === l ? "#FFFFFF" : "transparent",
-        color: lang === l ? "#000000" : "#666666",
-        transition: "background 0.15s, color 0.15s",
+        color: lang === l ? "#FFFFFF" : "#555555",
+        transition: "color 0.15s",
       }}
     >
       {label}
@@ -27,11 +27,7 @@ export function LangSwitcher() {
   )
 
   return (
-    <div style={{
-      display: "flex",
-      border: "1px solid #333",
-      overflow: "hidden",
-    }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
       {btn("fr", "FR")}
       {btn("en", "EN")}
     </div>
