@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-01-27.acacia",
@@ -23,7 +24,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Webhook signature invalid" }, { status: 400 });
   }
 
-  const supabase = await createClient();
+  // Use service role to bypass RLS for webhook updates
+  const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { persistSession: false } }
+      )
+    : await createServerClient();
 
   async function updateWorkspace(workspaceId: string, fields: Record<string, unknown>) {
     await supabase.from("workspaces").update(fields).eq("id", workspaceId);
