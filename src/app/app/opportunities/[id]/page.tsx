@@ -3,26 +3,7 @@ import { requireUser } from "@/lib/auth/require-user"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { DeckStatusPoller } from "@/components/deck-status-poller"
-
-const SECTOR_LABELS: Record<string, string> = {
-  sante: "Santé",
-  tech: "Technologie",
-  energie: "Énergie",
-  finance: "Finance",
-  industrie: "Industrie",
-  immobilier: "Immobilier",
-  education: "Éducation",
-  consumer: "Consumer",
-}
-
-const GEO_LABELS: Record<string, string> = {
-  europe: "Europe",
-  france: "France",
-  usa: "États-Unis",
-  mena: "MENA",
-  asie: "Asie",
-  global: "Global",
-}
+import { cookies } from "next/headers"
 
 function MetaTag({ label }: { label: string }) {
   return (
@@ -66,6 +47,49 @@ export default async function OpportunityDetailPage({
   await requireUser()
   const { id } = await params
   const supabase = await createClient()
+  const cookieStore = await cookies()
+  const lang = (cookieStore.get("crochet_lang")?.value ?? "fr") as "fr" | "en"
+
+  const SECTOR_LABELS: Record<string, string> = lang === "en"
+    ? { sante: "Health", tech: "Technology", energie: "Energy", finance: "Finance", industrie: "Industry", immobilier: "Real estate", education: "Education", consumer: "Consumer" }
+    : { sante: "Santé", tech: "Technologie", energie: "Énergie", finance: "Finance", industrie: "Industrie", immobilier: "Immobilier", education: "Éducation", consumer: "Consumer" }
+
+  const GEO_LABELS: Record<string, string> = lang === "en"
+    ? { europe: "Europe", france: "France", usa: "United States", mena: "MENA", asie: "Asia", global: "Global" }
+    : { europe: "Europe", france: "France", usa: "États-Unis", mena: "MENA", asie: "Asie", global: "Global" }
+
+  const t = {
+    qualifying:       lang === "en" ? "Qualification in progress…" : "Qualification en cours…",
+    qualifyingBody:   lang === "en"
+      ? "The engine is generating the MEMO and calculating the D-Score. This page updates automatically."
+      : "Le moteur génère le MEMO et calcule le D-Score. Cette page se met à jour automatiquement.",
+    analysisError:    lang === "en"
+      ? "Analysis failed. Click 'Restart' below to try again."
+      : "L'analyse a échoué. Cliquez sur « Relancer » ci-dessous pour réessayer.",
+    noMemo:           lang === "en" ? "No MEMO available for this file." : "Aucun MEMO disponible pour ce dossier.",
+    financialSnapshot: lang === "en" ? "Financial snapshot" : "Snapshot financier",
+    targetRaise:      lang === "en" ? "Target raise" : "Levée cible",
+    valuation:        lang === "en" ? "Valuation" : "Valorisation",
+    revenue:          lang === "en" ? "Revenue" : "Revenus",
+    ndaNotice:        lang === "en"
+      ? "This file is subject to a confidentiality agreement. Any unauthorized disclosure is your responsibility. Access to full documents requires an NDA signature via the Secure Room."
+      : "Ce dossier est soumis à un accord de confidentialité. Toute divulgation non autorisée engage votre responsabilité. L'accès aux documents complets nécessite une signature NDA via la Secure Room.",
+    restartAnalysis:  lang === "en" ? "Restart analysis" : "Relancer l'analyse",
+    officialMemo:     lang === "en" ? "Official Memo →" : "Mémo officiel →",
+    generateNda:      lang === "en" ? "Generate NDA" : "Générer NDA",
+    backToMatches:    lang === "en" ? "Back to matches" : "Retour aux matches",
+    qualifyFile:      lang === "en" ? "Qualify the file" : "Qualifiez le dossier",
+    awaitingMatch:    lang === "en" ? "Awaiting match" : "En attente de match",
+    documents:        lang === "en" ? "Documents" : "Documents",
+    information:      lang === "en" ? "Information" : "Informations",
+    sector:           lang === "en" ? "Sector" : "Secteur",
+    geography:        lang === "en" ? "Geography" : "Géographie",
+    type:             lang === "en" ? "Type" : "Type",
+    stage:            lang === "en" ? "Stage" : "Stade",
+    aiConfidential:   lang === "en" ? "AI · Confidential" : "IA · Confidentiel",
+    error:            lang === "en" ? "Error" : "Erreur",
+    analyzing:        lang === "en" ? "Analysis in progress…" : "Analyse en cours…",
+  }
 
   const { data: opp } = await supabase
     .from("opportunities")
@@ -111,7 +135,7 @@ export default async function OpportunityDetailPage({
   return (
     <div style={{ display: "flex", background: "#FFFFFF", minHeight: "calc(100vh - 56px)" }}>
 
-      {/* Polling silencieux — s'arrête automatiquement quand status != pending */}
+      {/* Silent polling — stops automatically when status != pending */}
       <DeckStatusPoller opportunityId={id} deckStatus={deckStatus} />
 
       {/* ── MAIN CONTENT ── */}
@@ -215,7 +239,7 @@ export default async function OpportunityDetailPage({
                     letterSpacing: "0.08em",
                     textTransform: "uppercase",
                   }}>
-                    {deckStatus === "done" ? "IA · Confidentiel" : deckStatus === "error" ? "Erreur" : "Analyse en cours…"}
+                    {deckStatus === "done" ? t.aiConfidential : deckStatus === "error" ? t.error : t.analyzing}
                   </span>
                 </div>
               </div>
@@ -255,7 +279,7 @@ export default async function OpportunityDetailPage({
                         margin: "0 0 4px",
                         fontWeight: 500,
                       }}>
-                        Qualification en cours…
+                        {t.qualifying}
                       </p>
                       <p style={{
                         fontFamily: "var(--font-dm-sans), sans-serif",
@@ -264,7 +288,7 @@ export default async function OpportunityDetailPage({
                         margin: 0,
                         lineHeight: 1.6,
                       }}>
-                        Le moteur génère le MEMO et calcule le D-Score. Cette page se met à jour automatiquement.
+                        {t.qualifyingBody}
                       </p>
                     </div>
                   </div>
@@ -277,28 +301,26 @@ export default async function OpportunityDetailPage({
                     margin: 0,
                     lineHeight: 1.8,
                   }}>
-                    {deckStatus === "error"
-                      ? "L'analyse a échoué. Cliquez sur « Relancer » ci-dessous pour réessayer."
-                      : "Aucun MEMO disponible pour ce dossier."}
+                    {deckStatus === "error" ? t.analysisError : t.noMemo}
                   </p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Snapshot financier */}
+          {/* Financial snapshot */}
           {(opp.amount || opp.valuation || opp.revenue) && (
             <div style={{ marginBottom: 36 }}>
-              <SectionLabel>Snapshot financier</SectionLabel>
+              <SectionLabel>{t.financialSnapshot}</SectionLabel>
               <div style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3, 1fr)",
                 border: "1px solid #E0DAD0",
               }}>
                 {[
-                  { label: "Levée cible", value: opp.amount ? `${Number(opp.amount).toLocaleString("fr-FR")} €` : null },
-                  { label: "Valorisation", value: opp.valuation ? `${Number(opp.valuation).toLocaleString("fr-FR")} €` : null },
-                  { label: "Revenus", value: opp.revenue ? `${Number(opp.revenue).toLocaleString("fr-FR")} €` : null },
+                  { label: t.targetRaise, value: opp.amount ? `${Number(opp.amount).toLocaleString("fr-FR")} €` : null },
+                  { label: t.valuation, value: opp.valuation ? `${Number(opp.valuation).toLocaleString("fr-FR")} €` : null },
+                  { label: t.revenue, value: opp.revenue ? `${Number(opp.revenue).toLocaleString("fr-FR")} €` : null },
                 ].filter(s => s.value).map((s, i, arr) => (
                   <div key={i} style={{
                     padding: "20px",
@@ -329,7 +351,7 @@ export default async function OpportunityDetailPage({
             </div>
           )}
 
-          {/* Confidentialité */}
+          {/* Confidentiality notice */}
           <div style={{
             display: "flex",
             gap: 10,
@@ -356,13 +378,13 @@ export default async function OpportunityDetailPage({
               margin: 0,
               lineHeight: 1.7,
             }}>
-              Ce dossier est soumis à un accord de confidentialité. Toute divulgation non autorisée engage votre responsabilité. L&apos;accès aux documents complets nécessite une signature NDA via la Secure Room.
+              {t.ndaNotice}
             </p>
           </div>
 
           {/* CTA */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            {/* Relancer analyse si erreur ou pending */}
+            {/* Restart analysis if error or pending */}
             {(deckStatus === "error" || deckStatus === "pending") && (
               <form action={async () => {
                 "use server"
@@ -390,12 +412,12 @@ export default async function OpportunityDetailPage({
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                 }}>
-                  Relancer l&apos;analyse
+                  {t.restartAnalysis}
                 </button>
               </form>
             )}
 
-            {/* Voir MEMO officiel */}
+            {/* Official Memo */}
             {deckStatus === "done" && (
               <Link href={`/app/opportunities/${id}/memo`} style={{
                 padding: "12px 28px",
@@ -412,11 +434,11 @@ export default async function OpportunityDetailPage({
                 alignItems: "center",
                 gap: 8,
               }}>
-                Mémo officiel →
+                {t.officialMemo}
               </Link>
             )}
 
-            {/* Générer / voir NDA */}
+            {/* Generate NDA */}
             <Link href={`/app/opportunities/${id}/nda`} style={{
               padding: "12px 28px",
               background: "transparent",
@@ -429,7 +451,7 @@ export default async function OpportunityDetailPage({
               letterSpacing: "0.06em",
               textTransform: "uppercase",
             }}>
-              Générer NDA
+              {t.generateNda}
             </Link>
 
             <Link href="/app/matches" style={{
@@ -444,7 +466,7 @@ export default async function OpportunityDetailPage({
               letterSpacing: "0.06em",
               textTransform: "uppercase",
             }}>
-              Retour aux matches
+              {t.backToMatches}
             </Link>
           </div>
 
@@ -460,7 +482,7 @@ export default async function OpportunityDetailPage({
         overflowY: "auto",
       }}>
 
-        {/* Scores — D-Score + M-Score toujours visibles */}
+        {/* Scores */}
         <div style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
@@ -475,7 +497,7 @@ export default async function OpportunityDetailPage({
               color: dScore !== null
                 ? dScore >= 70 ? "#22c55e" : dScore >= 50 ? "#f59e0b" : "#7A746E"
                 : "#7A746E",
-              hint: dScore === null ? "Qualifiez le dossier" : null,
+              hint: dScore === null ? t.qualifyFile : null,
             },
             {
               label: "M-Score",
@@ -483,7 +505,7 @@ export default async function OpportunityDetailPage({
               color: mScore !== null
                 ? mScore >= 70 ? "#22c55e" : mScore >= 55 ? "#f59e0b" : "#7A746E"
                 : "#7A746E",
-              hint: mScore === null ? "En attente de match" : null,
+              hint: mScore === null ? t.awaitingMatch : null,
             },
           ].map(({ label, value, color, hint }) => (
             <div key={label} style={{
@@ -539,7 +561,7 @@ export default async function OpportunityDetailPage({
               paddingBottom: 8,
               borderBottom: "1px solid #E0DAD0",
             }}>
-              Documents
+              {t.documents}
             </div>
             <div style={{
               padding: "10px 14px",
@@ -579,14 +601,14 @@ export default async function OpportunityDetailPage({
             paddingBottom: 8,
             borderBottom: "1px solid #E0DAD0",
           }}>
-            Informations
+            {t.information}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {[
-              { label: "Secteur", value: opp.sector ? (SECTOR_LABELS[opp.sector] ?? opp.sector) : "—" },
-              { label: "Géographie", value: opp.geo ? (GEO_LABELS[opp.geo] ?? opp.geo) : "—" },
-              { label: "Type", value: opp.deal_type ?? "—" },
-              { label: "Stade", value: opp.stage ?? "—" },
+              { label: t.sector, value: opp.sector ? (SECTOR_LABELS[opp.sector] ?? opp.sector) : "—" },
+              { label: t.geography, value: opp.geo ? (GEO_LABELS[opp.geo] ?? opp.geo) : "—" },
+              { label: t.type, value: opp.deal_type ?? "—" },
+              { label: t.stage, value: opp.stage ?? "—" },
             ].map(({ label, value }) => (
               <div key={label}>
                 <div style={{

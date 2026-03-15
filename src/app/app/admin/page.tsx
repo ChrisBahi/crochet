@@ -5,36 +5,10 @@ import Link from "next/link";
 import { AdmissionActions } from "./admission-actions";
 import { KycActions } from "./kyc-actions";
 import { runAiAnalysis } from "./actions";
+import { cookies } from "next/headers";
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: "En attente",
-  approved: "Approuvé",
-  rejected: "Refusé",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: "#7A746E",
-  approved: "#2D6A4F",
-  rejected: "#C0392B",
-};
-
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <span style={{
-      fontFamily: "var(--font-dm-sans), sans-serif",
-      fontSize: 10,
-      fontWeight: 600,
-      letterSpacing: "0.08em",
-      textTransform: "uppercase",
-      color: STATUS_COLORS[status] ?? "#7A746E",
-    }}>
-      {STATUS_LABELS[status] ?? status}
-    </span>
-  );
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-FR", {
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale, {
     day: "2-digit", month: "short", year: "numeric",
   });
 }
@@ -47,6 +21,63 @@ export default async function AdminPage({
   await requireAdmin();
   const { status: filterStatus, view } = await searchParams;
   const isMembersView = view === "members";
+  const cookieStore = await cookies();
+  const lang = (cookieStore.get("crochet_lang")?.value ?? "fr") as "fr" | "en";
+  const dateLocale = lang === "en" ? "en-GB" : "fr-FR";
+
+  const t = {
+    breadcrumb:     "Administration · CROCHET",
+    heading:        lang === "en" ? "Applications." : "Candidatures.",
+    subheading:     lang === "en"
+      ? "Review and validate admission requests to the network."
+      : "Examinez et validez les demandes d'admission au réseau.",
+    activeMembers:  lang === "en" ? "Active members" : "Membres actifs",
+    activeOpps:     lang === "en" ? "Active opportunities" : "Opportunités actives",
+    matchesCreated: lang === "en" ? "Matches created" : "Matches créés",
+    ongoingRooms:   lang === "en" ? "Ongoing rooms" : "Rooms en cours",
+    tabApplications: lang === "en" ? "Applications" : "Candidatures",
+    tabMembers:     lang === "en" ? "Members" : "Membres",
+    filterAll:      lang === "en" ? "All" : "Tout",
+    filterPending:  lang === "en" ? "Pending" : "En attente",
+    filterApproved: lang === "en" ? "Approved" : "Approuvés",
+    filterRejected: lang === "en" ? "Rejected" : "Refusés",
+    noApplications: lang === "en" ? "No application in this category." : "Aucune candidature dans cette catégorie.",
+    noMembers:      lang === "en" ? "No registered member." : "Aucun membre inscrit.",
+    colApplicant:   lang === "en" ? "Applicant" : "Candidat",
+    colRole:        lang === "en" ? "Role" : "Rôle",
+    colTicket:      "Ticket",
+    colStatus:      lang === "en" ? "Status" : "Statut",
+    colDate:        lang === "en" ? "Date" : "Date",
+    colMember:      lang === "en" ? "Member" : "Membre",
+    colCompany:     lang === "en" ? "Company" : "Société",
+    colKyc:         lang === "en" ? "KYC Verification" : "Vérification KYC",
+    aiScore:        lang === "en" ? "AI Score" : "Score IA",
+  };
+
+  const STATUS_LABELS: Record<string, string> = lang === "en"
+    ? { pending: "Pending", approved: "Approved", rejected: "Rejected" }
+    : { pending: "En attente", approved: "Approuvé", rejected: "Refusé" };
+
+  const STATUS_COLORS: Record<string, string> = {
+    pending: "#7A746E",
+    approved: "#2D6A4F",
+    rejected: "#C0392B",
+  };
+
+  function StatusBadge({ status }: { status: string }) {
+    return (
+      <span style={{
+        fontFamily: "var(--font-dm-sans), sans-serif",
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        color: STATUS_COLORS[status] ?? "#7A746E",
+      }}>
+        {STATUS_LABELS[status] ?? status}
+      </span>
+    );
+  }
 
   const admin = createAdminClient();
 
@@ -101,7 +132,7 @@ export default async function AdminPage({
   const requests = allRequests ?? [];
   const totalCount = (pendingCount ?? 0) + (approvedCount ?? 0) + (rejectedCount ?? 0);
 
-  // Membres (vue KYC)
+  // Members (KYC view)
   let members: {
     user_id: string;
     name: string | null;
@@ -118,7 +149,7 @@ export default async function AdminPage({
     members = memberProfiles ?? [];
   }
 
-  // Auto-analyse IA — tourne APRÈS l'envoi de la réponse, sans bloquer le rendu
+  // AI auto-analysis — runs AFTER response is sent, without blocking render
   const unanalyzed = requests
     .filter((r: { ai_score: number | null }) => r.ai_score === null || r.ai_score === undefined)
     .map((r: { id: string }) => r.id);
@@ -129,10 +160,10 @@ export default async function AdminPage({
   }
 
   const tabs = [
-    { label: "Tout", value: undefined, count: totalCount },
-    { label: "En attente", value: "pending", count: pendingCount ?? 0 },
-    { label: "Approuvés", value: "approved", count: approvedCount ?? 0 },
-    { label: "Refusés", value: "rejected", count: rejectedCount ?? 0 },
+    { label: t.filterAll, value: undefined, count: totalCount },
+    { label: t.filterPending, value: "pending", count: pendingCount ?? 0 },
+    { label: t.filterApproved, value: "approved", count: approvedCount ?? 0 },
+    { label: t.filterRejected, value: "rejected", count: rejectedCount ?? 0 },
   ];
 
   return (
@@ -148,7 +179,7 @@ export default async function AdminPage({
           color: "#7A746E",
           marginBottom: 10,
         }}>
-          Administration · CROCHET
+          {t.breadcrumb}
         </div>
         <h1 style={{
           fontFamily: "var(--font-playfair), Georgia, serif",
@@ -159,7 +190,7 @@ export default async function AdminPage({
           margin: "0 0 6px",
           lineHeight: 1.15,
         }}>
-          Candidatures.
+          {t.heading}
         </h1>
         <p style={{
           fontFamily: "var(--font-dm-sans), sans-serif",
@@ -167,19 +198,19 @@ export default async function AdminPage({
           color: "#7A746E",
           margin: 0,
         }}>
-          Examinez et validez les demandes d&apos;admission au réseau.
+          {t.subheading}
         </p>
       </div>
 
       <div style={{ borderTop: "2px solid #0A0A0A", marginBottom: 32 }} />
 
-      {/* Stats globales */}
+      {/* Global stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12, marginBottom: 40 }}>
         {[
-          { label: "Membres actifs", value: membersCount ?? 0 },
-          { label: "Opportunités actives", value: activeOppsCount ?? 0 },
-          { label: "Matches créés", value: matchesCount ?? 0 },
-          { label: "Rooms en cours", value: activeRoomsCount ?? 0 },
+          { label: t.activeMembers, value: membersCount ?? 0 },
+          { label: t.activeOpps, value: activeOppsCount ?? 0 },
+          { label: t.matchesCreated, value: matchesCount ?? 0 },
+          { label: t.ongoingRooms, value: activeRoomsCount ?? 0 },
         ].map(({ label, value }) => (
           <div key={label} style={{
             border: "1px solid #E0DAD0",
@@ -210,11 +241,11 @@ export default async function AdminPage({
         ))}
       </div>
 
-      {/* Vue switcher */}
+      {/* View switcher */}
       <div style={{ display: "flex", gap: 0, marginBottom: 0, borderBottom: "1px solid #E0DAD0" }}>
         {[
-          { label: "Candidatures", href: "/app/admin", active: !isMembersView },
-          { label: "Membres", href: "/app/admin?view=members", active: isMembersView },
+          { label: t.tabApplications, href: "/app/admin", active: !isMembersView },
+          { label: t.tabMembers, href: "/app/admin?view=members", active: isMembersView },
         ].map(({ label, href, active }) => (
           <Link
             key={label}
@@ -238,7 +269,7 @@ export default async function AdminPage({
       </div>
 
       {isMembersView ? (
-        /* ——— Vue Membres (KYC) ——— */
+        /* ——— Members view (KYC) ——— */
         <div style={{ marginTop: 32 }}>
           {members.length === 0 ? (
             <div style={{
@@ -249,7 +280,7 @@ export default async function AdminPage({
               color: "#7A746E",
               fontStyle: "italic",
             }}>
-              Aucun membre inscrit.
+              {t.noMembers}
             </div>
           ) : (
             <div>
@@ -260,7 +291,7 @@ export default async function AdminPage({
                 padding: "8px 0 12px",
                 borderBottom: "1px solid #E0DAD0",
               }}>
-                {["Membre", "Rôle", "Société", "Vérification KYC"].map((h) => (
+                {[t.colMember, t.colRole, t.colCompany, t.colKyc].map((h) => (
                   <div key={h} style={{
                     fontFamily: "var(--font-dm-sans), sans-serif",
                     fontSize: 10,
@@ -326,7 +357,7 @@ export default async function AdminPage({
         </div>
       ) : (
         <>
-          {/* Tabs candidatures */}
+          {/* Application tabs */}
           <div style={{ display: "flex", gap: 0, marginTop: 32, marginBottom: 32, borderBottom: "1px solid #E0DAD0" }}>
             {tabs.map((tab) => {
               const isActive = filterStatus === tab.value || (!filterStatus && tab.value === undefined);
@@ -378,7 +409,7 @@ export default async function AdminPage({
           color: "#7A746E",
           fontStyle: "italic",
         }}>
-          Aucune candidature dans cette catégorie.
+          {t.noApplications}
         </div>
       ) : (
         <div>
@@ -391,7 +422,7 @@ export default async function AdminPage({
             borderBottom: "1px solid #E0DAD0",
             marginBottom: 0,
           }}>
-            {["Candidat", "Rôle", "Ticket", "Statut", "Date"].map((h) => (
+            {[t.colApplicant, t.colRole, t.colTicket, t.colStatus, t.colDate].map((h) => (
               <div key={h} style={{
                 fontFamily: "var(--font-dm-sans), sans-serif",
                 fontSize: 10,
@@ -490,7 +521,7 @@ export default async function AdminPage({
                   color: "#7A746E",
                   paddingTop: 2,
                 }}>
-                  {formatDate(req.created_at)}
+                  {formatDate(req.created_at, dateLocale)}
                 </div>
               </div>
 
@@ -537,7 +568,7 @@ export default async function AdminPage({
                   )}
                 </div>
 
-                {/* Score IA + Actions */}
+                {/* AI Score + Actions */}
                 <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
                   {req.ai_score !== null && req.ai_score !== undefined && (
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
@@ -549,7 +580,7 @@ export default async function AdminPage({
                           textTransform: "uppercase",
                           color: "#7A746E",
                         }}>
-                          Score IA
+                          {t.aiScore}
                         </span>
                         <span style={{
                           fontFamily: "var(--font-jetbrains), monospace",

@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth/require-user"
 import { createClient } from "@/lib/supabase/server"
 import { ProfileEditForm } from "./profile-edit-form"
+import { cookies } from "next/headers"
 
 export default async function ProfileEditPage({
   searchParams,
@@ -11,6 +12,18 @@ export default async function ProfileEditPage({
   const supabase = await createClient()
   const params = await searchParams
   const isOnboarding = params.onboarding === "1"
+  const cookieStore = await cookies()
+  const lang = (cookieStore.get("crochet_lang")?.value ?? "fr") as "fr" | "en"
+
+  const t = {
+    passport:       lang === "en" ? "Transactional passport" : "Passeport transactionnel",
+    welcomeTitle:   lang === "en" ? "Welcome to CROCHET." : "Bienvenue sur CROCHET.",
+    welcomeBody:    lang === "en"
+      ? "Complete your transactional passport to activate the matching engine."
+      : "Complétez votre passeport transactionnel pour activer le moteur de matching.",
+    createProfile:  lang === "en" ? "Create my profile" : "Créer mon profil",
+    editProfile:    lang === "en" ? "Edit profile" : "Éditer le profil",
+  }
 
   const { data: profile } = await supabase
     .from("investor_profiles")
@@ -48,7 +61,7 @@ export default async function ProfileEditPage({
               color: "#0A0A0A",
               marginBottom: 4,
             }}>
-              Bienvenue sur CROCHET.
+              {t.welcomeTitle}
             </div>
             <div style={{
               fontFamily: "var(--font-dm-sans), sans-serif",
@@ -56,7 +69,7 @@ export default async function ProfileEditPage({
               color: "#7A746E",
               lineHeight: 1.65,
             }}>
-              Complétez votre passeport transactionnel pour activer le moteur de matching.
+              {t.welcomeBody}
             </div>
           </div>
         </div>
@@ -71,7 +84,7 @@ export default async function ProfileEditPage({
           color: "#7A746E",
           marginBottom: 8,
         }}>
-          Passeport transactionnel
+          {t.passport}
         </div>
         <h1 style={{
           fontFamily: "var(--font-playfair), Georgia, serif",
@@ -82,7 +95,7 @@ export default async function ProfileEditPage({
           margin: 0,
           lineHeight: 1,
         }}>
-          {isOnboarding ? "Créer mon profil" : "Éditer le profil"}
+          {isOnboarding ? t.createProfile : t.editProfile}
         </h1>
       </div>
 

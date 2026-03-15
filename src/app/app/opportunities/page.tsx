@@ -2,6 +2,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
+import { cookies } from "next/headers"
 
 type DeckRow = { d_score?: number | null; status?: string | null }
 type MatchRow = { id: string; status?: string | null; fit_score?: number | null }
@@ -61,6 +62,22 @@ export default async function OpportunitiesPage() {
   await requireUser()
   const workspaceId = await requireActiveWorkspaceId()
   const supabase = await createClient()
+  const cookieStore = await cookies()
+  const lang = (cookieStore.get("crochet_lang")?.value ?? "fr") as "fr" | "en"
+
+  const t = {
+    submit:       lang === "en" ? "+ Submit" : "+ Soumettre",
+    noFiles:      lang === "en" ? "No file submitted." : "Aucun dossier soumis.",
+    noFilesHint:  lang === "en"
+      ? "Use the Submit button to initiate your first signal."
+      : "Utilisez le bouton Soumettre pour initier votre premier signal.",
+    colFile:      lang === "en" ? "File" : "Dossier",
+    colSector:    lang === "en" ? "Sector" : "Secteur",
+    colGeo:       lang === "en" ? "Geography" : "Géographie",
+    colPipeline:  "Pipeline",
+    colDScore:    "D-Sc.",
+    colMScore:    "M-Sc.",
+  }
 
   const { data: opportunities } = workspaceId
     ? await supabase
@@ -114,7 +131,7 @@ export default async function OpportunitiesPage() {
           letterSpacing: "0.06em",
           textTransform: "uppercase",
         }}>
-          + Soumettre
+          {t.submit}
         </Link>
       </div>
 
@@ -129,7 +146,7 @@ export default async function OpportunitiesPage() {
           padding: "8px 16px",
           marginBottom: 4,
         }}>
-          {["Dossier", "Secteur", "Géographie", "Pipeline", "D-Sc.", "M-Sc."].map(h => (
+          {[t.colFile, t.colSector, t.colGeo, t.colPipeline, t.colDScore, t.colMScore].map(h => (
             <span key={h} style={{
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 10,
@@ -154,10 +171,10 @@ export default async function OpportunitiesPage() {
           borderTop: "1px solid #E0DAD0",
           borderBottom: "1px solid #E0DAD0",
         }}>
-          Aucun dossier soumis.
+          {t.noFiles}
           <br />
           <span style={{ fontSize: 11, display: "block", marginTop: 8 }}>
-            Utilisez le bouton Soumettre pour initier votre premier signal.
+            {t.noFilesHint}
           </span>
         </div>
       ) : (

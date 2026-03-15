@@ -4,6 +4,7 @@ import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 import Link from "next/link"
 import { IntroButton } from "@/components/intro-button"
 import { OpenRoomButton } from "@/components/open-room-button"
+import { cookies } from "next/headers"
 
 type Match = {
   id: string
@@ -63,16 +64,17 @@ function ScoreBadge({ label, value }: { label: string; value: number | undefined
   )
 }
 
-function StatusPill({ status }: { status?: string }) {
-  const map: Record<string, { label: string; bg: string; color: string }> = {
-    ready:            { label: "Ready",              bg: "#0A0A0A",  color: "#FFFFFF" },
-    pending:          { label: "Pending",             bg: "#F5F0E8",  color: "#7A746E" },
-    review:           { label: "Review",              bg: "#FEF3C7",  color: "#92400E" },
-    intro_requested:  { label: "Intro demandée",      bg: "#EFF6FF",  color: "#1D4ED8" },
-    room_active:      { label: "Room active",         bg: "#052e16",  color: "#22c55e" },
-    closing:          { label: "Closing",             bg: "#1E1B4B",  color: "#818CF8" },
+function StatusPill({ status, lang }: { status?: string; lang: "fr" | "en" }) {
+  const map: Record<string, { labelFr: string; labelEn: string; bg: string; color: string }> = {
+    ready:            { labelFr: "Ready",              labelEn: "Ready",             bg: "#0A0A0A",  color: "#FFFFFF" },
+    pending:          { labelFr: "Pending",             labelEn: "Pending",           bg: "#F5F0E8",  color: "#7A746E" },
+    review:           { labelFr: "Review",              labelEn: "Review",            bg: "#FEF3C7",  color: "#92400E" },
+    intro_requested:  { labelFr: "Intro demandée",      labelEn: "Intro requested",   bg: "#EFF6FF",  color: "#1D4ED8" },
+    room_active:      { labelFr: "Room active",         labelEn: "Room active",       bg: "#052e16",  color: "#22c55e" },
+    closing:          { labelFr: "Closing",             labelEn: "Closing",           bg: "#1E1B4B",  color: "#818CF8" },
   }
   const s = map[status ?? "pending"] ?? map.pending
+  const label = lang === "en" ? s.labelEn : s.labelFr
   return (
     <span style={{
       display: "inline-block",
@@ -85,7 +87,7 @@ function StatusPill({ status }: { status?: string }) {
       letterSpacing: "0.08em",
       textTransform: "uppercase" as const,
     }}>
-      {s.label}
+      {label}
     </span>
   )
 }
@@ -98,6 +100,27 @@ export default async function MatchesPage({
   await requireUser()
   const wsId = await requireActiveWorkspaceId()
   const params = await searchParams
+  const cookieStore = await cookies()
+  const lang = (cookieStore.get("crochet_lang")?.value ?? "fr") as "fr" | "en"
+
+  const t = {
+    noMatch:        lang === "en" ? "No match available." : "Aucun match disponible.",
+    noMatchHint:    lang === "en" ? "Submit a file to activate the engine." : "Soumettez un dossier pour activer le moteur.",
+    noMatchDisplay: lang === "en" ? "No match to display." : "Aucun match à afficher.",
+    selectMatch:    lang === "en" ? "Select a match." : "Sélectionnez un match.",
+    whyMatch:       lang === "en" ? "Why this match" : "Pourquoi ce match",
+    introTitle:     lang === "en" ? "Intro requested · Awaiting activation" : "Intro demandée · En attente d'activation",
+    introBody:      lang === "en"
+      ? "A notification has been sent to the counterpart. You can also open the Room directly."
+      : "Une notification a été envoyée à la contrepartie. Vous pouvez également ouvrir la Room directement.",
+    memoBody:       lang === "en"
+      ? "The full MEMO is accessible through the file or the Secure Room."
+      : "Le MEMO complet est accessible via le dossier ou la Secure Room.",
+    openFile:       lang === "en" ? "Open file" : "Ouvrir le dossier",
+    accessRoom:     lang === "en" ? "Access Room" : "Accéder à la Room",
+    aiConfidential: lang === "en" ? "AI · Confidential" : "IA · Confidentiel",
+    untitled:       lang === "en" ? "Untitled opportunity" : "Opportunité sans titre",
+  }
 
   const supabase = await createClient()
 
@@ -177,10 +200,10 @@ export default async function MatchesPage({
             marginTop: 32,
             lineHeight: 1.7,
           }}>
-            Aucun match disponible.
+            {t.noMatch}
             <br />
             <span style={{ fontSize: 11, display: "block", marginTop: 8 }}>
-              Soumettez un dossier pour activer le moteur.
+              {t.noMatchHint}
             </span>
           </div>
         ) : (
@@ -215,7 +238,7 @@ export default async function MatchesPage({
                   }}>
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <StatusPill status={m.status} />
+                  <StatusPill status={m.status} lang={lang} />
                 </div>
 
                 <div style={{
@@ -228,7 +251,7 @@ export default async function MatchesPage({
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                 }}>
-                  {opp?.title ?? "Opportunité sans titre"}
+                  {opp?.title ?? t.untitled}
                 </div>
 
                 <div style={{
@@ -284,7 +307,7 @@ export default async function MatchesPage({
             fontSize: 13,
             color: "#7A746E",
           }}>
-            {empty ? "Aucun match à afficher." : "Sélectionnez un match."}
+            {empty ? t.noMatchDisplay : t.selectMatch}
           </div>
         ) : (
           <div style={{ maxWidth: 720, padding: "40px 52px" }}>
@@ -298,7 +321,7 @@ export default async function MatchesPage({
                 marginBottom: 16,
                 flexWrap: "wrap",
               }}>
-                <StatusPill status={selected.status} />
+                <StatusPill status={selected.status} lang={lang} />
                 {[selectedOpp.sector, selectedOpp.geo, selectedOpp.deal_type].filter(Boolean).map((tag, i) => (
                   <span key={i} style={{
                     fontFamily: "var(--font-dm-sans), sans-serif",
@@ -375,7 +398,7 @@ export default async function MatchesPage({
                   color: "#7A746E",
                   marginBottom: 14,
                 }}>
-                  Pourquoi ce match
+                  {t.whyMatch}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {selected.why.map((reason, i) => (
@@ -409,7 +432,7 @@ export default async function MatchesPage({
               </div>
             )}
 
-            {/* Intro demandée — état intermédiaire */}
+            {/* Intro requested — intermediate state */}
             {selected.status === "intro_requested" && (
               <div style={{
                 padding: "16px 20px",
@@ -436,7 +459,7 @@ export default async function MatchesPage({
                     color: "#1D4ED8",
                     marginBottom: 4,
                   }}>
-                    Intro demandée · En attente d&apos;activation
+                    {t.introTitle}
                   </div>
                   <div style={{
                     fontFamily: "var(--font-dm-sans), sans-serif",
@@ -444,7 +467,7 @@ export default async function MatchesPage({
                     color: "#3B82F6",
                     lineHeight: 1.6,
                   }}>
-                    Une notification a été envoyée à la contrepartie. Vous pouvez également ouvrir la Room directement.
+                    {t.introBody}
                   </div>
                 </div>
               </div>
@@ -479,7 +502,7 @@ export default async function MatchesPage({
                   color: "#7A746E",
                   letterSpacing: "0.04em",
                 }}>
-                  IA · Confidentiel
+                  {t.aiConfidential}
                 </span>
               </div>
               <div style={{ padding: "20px" }}>
@@ -491,7 +514,7 @@ export default async function MatchesPage({
                   margin: 0,
                   lineHeight: 1.8,
                 }}>
-                  Le MEMO complet est accessible via le dossier ou la Secure Room.
+                  {t.memoBody}
                 </p>
               </div>
             </div>
@@ -512,7 +535,7 @@ export default async function MatchesPage({
                   textTransform: "uppercase",
                 }}
               >
-                Ouvrir le dossier
+                {t.openFile}
               </Link>
 
               {/* Status-based CTA */}
@@ -543,7 +566,7 @@ export default async function MatchesPage({
                     gap: 6,
                   }}
                 >
-                  🔒 Accéder à la Room
+                  🔒 {t.accessRoom}
                 </Link>
               )}
             </div>
