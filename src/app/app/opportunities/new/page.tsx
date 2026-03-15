@@ -116,6 +116,7 @@ export default async function NewOpportunityPage() {
         pitch_deck_url: pitchDeckUrl,
         website_url: websiteUrl,
         signal: Object.keys(questionnaire).length > 0 ? { questionnaire } : null,
+        status: "active",
       })
       .select("id")
       .single()
