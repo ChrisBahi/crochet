@@ -2,9 +2,15 @@ import { requireUser } from "@/lib/auth/require-user"
 import { createClient } from "@/lib/supabase/server"
 import { ProfileEditForm } from "./profile-edit-form"
 
-export default async function ProfileEditPage() {
+export default async function ProfileEditPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ onboarding?: string }>
+}) {
   const user = await requireUser()
   const supabase = await createClient()
+  const params = await searchParams
+  const isOnboarding = params.onboarding === "1"
 
   const { data: profile } = await supabase
     .from("investor_profiles")
@@ -14,6 +20,47 @@ export default async function ProfileEditPage() {
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "48px 52px" }}>
+
+      {isOnboarding && (
+        <div style={{
+          padding: "16px 20px",
+          background: "#F5F0E8",
+          border: "1px solid #E0DAD0",
+          marginBottom: 32,
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 14,
+        }}>
+          <span style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "#0A0A0A",
+            flexShrink: 0,
+            marginTop: 5,
+            display: "inline-block",
+          }} />
+          <div>
+            <div style={{
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#0A0A0A",
+              marginBottom: 4,
+            }}>
+              Bienvenue sur CROCHET.
+            </div>
+            <div style={{
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 12,
+              color: "#7A746E",
+              lineHeight: 1.65,
+            }}>
+              Complétez votre passeport transactionnel pour activer le moteur de matching.
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ marginBottom: 32 }}>
         <div style={{
@@ -35,7 +82,7 @@ export default async function ProfileEditPage() {
           margin: 0,
           lineHeight: 1,
         }}>
-          Éditer le profil
+          {isOnboarding ? "Créer mon profil" : "Éditer le profil"}
         </h1>
       </div>
 

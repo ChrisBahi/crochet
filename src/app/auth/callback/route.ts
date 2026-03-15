@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  let response = NextResponse.redirect(new URL("/app", request.url));
+  let response = NextResponse.redirect(new URL("/welcome", request.url));
 
   if (code) {
     const supabase = createServerClient(
@@ -55,11 +55,6 @@ export async function GET(request: NextRequest) {
       loginUrl.searchParams.set("oauth_error_description", exchangeError.message);
       return NextResponse.redirect(loginUrl);
     }
-  }
-  if (!code) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("oauth_error", "missing_code");
-    return NextResponse.redirect(loginUrl);
   }
 
   return response;

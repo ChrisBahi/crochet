@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import LoginButton from "./login-button"
 import Link from "next/link"
+import { Suspense } from "react"
 
 export default function LoginPage() {
   return (
@@ -96,7 +97,9 @@ export default function LoginPage() {
 
           <div style={{ borderTop: "2px solid #0A0A0A", marginBottom: 32 }} />
 
-          <LoginButton />
+          <Suspense>
+            <LoginButton />
+          </Suspense>
 
           <p style={{
             fontFamily: "var(--font-dm-sans), sans-serif",

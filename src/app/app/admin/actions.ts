@@ -50,7 +50,7 @@ export async function rejectAdmission(id: string) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "CROCHET <no-reply@crochet.app>",
+        from: "CROCHET <no-reply@crochett.ai>",
         to: [req.email],
         subject: "Votre candidature CROCHET",
         html: `<!DOCTYPE html>
