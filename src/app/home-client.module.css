@@ -1,0 +1,176 @@
+.header {
+  padding-inline: 48px;
+}
+
+.heroSection {
+  padding: 80px 48px 0;
+}
+
+.heroGrid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: flex-start;
+}
+
+.statsSection {
+  padding: 48px;
+}
+
+.statsGrid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0;
+}
+
+.statItem {
+  text-align: center;
+  padding: 0 32px;
+}
+
+.statItem + .statItem {
+  border-left: 1px solid #1A1A1A;
+}
+
+.pillarsSection {
+  padding: 80px 48px;
+}
+
+.pillarsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+}
+
+.pillarItem {
+  padding: 40px 36px;
+}
+
+.pillarItem:first-child {
+  border-left: 1px solid #E0DAD0;
+  border-right: 1px solid #E0DAD0;
+}
+
+.pillarItem:nth-child(2) {
+  border-right: 1px solid #E0DAD0;
+}
+
+.admissionSection {
+  padding: 100px 48px;
+}
+
+.admissionInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 64px;
+}
+
+.admissionCard {
+  flex: 0 0 380px;
+  border: 1px solid #333;
+  padding: 40px;
+  background: #0D0D0D;
+}
+
+.footer {
+  padding: 24px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  .header {
+    padding-inline: 16px;
+  }
+
+  .heroSection {
+    padding: 40px 20px 0;
+  }
+
+  .heroGrid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .statsSection {
+    padding: 36px 20px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .statItem {
+    padding: 16px;
+  }
+
+  .statItem + .statItem {
+    border-left: none;
+  }
+
+  .statItem:nth-child(2) {
+    border-left: 1px solid #1A1A1A;
+  }
+
+  .statItem:nth-child(3) {
+    border-top: 1px solid #1A1A1A;
+  }
+
+  .statItem:nth-child(4) {
+    border-left: 1px solid #1A1A1A;
+    border-top: 1px solid #1A1A1A;
+  }
+
+  .pillarsSection {
+    padding: 56px 20px;
+  }
+
+  .pillarsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .pillarItem {
+    padding: 32px 0;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: 1px solid #E0DAD0;
+  }
+
+  .pillarItem:first-child {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+
+  .admissionSection {
+    padding: 56px 20px;
+  }
+
+  .admissionInner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 40px;
+  }
+
+  .admissionCard {
+    flex: none;
+    padding: 28px 20px;
+  }
+
+  .footer {
+    padding: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+}

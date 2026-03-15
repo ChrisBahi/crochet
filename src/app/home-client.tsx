@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { LangSwitcher } from "@/components/lang-switcher"
 import { useLang } from "@/lib/lang/context"
+import styles from "./home-client.module.css"
 
 const t = {
   fr: {
@@ -91,13 +92,12 @@ export function HomeClient({ appHref }: { appHref: string }) {
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#F5F2EE" }}>
 
       {/* ── HEADER ── */}
-      <header style={{
+      <header className={styles.header} style={{
         background: "#0A0A0A",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         height: 72,
-        paddingInline: 48,
         position: "sticky",
         top: 0,
         zIndex: 100,
@@ -122,7 +122,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
             color: "#FFFFFF",
             background: "#1A1A1A",
             textDecoration: "none",
-            padding: "10px 24px",
+            padding: "10px 20px",
             border: "1px solid #505050",
             display: "inline-block",
             letterSpacing: "0.04em",
@@ -136,7 +136,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
             color: "#000000",
             background: "#FFFFFF",
             textDecoration: "none",
-            padding: "10px 24px",
+            padding: "10px 20px",
             display: "inline-block",
             letterSpacing: "0.04em",
           }}>
@@ -146,7 +146,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
       </header>
 
       {/* ── HERO ── */}
-      <section style={{ background: "#F5F2EE", padding: "80px 48px 0", flex: 1, position: "relative", overflow: "hidden" }}>
+      <section className={styles.heroSection} style={{ background: "#F5F2EE", flex: 1, position: "relative", overflow: "hidden" }}>
         <div style={{
           position: "absolute", right: -60, top: -40,
           fontSize: 600, fontFamily: "var(--font-playfair), Georgia, serif",
@@ -154,7 +154,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
           userSelect: "none", pointerEvents: "none", letterSpacing: "-0.05em",
         }}>C</div>
 
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "flex-start" }}>
+        <div className={styles.heroGrid}>
           <div style={{ paddingBottom: 80 }}>
             <div style={{
               fontFamily: "var(--font-jetbrains), monospace",
@@ -165,7 +165,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
             </div>
             <h1 style={{
               fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
-              fontSize: "clamp(52px, 5.5vw, 76px)", fontWeight: 800,
+              fontSize: "clamp(48px, 5.5vw, 76px)", fontWeight: 800,
               color: "#0A0A0A", margin: "0", lineHeight: 1.05, letterSpacing: "-0.02em",
             }}>
               {tx.h1a}
@@ -173,7 +173,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
             <h1 style={{
               fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
               fontStyle: "italic",
-              fontSize: "clamp(52px, 5.5vw, 76px)", fontWeight: 800,
+              fontSize: "clamp(48px, 5.5vw, 76px)", fontWeight: 800,
               color: "#0A0A0A", margin: "0 0 40px", lineHeight: 1.05, letterSpacing: "-0.02em",
             }}>
               {tx.h1b}
@@ -244,10 +244,10 @@ export function HomeClient({ appHref }: { appHref: string }) {
       </section>
 
       {/* ── STATS BAR ── */}
-      <section style={{ background: "#0A0A0A", padding: "48px 48px", borderTop: "1px solid #F0EDE8" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 0 }}>
+      <section className={styles.statsSection} style={{ background: "#0A0A0A", borderTop: "1px solid #F0EDE8" }}>
+        <div className={styles.statsGrid}>
           {tx.stats.map((stat, i) => (
-            <div key={i} style={{ textAlign: "center", padding: "0 32px", borderLeft: i > 0 ? "1px solid #1A1A1A" : "none" }}>
+            <div key={i} className={styles.statItem}>
               <div style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 42, fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.02em", lineHeight: 1, marginBottom: 10 }}>
                 {stat.value}
               </div>
@@ -260,14 +260,14 @@ export function HomeClient({ appHref }: { appHref: string }) {
       </section>
 
       {/* ── TROIS PILIERS ── */}
-      <section id="plateforme" style={{ background: "#FFFFFF", padding: "80px 48px", borderTop: "1px solid #E0DAD0", borderBottom: "1px solid #E0DAD0" }}>
+      <section id="plateforme" className={styles.pillarsSection} style={{ background: "#FFFFFF", borderTop: "1px solid #E0DAD0", borderBottom: "1px solid #E0DAD0" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#7A746E", marginBottom: 48 }}>
             {tx.infraLabel}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 0 }}>
+          <div className={styles.pillarsGrid}>
             {tx.pillars.map((pillar, i) => (
-              <div key={i} style={{ padding: "40px 36px", borderRight: i < 2 ? "1px solid #E0DAD0" : "none", borderLeft: i === 0 ? "1px solid #E0DAD0" : "none" }}>
+              <div key={i} className={styles.pillarItem}>
                 <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "#C8C2B8", letterSpacing: "0.1em", marginBottom: 20 }}>
                   {pillar.num}
                 </div>
@@ -287,8 +287,8 @@ export function HomeClient({ appHref }: { appHref: string }) {
       </section>
 
       {/* ── ADMISSION ── */}
-      <section style={{ background: "#111111", padding: "100px 48px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 64 }}>
+      <section className={styles.admissionSection} style={{ background: "#111111" }}>
+        <div className={styles.admissionInner}>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "#AAA", marginBottom: 24 }}>
               {tx.admissionLabel}
@@ -301,7 +301,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
             </p>
           </div>
 
-          <div style={{ flex: "0 0 380px", border: "1px solid #333", padding: "40px", background: "#0D0D0D" }}>
+          <div className={styles.admissionCard}>
             <div style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "#AAA", marginBottom: 24, paddingBottom: 16, borderBottom: "1px solid #2A2A2A" }}>
               {tx.admittedLabel}
             </div>
@@ -330,7 +330,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ background: "#0A0A0A", borderTop: "1px solid #1A1A1A", padding: "24px 48px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <footer className={styles.footer} style={{ background: "#0A0A0A", borderTop: "1px solid #1A1A1A" }}>
         <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 14, fontWeight: 700, color: "#AAA", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           CROCHET.
         </span>
