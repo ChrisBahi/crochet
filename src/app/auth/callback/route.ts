@@ -56,11 +56,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
   }
-  if (!code) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("oauth_error", "missing_code");
-    return NextResponse.redirect(loginUrl);
-  }
 
   return response;
 }
