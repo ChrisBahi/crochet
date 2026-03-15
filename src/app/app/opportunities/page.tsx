@@ -184,7 +184,7 @@ export default async function OpportunitiesPage() {
                   alignItems: "center",
                 }}
               >
-                <div>
+                <div style={{ minWidth: 0, overflow: "hidden" }}>
                   <div style={{
                     fontFamily: "var(--font-dm-sans), sans-serif",
                     fontSize: 14,
@@ -202,7 +202,6 @@ export default async function OpportunitiesPage() {
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
-                      maxWidth: 400,
                     }}>
                       {o.description}
                     </div>
