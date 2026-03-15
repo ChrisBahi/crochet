@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { NotificationBell } from "@/components/notification-bell"
+import { useLang } from "@/lib/lang/context"
 
 const NAV = [
   { href: "/app/matches",       label: "Matches" },

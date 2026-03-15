@@ -6,6 +6,7 @@ import "@fontsource/dm-sans/400.css";
 import "@fontsource/dm-sans/500.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "./globals.css";
+import { LangProvider } from "@/lib/lang/context";
 
 export const metadata: Metadata = {
   title: "Crochet — Infrastructure privée de transactions",
@@ -20,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className="antialiased">
-        {children}
+        <LangProvider>{children}</LangProvider>
       </body>
     </html>
   );
