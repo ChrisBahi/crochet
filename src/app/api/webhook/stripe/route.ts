@@ -4,7 +4,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-01-27.acacia",
+  apiVersion: "2025-02-24.acacia",
 });
 
 export async function POST(req: NextRequest) {
@@ -40,8 +40,7 @@ export async function POST(req: NextRequest) {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
-      const workspaceId = session.subscription_data?.metadata?.workspace_id
-        ?? (session.metadata?.workspace_id as string | undefined);
+      const workspaceId = session.metadata?.workspace_id as string | undefined;
       if (!workspaceId) break;
 
       const sub = await stripe.subscriptions.retrieve(session.subscription as string);
