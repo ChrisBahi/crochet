@@ -1,64 +1,37 @@
-import Stripe from "stripe";
+const KEY = process.env.STRIPE_SECRET_KEY!;
+const BASE = "https://api.stripe.com/v1";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-01-27.acacia",
-});
+async function post(path: string, params: Record<string, string>) {
+  const body = new URLSearchParams(params).toString();
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${KEY}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+  return res.json() as Promise<Record<string, string>>;
+}
 
 async function main() {
-  console.log("Creating Stripe products and prices...\n");
+  const plans = [
+    { name: "Starter", description: "Pour les conseillers independants", amount: "29000" },
+    { name: "Pro", description: "Pour les fonds et family offices", amount: "59000" },
+    { name: "Scale", description: "Pour les boutiques M&A et structures multi-fonds", amount: "149000" },
+  ];
 
-  // Starter
-  const starter = await stripe.products.create({
-    name: "Starter",
-    description: "Pour les conseillers indépendants",
-  });
-  const starterPrice = await stripe.prices.create({
-    product: starter.id,
-    unit_amount: 29000, // €290.00
-    currency: "eur",
-    recurring: { interval: "month" },
-    nickname: "Starter mensuel",
-  });
-  console.log(`✓ Starter created`);
-  console.log(`  Product ID: ${starter.id}`);
-  console.log(`  Price ID:   ${starterPrice.id}\n`);
-
-  // Pro
-  const pro = await stripe.products.create({
-    name: "Pro",
-    description: "Pour les fonds et family offices",
-  });
-  const proPrice = await stripe.prices.create({
-    product: pro.id,
-    unit_amount: 59000, // €590.00
-    currency: "eur",
-    recurring: { interval: "month" },
-    nickname: "Pro mensuel",
-  });
-  console.log(`✓ Pro created`);
-  console.log(`  Product ID: ${pro.id}`);
-  console.log(`  Price ID:   ${proPrice.id}\n`);
-
-  // Scale
-  const scale = await stripe.products.create({
-    name: "Scale",
-    description: "Pour les boutiques M&A et structures multi-fonds",
-  });
-  const scalePrice = await stripe.prices.create({
-    product: scale.id,
-    unit_amount: 149000, // €1490.00
-    currency: "eur",
-    recurring: { interval: "month" },
-    nickname: "Scale mensuel",
-  });
-  console.log(`✓ Scale created`);
-  console.log(`  Product ID: ${scale.id}`);
-  console.log(`  Price ID:   ${scalePrice.id}\n`);
-
-  console.log("=== Add these to your .env.local ===");
-  console.log(`STRIPE_PRICE_STARTER=${starterPrice.id}`);
-  console.log(`STRIPE_PRICE_PRO=${proPrice.id}`);
-  console.log(`STRIPE_PRICE_SCALE=${scalePrice.id}`);
+  for (const plan of plans) {
+    const product = await post("/products", { name: plan.name, description: plan.description });
+    const price = await post("/prices", {
+      product: product.id,
+      unit_amount: plan.amount,
+      currency: "eur",
+      "recurring[interval]": "month",
+    });
+    console.log(`✓ ${plan.name}`);
+    console.log(`  STRIPE_PRICE_${plan.name.toUpperCase()}=${price.id}`);
+  }
 }
 
 main().catch(console.error);
