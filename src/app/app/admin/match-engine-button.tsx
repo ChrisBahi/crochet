@@ -1,7 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { runMatchEngine } from "./actions";
+import { createClient } from "@/lib/supabase/client";
+
+type MatchResult = {
+  opportunities_scanned: number;
+  matches_created: number;
+  skipped: {
+    not_complementary: number;
+    low_structured_score: number;
+    low_mscore: number;
+    duplicates: number;
+  };
+};
 
 export function MatchEngineButton() {
   const [loading, setLoading] = useState(false);
@@ -11,8 +22,31 @@ export function MatchEngineButton() {
     setLoading(true);
     setResult(null);
     try {
-      const res = await runMatchEngine();
-      setResult(res);
+      // Get session JWT to authenticate the API call directly
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? "";
+
+      const baseUrl = window.location.origin;
+      const res = await fetch(`${baseUrl}/api/match/run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        setResult({ success: false, message: `Erreur ${res.status}: ${text || "Réponse inattendue du serveur"}` });
+        return;
+      }
+
+      const data: MatchResult = await res.json();
+      setResult({
+        success: true,
+        message: `${data.matches_created ?? 0} match(s) créé(s) sur ${data.opportunities_scanned ?? 0} opportunités analysées.`,
+      });
     } catch (e: unknown) {
       setResult({ success: false, message: e instanceof Error ? e.message : "Erreur inconnue" });
     } finally {

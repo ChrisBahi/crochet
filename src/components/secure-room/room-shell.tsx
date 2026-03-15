@@ -82,51 +82,86 @@ const C = {
 // ─── Black Screen Guard ───────────────────────────────────────────────────────
 
 function BlackScreenGuard({ children }: { children: React.ReactNode }) {
-  const [hidden, setHidden] = useState(false)
+  // Use a ref to drive visibility — faster than setState (no React re-render cycle)
+  const overlayRef = useRef<HTMLDivElement>(null)
   const { lang } = useLang()
 
   useEffect(() => {
-    const handle = () => setHidden(document.visibilityState === "hidden")
-    document.addEventListener("visibilitychange", handle)
-    return () => document.removeEventListener("visibilitychange", handle)
+    const show = () => {
+      if (overlayRef.current) overlayRef.current.style.visibility = "visible"
+    }
+    const hide = () => {
+      if (overlayRef.current) overlayRef.current.style.visibility = "hidden"
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") show(); else hide()
+    }
+
+    // Desktop tab switch + mobile app-switch (Safari/Chrome)
+    document.addEventListener("visibilitychange", onVisibility)
+    // Window loses focus (alt-tab, command-tab, screenshot on Mac)
+    window.addEventListener("blur", show)
+    window.addEventListener("focus", hide)
+    // iOS: page hidden when navigating away
+    window.addEventListener("pagehide", show)
+    window.addEventListener("pageshow", hide)
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility)
+      window.removeEventListener("blur", show)
+      window.removeEventListener("focus", hide)
+      window.removeEventListener("pagehide", show)
+      window.removeEventListener("pageshow", hide)
+    }
   }, [])
 
   return (
     <>
-      <style>{`@media print { body { display: none !important; } }`}</style>
-      {children}
-      {hidden && (
-        <div style={{
+      <style>{`
+        @media print { body { display: none !important; } }
+        /* Blur content when window not focused — CSS fallback */
+        .bsg-content { transition: filter 0.05s; }
+      `}</style>
+      <div className="bsg-content" style={{ display: "contents" }}>
+        {children}
+      </div>
+      {/* Always in DOM — toggled via style.visibility for zero React lag */}
+      <div
+        ref={overlayRef}
+        style={{
           position: "fixed", inset: 0,
           background: "#000000",
           zIndex: 999999,
+          visibility: "hidden",   // starts hidden
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           gap: 16,
           userSelect: "none",
+          willChange: "visibility",
+        }}
+      >
+        <span style={{
+          fontFamily: FONT_SANS,
+          fontSize: 11,
+          letterSpacing: "0.22em",
+          textTransform: "uppercase",
+          color: "rgba(255,255,255,0.35)",
         }}>
-          <span style={{
-            fontFamily: FONT_SANS,
-            fontSize: 11,
-            letterSpacing: "0.22em",
-            textTransform: "uppercase",
-            color: "rgba(255,255,255,0.35)",
-          }}>
-            {lang === "en" ? "THE SIGNAL, NOT THE NOISE." : "LE SIGNAL, PAS LE BRUIT."}
-          </span>
-          <span style={{
-            fontFamily: FONT_SERIF,
-            fontSize: 32,
-            fontWeight: 700,
-            color: "#FFFFFF",
-            letterSpacing: "0.06em",
-          }}>
-            Crochet.
-          </span>
-        </div>
-      )}
+          {lang === "en" ? "THE SIGNAL, NOT THE NOISE." : "LE SIGNAL, PAS LE BRUIT."}
+        </span>
+        <span style={{
+          fontFamily: FONT_SERIF,
+          fontSize: 32,
+          fontWeight: 700,
+          color: "#FFFFFF",
+          letterSpacing: "0.06em",
+        }}>
+          Crochet.
+        </span>
+      </div>
     </>
   )
 }
@@ -169,70 +204,83 @@ function RoomHeader({
   }
 
   return (
-    <div style={{
-      background: C.bgDark,
-      borderBottom: "1px solid #1A1A1A",
-      padding: "0 24px",
-      height: 52,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      flexShrink: 0,
-    }}>
-      {/* Left */}
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-        <span style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.01em" }}>
-          crochet.
-        </span>
-        <div style={{ width: 1, height: 16, background: "#2A2A2A" }} />
-        <span style={{ fontFamily: FONT_MONO, fontSize: 10, color: "#555", letterSpacing: "0.08em" }}>
-          {roomRef}
-        </span>
-        {opportunityTitle && (
-          <>
-            <div style={{ width: 1, height: 16, background: "#2A2A2A" }} />
-            <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#888", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {opportunityTitle}
+    <>
+      <style>{`
+        @media (max-width: 640px) {
+          .room-header-title { display: none !important; }
+          .room-header-secure { display: none !important; }
+          .room-header-opp { max-width: 120px !important; }
+        }
+      `}</style>
+      <div style={{
+        background: C.bgDark,
+        borderBottom: "1px solid #1A1A1A",
+        padding: "0 16px",
+        height: 52,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexShrink: 0,
+        minWidth: 0,
+        overflow: "hidden",
+      }}>
+        {/* Left */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1, overflow: "hidden" }}>
+          <span className="room-header-title" style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-0.01em", flexShrink: 0 }}>
+            crochet.
+          </span>
+          <div className="room-header-title" style={{ width: 1, height: 16, background: "#2A2A2A", flexShrink: 0 }} />
+          <span style={{ fontFamily: FONT_MONO, fontSize: 10, color: "#555", letterSpacing: "0.08em", flexShrink: 0 }}>
+            {roomRef}
+          </span>
+          {opportunityTitle && (
+            <>
+              <div className="room-header-title" style={{ width: 1, height: 16, background: "#2A2A2A", flexShrink: 0 }} />
+              <span className="room-header-opp" style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#888", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {opportunityTitle}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Right */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginLeft: 8 }}>
+          {/* NDA */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 5,
+            padding: "3px 8px",
+            border: `1px solid ${ndaSigned ? "#16a34a" : "#5a4000"}`,
+            background: ndaSigned ? "#052e16" : "#1c1000",
+            flexShrink: 0,
+          }}>
+            <span style={{ width: 5, height: 5, borderRadius: "50%", background: ndaSigned ? "#22c55e" : "#f59e0b", flexShrink: 0 }} />
+            <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: ndaSigned ? "#22c55e" : "#f59e0b", letterSpacing: "0.08em" }}>
+              NDA {ndaSigned ? (lang === "en" ? "OK" : "OK") : (lang === "en" ? "REQ." : "REQ.")}
             </span>
-          </>
-        )}
-      </div>
+          </div>
 
-      {/* Right */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        {/* NDA */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "3px 10px",
-          border: `1px solid ${ndaSigned ? "#16a34a" : "#5a4000"}`,
-          background: ndaSigned ? "#052e16" : "#1c1000",
-        }}>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: ndaSigned ? "#22c55e" : "#f59e0b", flexShrink: 0 }} />
-          <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: ndaSigned ? "#22c55e" : "#f59e0b", letterSpacing: "0.1em" }}>
-            NDA {ndaSigned ? (lang === "en" ? "SIGNED" : "SIGNÉ") : (lang === "en" ? "REQUIRED" : "REQUIS")}
-          </span>
-        </div>
+          {/* Status */}
+          <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusColor[status] ?? "#7A746E" }} />
+            <span style={{ fontFamily: FONT_SANS, fontSize: 10, color: "#888", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              {statusLabel[status] ?? status}
+            </span>
+          </div>
 
-        {/* Status */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusColor[status] ?? "#7A746E" }} />
-          <span style={{ fontFamily: FONT_SANS, fontSize: 10, color: "#888", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-            {statusLabel[status] ?? status}
-          </span>
-        </div>
-
-        {/* Secure badge */}
-        <div style={{
-          padding: "3px 10px",
-          border: "1px solid #1A1A1A",
-          background: "#111",
-        }}>
-          <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#444", letterSpacing: "0.1em" }}>
-            {lang === "en" ? "SECURE ZONE" : "ZONE SÉCURISÉE"}
-          </span>
+          {/* Secure badge — hidden on mobile */}
+          <div className="room-header-secure" style={{
+            padding: "3px 8px",
+            border: "1px solid #1A1A1A",
+            background: "#111",
+            flexShrink: 0,
+          }}>
+            <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#444", letterSpacing: "0.08em" }}>
+              {lang === "en" ? "SECURE" : "SÉCURISÉ"}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
