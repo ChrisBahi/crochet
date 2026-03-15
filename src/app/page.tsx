@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { LangSwitcher } from "@/components/lang-switcher";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -51,7 +52,8 @@ export default async function Home() {
         </nav>
 
         {/* Right CTAs */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <LangSwitcher />
           <Link href={appHref} style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
             fontSize: 13,
