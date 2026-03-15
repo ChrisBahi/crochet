@@ -2,9 +2,11 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useLang } from "@/lib/lang/context";
 
 export default function WelcomePage() {
   const router = useRouter();
+  const { lang } = useLang();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -12,6 +14,9 @@ export default function WelcomePage() {
     }, 2500);
     return () => clearTimeout(timer);
   }, [router]);
+
+  const line1 = lang === "en" ? "The signal," : "Le signal,";
+  const line2 = lang === "en" ? "not the noise." : "pas le bruit.";
 
   return (
     <div style={{
@@ -33,7 +38,7 @@ export default function WelcomePage() {
         textAlign: "center",
         animation: "fadeIn 0.8s ease forwards",
       }}>
-        Le signal,
+        {line1}
       </h1>
       <h1 style={{
         fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
@@ -47,7 +52,7 @@ export default function WelcomePage() {
         textAlign: "center",
         animation: "fadeIn 0.8s ease 0.2s both",
       }}>
-        pas le bruit.
+        {line2}
       </h1>
 
       <div style={{

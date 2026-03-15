@@ -6,11 +6,18 @@ import { createClient } from "@/lib/supabase/client"
 import { NotificationBell } from "@/components/notification-bell"
 import { useLang } from "@/lib/lang/context"
 
-const NAV = [
+const NAV_FR = [
   { href: "/app/matches",       label: "Matches" },
   { href: "/app/opportunities", label: "Opportunités" },
   { href: "/app/rooms",         label: "Rooms" },
   { href: "/app/profile",       label: "Profil" },
+]
+
+const NAV_EN = [
+  { href: "/app/matches",       label: "Matches" },
+  { href: "/app/opportunities", label: "Opportunities" },
+  { href: "/app/rooms",         label: "Rooms" },
+  { href: "/app/profile",       label: "Profile" },
 ]
 
 const ADMIN_NAV = { href: "/app/admin", label: "Admin" }
@@ -28,7 +35,8 @@ export function AppShell({
   const router   = useRouter()
   const supabase = createClient()
   const { lang, setLang } = useLang()
-  const nav = isAdmin ? [...NAV, ADMIN_NAV] : NAV
+  const baseNav = lang === "en" ? NAV_EN : NAV_FR
+  const nav = isAdmin ? [...baseNav, ADMIN_NAV] : baseNav
 
   async function logout() {
     await supabase.auth.signOut()
@@ -94,7 +102,7 @@ export function AppShell({
               letterSpacing: "0.06em", textTransform: "uppercase",
             }}
           >
-            Soumettre
+            {lang === "en" ? "Submit" : "Soumettre"}
           </Link>
 
           {userId && <NotificationBell userId={userId} />}
@@ -131,7 +139,7 @@ export function AppShell({
               cursor: "pointer",
             }}
           >
-            Sortir
+            {lang === "en" ? "Sign out" : "Sortir"}
           </button>
         </div>
       </header>
