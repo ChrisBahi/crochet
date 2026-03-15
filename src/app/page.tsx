@@ -539,23 +539,7 @@ export default async function Home() {
         }}>
           CROCHET.
         </span>
-        <div style={{ display: "flex", gap: 28 }}>
-          {[
-            { label: "Connexion", href: "/login" },
-            { label: "Candidature", href: "/register" },
-          ].map(({ label, href }) => (
-            <Link key={href} href={href} style={{
-              fontFamily: "var(--font-dm-sans), sans-serif",
-              fontSize: 11,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "#AAA",
-              textDecoration: "none",
-            }}>
-              {label}
-            </Link>
-          ))}
-        </div>
+        <LangSwitcher />
         <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "#666", letterSpacing: "0.08em" }}>
           © 2025 CROCHET — CONFIDENTIEL
         </span>
