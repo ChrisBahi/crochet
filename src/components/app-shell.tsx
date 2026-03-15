@@ -107,28 +107,6 @@ export function AppShell({
 
           {userId && <NotificationBell userId={userId} />}
 
-          {/* Lang switch */}
-          <div style={{ display: "flex", border: "1px solid #E0DAD0" }}>
-            {(["fr", "en"] as const).map((l) => (
-              <button
-                key={l}
-                onClick={() => setLang(l)}
-                style={{
-                  padding: "7px 10px",
-                  background: lang === l ? "#0A0A0A" : "transparent",
-                  color: lang === l ? "#FFFFFF" : "#7A746E",
-                  border: "none",
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 11, fontWeight: 600,
-                  letterSpacing: "0.06em", textTransform: "uppercase",
-                  cursor: "pointer",
-                }}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
-
           <button
             onClick={logout}
             style={{
