@@ -138,6 +138,28 @@ const QUESTIONNAIRE: Record<string, QuestionField[]> = {
         { value: "negociable", label: "Négociable" },
       ],
     },
+    {
+      name: "q_revenue_model",
+      label: "Modèle économique principal",
+      type: "select",
+      options: [
+        { value: "b2b", label: "B2B — clients professionnels" },
+        { value: "b2c", label: "B2C — clients particuliers" },
+        { value: "mixte", label: "Mixte B2B / B2C" },
+        { value: "b2b2c", label: "B2B2C — via partenaires" },
+      ],
+    },
+    {
+      name: "q_revenue_trend",
+      label: "Évolution du chiffre d'affaires sur 3 ans",
+      type: "select",
+      options: [
+        { value: "forte_croissance", label: "En forte croissance (> +15 % / an)" },
+        { value: "croissance", label: "En croissance (+5 à +15 % / an)" },
+        { value: "stable", label: "Stable (entre -5 % et +5 %)" },
+        { value: "declin", label: "En déclin (< -5 % / an)" },
+      ],
+    },
   ],
   debt: [
     {

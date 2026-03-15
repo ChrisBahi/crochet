@@ -11,6 +11,7 @@ const NAV_FR = [
   { href: "/app/opportunities", label: "Opportunités" },
   { href: "/app/rooms",         label: "Rooms" },
   { href: "/app/profile",       label: "Profil" },
+  { href: "/app/billing",       label: "Abonnement" },
 ]
 
 const NAV_EN = [
@@ -18,6 +19,7 @@ const NAV_EN = [
   { href: "/app/opportunities", label: "Opportunities" },
   { href: "/app/rooms",         label: "Rooms" },
   { href: "/app/profile",       label: "Profile" },
+  { href: "/app/billing",       label: "Billing" },
 ]
 
 const ADMIN_NAV = { href: "/app/admin", label: "Admin" }

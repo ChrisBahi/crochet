@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/lang/context";
 
@@ -8,15 +7,10 @@ export default function WelcomePage() {
   const router = useRouter();
   const { lang } = useLang();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace("/app");
-    }, 2500);
-    return () => clearTimeout(timer);
-  }, [router]);
-
   const line1 = lang === "en" ? "The signal," : "Le signal,";
   const line2 = lang === "en" ? "not the noise." : "pas le bruit.";
+  const subtitle = lang === "en" ? "Your access is confirmed." : "Votre accès est confirmé.";
+  const cta = lang === "en" ? "Enter my space →" : "Accéder à mon espace →";
 
   return (
     <div style={{
@@ -32,7 +26,7 @@ export default function WelcomePage() {
         fontSize: "clamp(48px, 7vw, 96px)",
         fontWeight: 800,
         color: "#FFFFFF",
-        margin: "0 0 0",
+        margin: "0",
         lineHeight: 1.02,
         letterSpacing: "-0.03em",
         textAlign: "center",
@@ -46,7 +40,7 @@ export default function WelcomePage() {
         fontSize: "clamp(48px, 7vw, 96px)",
         fontWeight: 800,
         color: "#FFFFFF",
-        margin: "0 0 0",
+        margin: "0 0 48px",
         lineHeight: 1.02,
         letterSpacing: "-0.03em",
         textAlign: "center",
@@ -55,14 +49,44 @@ export default function WelcomePage() {
         {line2}
       </h1>
 
+      <p style={{
+        fontFamily: "var(--font-dm-sans), sans-serif",
+        fontSize: 14,
+        color: "#7A746E",
+        margin: "0 0 40px",
+        letterSpacing: "0.02em",
+        animation: "fadeIn 0.8s ease 0.5s both",
+      }}>
+        {subtitle}
+      </p>
+
+      <button
+        onClick={() => router.replace("/app")}
+        style={{
+          fontFamily: "var(--font-dm-sans), sans-serif",
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: "#0A0A0A",
+          background: "#FFFFFF",
+          border: "none",
+          padding: "16px 40px",
+          cursor: "pointer",
+          animation: "fadeIn 0.8s ease 0.8s both",
+        }}
+      >
+        {cta}
+      </button>
+
       <div style={{
-        marginTop: 56,
+        marginTop: 64,
         fontFamily: "var(--font-jetbrains), monospace",
         fontSize: 9,
         color: "#333",
         letterSpacing: "0.18em",
         textTransform: "uppercase",
-        animation: "fadeIn 0.8s ease 0.8s both",
+        animation: "fadeIn 0.8s ease 1s both",
       }}>
         CROCHET.
       </div>
@@ -71,6 +95,9 @@ export default function WelcomePage() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        button:hover {
+          background: #E0DAD0 !important;
         }
       `}</style>
     </div>

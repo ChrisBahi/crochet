@@ -89,7 +89,8 @@ export default async function NewOpportunityPage() {
     const questionnaireFields = [
       "q_growth_rate", "q_active_customers", "q_revenue_type", "q_runway",
       "q_main_risk", "q_cession_reason", "q_dependance_dirigeant", "q_employees",
-      "q_dette_bancaire", "q_non_concurrence", "q_debt_purpose", "q_repayment_capacity",
+      "q_dette_bancaire", "q_non_concurrence", "q_revenue_model", "q_revenue_trend",
+      "q_debt_purpose", "q_repayment_capacity",
       "q_guarantees", "q_revenue_stability", "q_rev_share_amount", "q_heirs",
       "q_timeline", "q_fiscal_optim", "q_immo_type", "q_occupancy", "q_bail_duration",
     ]
