@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/auth/require-user"
 import { redirect } from "next/navigation"
 import { RoomShell } from "@/components/secure-room/room-shell"
+import { getPlanStatus } from "@/lib/subscription"
 
 export const dynamic = "force-dynamic"
 
@@ -83,6 +84,8 @@ export default async function RoomPage({
 
   const displayName = (profile?.name as string) ?? user.email?.split("@")[0] ?? "Vous"
 
+  const { status: planStatus, trialDaysLeft } = await getPlanStatus(user.id)
+
   // Demo fallback: if no real opportunity, inject mock data so the room is explorable
   const isDemo = !opportunity && !room.match_id && !room.opportunity_id
   const resolvedOpportunity = opportunity ?? (isDemo ? {
@@ -133,6 +136,8 @@ export default async function RoomPage({
       userId={user.id}
       displayName={displayName}
       initialValidations={validations ?? []}
+      planStatus={planStatus}
+      trialDaysLeft={trialDaysLeft}
     />
   )
 }

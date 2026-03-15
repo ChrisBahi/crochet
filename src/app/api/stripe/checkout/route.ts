@@ -1,0 +1,43 @@
+import { NextRequest, NextResponse } from "next/server"
+import Stripe from "stripe"
+import { createClient } from "@/lib/supabase/server"
+
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY ?? "", { apiVersion: "2026-02-25.clover" })
+}
+
+export async function POST(req: NextRequest) {
+  const stripe = getStripe()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.redirect(new URL("/login", req.url))
+  }
+
+  const formData = await req.formData()
+  const priceId = formData.get("priceId") as string
+  const plan = formData.get("plan") as string
+
+  if (!priceId) {
+    return NextResponse.json({ error: "Missing priceId" }, { status: 400 })
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://crochett.ai"
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    payment_method_types: ["card"],
+    line_items: [{ price: priceId, quantity: 1 }],
+    customer_email: user.email,
+    metadata: { user_id: user.id, plan },
+    success_url: `${siteUrl}/app?upgraded=1`,
+    cancel_url: `${siteUrl}/pricing`,
+    subscription_data: {
+      trial_period_days: 14,
+      metadata: { user_id: user.id, plan },
+    },
+  })
+
+  return NextResponse.redirect(session.url ?? `${siteUrl}/pricing`, { status: 303 })
+}

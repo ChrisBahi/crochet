@@ -334,7 +334,18 @@ export function HomeClient({ appHref }: { appHref: string }) {
         <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 14, fontWeight: 700, color: "#AAA", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           CROCHET.
         </span>
-        <LangSwitcher />
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <Link href="/pricing" style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 11, color: "#666", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            {lang === "fr" ? "Tarifs" : "Pricing"}
+          </Link>
+          <Link href="/faq" style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 11, color: "#666", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            FAQ
+          </Link>
+          <Link href="/rgpd" style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 11, color: "#666", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            RGPD
+          </Link>
+          <LangSwitcher />
+        </div>
         <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "#666", letterSpacing: "0.08em" }}>
           {tx.copyright}
         </span>

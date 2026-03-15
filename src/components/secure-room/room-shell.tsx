@@ -347,12 +347,13 @@ function Sidebar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
 // ─── Chat ────────────────────────────────────────────────────────────────────
 
 function ChatSection({
-  messages, userId, displayName, onSend,
+  messages, userId, displayName, onSend, canShare = true,
 }: {
   messages: ParsedMessage[]
   userId: string
   displayName: string
   onSend: (content: string, kind?: MsgKind, meta?: Record<string, string>) => Promise<void>
+  canShare?: boolean
 }) {
   const { lang } = useLang()
   const [text, setText] = useState("")
@@ -556,9 +557,9 @@ function ChatSection({
         alignItems: "flex-end",
       }}>
         <button
-          title={lang === "en" ? "Share a document" : "Partager un document"}
-          onClick={() => setDocMode(d => !d)}
-          style={{ ...btnStyle(true), padding: "8px 10px", flexShrink: 0 }}
+          title={canShare ? (lang === "en" ? "Share a document" : "Partager un document") : (lang === "en" ? "Upgrade to share documents" : "Passez au plan payant pour partager")}
+          onClick={() => canShare ? setDocMode(d => !d) : window.location.href = "/pricing"}
+          style={{ ...btnStyle(!canShare), padding: "8px 10px", flexShrink: 0, opacity: canShare ? 1 : 0.5 }}
         >
           📎
         </button>
@@ -1589,6 +1590,7 @@ const fieldStyle: React.CSSProperties = {
 export function RoomShell({
   roomId, roomRef, roomStatus: initialRoomStatus, opportunity, deck,
   ndaSigned, initialMessages, userId, displayName, initialValidations,
+  planStatus = "trial", trialDaysLeft = 14,
 }: {
   roomId: string
   roomRef: string
@@ -1600,6 +1602,8 @@ export function RoomShell({
   userId: string
   displayName: string
   initialValidations: Validation[]
+  planStatus?: "active_paid" | "trial" | "expired"
+  trialDaysLeft?: number
 }) {
   const supabase = useMemo(() => createClient(), [])
   const [tab, setTab] = useState<Tab>("chat")
@@ -1671,6 +1675,38 @@ export function RoomShell({
           opportunityTitle={opportunityTitle}
         />
 
+        {/* Trial banner */}
+        {planStatus === "trial" && trialDaysLeft <= 3 && trialDaysLeft > 0 && (
+          <div style={{ background: "#1c1000", borderBottom: "1px solid #5a4000", padding: "8px 24px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b", flexShrink: 0 }} />
+            <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#fbbf24" }}>
+              {lang === "en"
+                ? `Trial ending in ${trialDaysLeft} day${trialDaysLeft > 1 ? "s" : ""} — add a payment method to keep access.`
+                : `Essai se termine dans ${trialDaysLeft} jour${trialDaysLeft > 1 ? "s" : ""} — ajoutez un moyen de paiement pour conserver l'accès.`
+              }
+            </span>
+            <a href="/pricing" style={{ marginLeft: "auto", fontFamily: FONT_SANS, fontSize: 11, color: "#f59e0b", textDecoration: "none", padding: "4px 14px", border: "1px solid #5a4000" }}>
+              {lang === "en" ? "Choose a plan →" : "Choisir un plan →"}
+            </a>
+          </div>
+        )}
+
+        {/* Expired paywall banner */}
+        {planStatus === "expired" && (
+          <div style={{ background: "#1a0a0a", borderBottom: "1px solid #5a1000", padding: "10px 24px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", flexShrink: 0 }} />
+            <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#fca5a5" }}>
+              {lang === "en"
+                ? "Your trial has ended. Document sharing is disabled."
+                : "Votre essai est terminé. Le partage de documents est désactivé."
+              }
+            </span>
+            <a href="/pricing" style={{ marginLeft: "auto", fontFamily: FONT_SANS, fontSize: 11, fontWeight: 700, color: "#FFFFFF", textDecoration: "none", padding: "6px 16px", background: "#ef4444", border: "none" }}>
+              {lang === "en" ? "Upgrade →" : "Passer au plan payant →"}
+            </a>
+          </div>
+        )}
+
         {/* Pending close banner */}
         {roomStatus === "pending_close" && (
           <div style={{
@@ -1704,6 +1740,7 @@ export function RoomShell({
                 userId={userId}
                 displayName={displayName}
                 onSend={sendMessage}
+                canShare={planStatus !== "expired"}
               />
             )}
             {tab === "deck" && (
