@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
     return [
       { source: "/apply", destination: "/register", permanent: true },
       { source: "/candidater", destination: "/register", permanent: true },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.crochett.ai" }],
+        destination: "https://crochett.ai/:path*",
+        permanent: true,
+      },
     ]
   },
 };

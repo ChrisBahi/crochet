@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { validateDeal, declineDeal, revokeValidation } from "@/app/app/rooms/[id]/actions"
+import { useLang } from "@/lib/lang/context"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -51,12 +52,12 @@ function parseMessage(m: RawMessage): ParsedMessage {
   return { ...m, kind: "text" }
 }
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+function formatTime(iso: string, lang: "fr" | "en" = "fr") {
+  return new Date(iso).toLocaleTimeString(lang === "en" ? "en-GB" : "fr-FR", { hour: "2-digit", minute: "2-digit" })
 }
 
-function formatDateFr(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-FR", {
+function formatDateFr(iso: string, lang: "fr" | "en" = "fr") {
+  return new Date(iso).toLocaleDateString(lang === "en" ? "en-GB" : "fr-FR", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
     hour: "2-digit", minute: "2-digit",
   })
@@ -82,6 +83,7 @@ const C = {
 
 function BlackScreenGuard({ children }: { children: React.ReactNode }) {
   const [hidden, setHidden] = useState(false)
+  const { lang } = useLang()
 
   useEffect(() => {
     const handle = () => setHidden(document.visibilityState === "hidden")
@@ -112,7 +114,7 @@ function BlackScreenGuard({ children }: { children: React.ReactNode }) {
             textTransform: "uppercase",
             color: "rgba(255,255,255,0.35)",
           }}>
-            LE SIGNAL, PAS LE BRUIT.
+            {lang === "en" ? "THE SIGNAL, NOT THE NOISE." : "LE SIGNAL, PAS LE BRUIT."}
           </span>
           <span style={{
             fontFamily: FONT_SERIF,
@@ -136,15 +138,26 @@ function RoomHeader({
 }: {
   roomRef: string; status: string; ndaSigned: boolean; opportunityTitle?: string
 }) {
-  const statusLabel: Record<string, string> = {
-    active: "Actif",
-    negotiating: "En négociation",
-    closing: "Closing",
-    closed: "Clôturé",
-    pending_close: "En attente de validation",
-    closed_deal: "Deal validé",
-    closed_no_deal: "Archivé",
-  }
+  const { lang } = useLang()
+  const statusLabel: Record<string, string> = lang === "en"
+    ? {
+        active: "Active",
+        negotiating: "Negotiating",
+        closing: "Closing",
+        closed: "Closed",
+        pending_close: "Pending validation",
+        closed_deal: "Deal validated",
+        closed_no_deal: "Archived",
+      }
+    : {
+        active: "Actif",
+        negotiating: "En négociation",
+        closing: "Closing",
+        closed: "Clôturé",
+        pending_close: "En attente de validation",
+        closed_deal: "Deal validé",
+        closed_no_deal: "Archivé",
+      }
   const statusColor: Record<string, string> = {
     active: "#22c55e",
     negotiating: "#f59e0b",
@@ -196,7 +209,7 @@ function RoomHeader({
         }}>
           <span style={{ width: 5, height: 5, borderRadius: "50%", background: ndaSigned ? "#22c55e" : "#f59e0b", flexShrink: 0 }} />
           <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: ndaSigned ? "#22c55e" : "#f59e0b", letterSpacing: "0.1em" }}>
-            NDA {ndaSigned ? "SIGNÉ" : "REQUIS"}
+            NDA {ndaSigned ? (lang === "en" ? "SIGNED" : "SIGNÉ") : (lang === "en" ? "REQUIRED" : "REQUIS")}
           </span>
         </div>
 
@@ -215,7 +228,7 @@ function RoomHeader({
           background: "#111",
         }}>
           <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#444", letterSpacing: "0.1em" }}>
-            ZONE SÉCURISÉE
+            {lang === "en" ? "SECURE ZONE" : "ZONE SÉCURISÉE"}
           </span>
         </div>
       </div>
@@ -269,16 +282,20 @@ const SvgSecurite = () => (
   </svg>
 )
 
-const TABS: { id: Tab; icon: React.ReactNode; label: string }[] = [
-  { id: "chat",    icon: <SvgChat />,     label: "Chat" },
-  { id: "deck",    icon: <SvgDossier />,  label: "Dossier" },
-  { id: "vision",  icon: <SvgVision />,   label: "Vision" },
-  { id: "rdv",     icon: <SvgRdv />,      label: "RDV" },
-  { id: "closing", icon: <SvgClosing />,  label: "Closing" },
-  { id: "info",    icon: <SvgSecurite />, label: "Sécurité" },
-]
+function getTabs(lang: "fr" | "en"): { id: Tab; icon: React.ReactNode; label: string }[] {
+  return [
+    { id: "chat",    icon: <SvgChat />,     label: "Chat" },
+    { id: "deck",    icon: <SvgDossier />,  label: lang === "en" ? "File" : "Dossier" },
+    { id: "vision",  icon: <SvgVision />,   label: "Vision" },
+    { id: "rdv",     icon: <SvgRdv />,      label: lang === "en" ? "Appt." : "RDV" },
+    { id: "closing", icon: <SvgClosing />,  label: "Closing" },
+    { id: "info",    icon: <SvgSecurite />, label: lang === "en" ? "Security" : "Sécurité" },
+  ]
+}
 
 function Sidebar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
+  const { lang } = useLang()
+  const tabs = getTabs(lang)
   return (
     <div style={{
       width: 64,
@@ -291,7 +308,7 @@ function Sidebar({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
       gap: 4,
       background: "#FDFAF6",
     }}>
-      {TABS.map(t => (
+      {tabs.map(t => (
         <button
           key={t.id}
           onClick={() => setTab(t.id)}
@@ -337,6 +354,7 @@ function ChatSection({
   displayName: string
   onSend: (content: string, kind?: MsgKind, meta?: Record<string, string>) => Promise<void>
 }) {
+  const { lang } = useLang()
   const [text, setText] = useState("")
   const [sending, setSending] = useState(false)
   const [docMode, setDocMode] = useState(false)
@@ -372,7 +390,9 @@ function ChatSection({
         {messages.length === 0 && (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
             <p style={{ fontFamily: FONT_SANS, fontSize: 13, color: C.muted, fontStyle: "italic" }}>
-              La room est ouverte. Les échanges sont chiffrés et confidentiels.
+              {lang === "en"
+                ? "The room is open. Exchanges are encrypted and confidential."
+                : "La room est ouverte. Les échanges sont chiffrés et confidentiels."}
             </p>
           </div>
         )}
@@ -417,7 +437,7 @@ function ChatSection({
                       {m.docTitle}
                     </div>
                     <div style={{ fontFamily: FONT_MONO, fontSize: 9, color: isMe ? "#888" : C.muted, letterSpacing: "0.04em" }}>
-                      Ouvrir le document →
+                      {lang === "en" ? "Open document →" : "Ouvrir le document →"}
                     </div>
                   </div>
                 </a>
@@ -436,20 +456,28 @@ function ChatSection({
                   background: mt.status === "accepted" ? "#f0fdf4" : C.bgSubtle,
                 }}>
                   <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 8 }}>
-                    📅 Proposition de rendez-vous
+                    {lang === "en" ? "📅 Meeting proposal" : "📅 Proposition de rendez-vous"}
                   </div>
                   <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 4 }}>
-                    {formatDateFr(mt.datetime)}
+                    {formatDateFr(mt.datetime, lang)}
                   </div>
                   <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted }}>
-                    {mt.format === "video" ? "🎥 Appel vidéo" : "📞 Appel téléphonique"} · {mt.duration} min
+                    {mt.format === "video"
+                      ? (lang === "en" ? "🎥 Video call" : "🎥 Appel vidéo")
+                      : (lang === "en" ? "📞 Phone call" : "📞 Appel téléphonique")
+                    } · {mt.duration} min
                   </div>
                   <div style={{
                     marginTop: 8,
                     fontFamily: FONT_MONO, fontSize: 9, letterSpacing: "0.08em",
                     color: mt.status === "accepted" ? "#16a34a" : mt.status === "declined" ? "#dc2626" : C.muted,
                   }}>
-                    {mt.status === "accepted" ? "✓ CONFIRMÉ" : mt.status === "declined" ? "✗ REFUSÉ" : "EN ATTENTE DE CONFIRMATION"}
+                    {mt.status === "accepted"
+                      ? (lang === "en" ? "✓ CONFIRMED" : "✓ CONFIRMÉ")
+                      : mt.status === "declined"
+                        ? (lang === "en" ? "✗ DECLINED" : "✗ REFUSÉ")
+                        : (lang === "en" ? "PENDING CONFIRMATION" : "EN ATTENTE DE CONFIRMATION")
+                    }
                   </div>
                 </div>
               </div>
@@ -483,7 +511,7 @@ function ChatSection({
                 </p>
               </div>
               <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: C.muted, marginLeft: isMe ? 0 : 2 }}>
-                {formatTime(m.created_at)}
+                {formatTime(m.created_at, lang)}
               </span>
             </div>
           )
@@ -505,17 +533,17 @@ function ChatSection({
           <input
             value={docTitle}
             onChange={e => setDocTitle(e.target.value)}
-            placeholder="Nom du document"
+            placeholder={lang === "en" ? "Document name" : "Nom du document"}
             style={{ flex: "0 0 180px", padding: "6px 10px", border: `1px solid ${C.border}`, fontFamily: FONT_SANS, fontSize: 12, background: "#FFF", outline: "none" }}
           />
           <input
             value={docUrl}
             onChange={e => setDocUrl(e.target.value)}
-            placeholder="URL du document (Drive, Notion, PDF…)"
+            placeholder={lang === "en" ? "Document URL (Drive, Notion, PDF…)" : "URL du document (Drive, Notion, PDF…)"}
             style={{ flex: 1, minWidth: 200, padding: "6px 10px", border: `1px solid ${C.border}`, fontFamily: FONT_SANS, fontSize: 12, background: "#FFF", outline: "none" }}
           />
-          <button onClick={handleDocShare} disabled={!docUrl.trim()} style={btnStyle(false)}>Partager</button>
-          <button onClick={() => setDocMode(false)} style={{ ...btnStyle(true), borderColor: C.border }}>Annuler</button>
+          <button onClick={handleDocShare} disabled={!docUrl.trim()} style={btnStyle(false)}>{lang === "en" ? "Share" : "Partager"}</button>
+          <button onClick={() => setDocMode(false)} style={{ ...btnStyle(true), borderColor: C.border }}>{lang === "en" ? "Cancel" : "Annuler"}</button>
         </div>
       )}
 
@@ -528,7 +556,7 @@ function ChatSection({
         alignItems: "flex-end",
       }}>
         <button
-          title="Partager un document"
+          title={lang === "en" ? "Share a document" : "Partager un document"}
           onClick={() => setDocMode(d => !d)}
           style={{ ...btnStyle(true), padding: "8px 10px", flexShrink: 0 }}
         >
@@ -538,7 +566,9 @@ function ChatSection({
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-          placeholder="Message… (Entrée pour envoyer, Shift+Entrée pour nouvelle ligne)"
+          placeholder={lang === "en"
+            ? "Message… (Enter to send, Shift+Enter for new line)"
+            : "Message… (Entrée pour envoyer, Shift+Entrée pour nouvelle ligne)"}
           rows={2}
           style={{
             flex: 1,
@@ -556,7 +586,7 @@ function ChatSection({
           disabled={!text.trim() || sending}
           style={{ ...btnStyle(false), flexShrink: 0, alignSelf: "flex-end", padding: "10px 20px" }}
         >
-          {sending ? "…" : "Envoyer"}
+          {sending ? "…" : (lang === "en" ? "Send" : "Envoyer")}
         </button>
       </div>
     </div>
@@ -573,6 +603,7 @@ function DeckSection({
   messages: ParsedMessage[]
   roomStatus: string
 }) {
+  const { lang } = useLang()
   const deckUrl = opportunity?.pitch_deck_url as string | null
   const websiteUrl = opportunity?.website_url as string | null
   const docMessages = messages.filter(m => m.kind === "doc")
@@ -584,12 +615,12 @@ function DeckSection({
 
   return (
     <div style={{ height: "100%", overflowY: "auto", padding: "32px 36px" }}>
-      <SectionHeader label="Dossier & Documents" />
+      <SectionHeader label={lang === "en" ? "File & Documents" : "Dossier & Documents"} />
 
       {/* Opportunity snapshot */}
       {opportunity && (
         <div style={{ marginBottom: 32 }}>
-          <Label>Opportunité référencée</Label>
+          <Label>{lang === "en" ? "Referenced Opportunity" : "Opportunité référencée"}</Label>
           <div style={{ border: `1px solid ${C.border}`, padding: "18px 22px", marginTop: 8 }}>
             <div style={{ fontFamily: FONT_SERIF, fontStyle: "italic", fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 12 }}>
               {opportunity.title as string}
@@ -613,7 +644,7 @@ function DeckSection({
       {/* Documents IA — MEMO + NDA */}
       {!isDemo && (
         <div style={{ marginBottom: 32 }}>
-          <Label>Documents IA</Label>
+          <Label>{lang === "en" ? "AI Documents" : "Documents IA"}</Label>
           <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
 
             {/* MEMO */}
@@ -630,10 +661,15 @@ function DeckSection({
               }}
             >
               <div style={{ flexShrink: 0 }}>
-                <div style={{ fontFamily: FONT_SANS, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, marginBottom: 2 }}>MEMO IA</div>
-                <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C.text }}>Mémorandum de qualification</div>
+                <div style={{ fontFamily: FONT_SANS, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, marginBottom: 2 }}>AI MEMO</div>
+                <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C.text }}>
+                  {lang === "en" ? "Qualification Memorandum" : "Mémorandum de qualification"}
+                </div>
                 <div style={{ fontFamily: FONT_SANS, fontSize: 11, color: C.muted, marginTop: 2 }}>
-                  {memoReady ? "Qualifié · Prêt à lire" : "En attente de qualification"}
+                  {memoReady
+                    ? (lang === "en" ? "Qualified · Ready to read" : "Qualifié · Prêt à lire")
+                    : (lang === "en" ? "Pending qualification" : "En attente de qualification")
+                  }
                 </div>
               </div>
               {dScore != null && (
@@ -645,7 +681,7 @@ function DeckSection({
               {memoReady && (
                 <div style={{ marginLeft: dScore != null ? 0 : "auto", flexShrink: 0 }}>
                   <span style={{ fontFamily: FONT_SANS, fontSize: 10, color: C.text, border: `1px solid ${C.border}`, padding: "3px 10px" }}>
-                    Ouvrir →
+                    {lang === "en" ? "Open →" : "Ouvrir →"}
                   </span>
                 </div>
               )}
@@ -664,11 +700,15 @@ function DeckSection({
             >
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: FONT_SANS, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, marginBottom: 2 }}>NDA</div>
-                <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C.text }}>Accord de Confidentialité</div>
-                <div style={{ fontFamily: FONT_SANS, fontSize: 11, color: C.muted, marginTop: 2 }}>Bilatéral · Droit français · eIDAS</div>
+                <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C.text }}>
+                  {lang === "en" ? "Confidentiality Agreement" : "Accord de Confidentialité"}
+                </div>
+                <div style={{ fontFamily: FONT_SANS, fontSize: 11, color: C.muted, marginTop: 2 }}>
+                  {lang === "en" ? "Bilateral · French law · eIDAS" : "Bilatéral · Droit français · eIDAS"}
+                </div>
               </div>
               <span style={{ fontFamily: FONT_SANS, fontSize: 10, color: C.text, border: `1px solid ${C.border}`, padding: "3px 10px", flexShrink: 0 }}>
-                Signer / Lire →
+                {lang === "en" ? "Sign / Read →" : "Signer / Lire →"}
               </span>
             </a>
 
@@ -686,9 +726,14 @@ function DeckSection({
           alignItems: "center",
           gap: 12,
         }}>
-          <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#555", letterSpacing: "0.1em" }}>🔒 TÉLÉCHARGEMENT VERROUILLÉ</span>
+          <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#555", letterSpacing: "0.1em" }}>
+            {lang === "en" ? "🔒 DOWNLOAD LOCKED" : "🔒 TÉLÉCHARGEMENT VERROUILLÉ"}
+          </span>
           <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#888", lineHeight: 1.5 }}>
-            Les documents sont visibles mais non téléchargeables. Le téléchargement sera déverrouillé après validation du deal par les deux parties.
+            {lang === "en"
+              ? "Documents are viewable but not downloadable. Downloads will be unlocked once both parties have validated the deal."
+              : "Les documents sont visibles mais non téléchargeables. Le téléchargement sera déverrouillé après validation du deal par les deux parties."
+            }
           </span>
         </div>
       )}
@@ -702,17 +747,19 @@ function DeckSection({
               padding: "10px 16px", borderBottom: `1px solid ${C.border}`,
               display: "flex", justifyContent: "space-between", alignItems: "center",
             }}>
-              <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: C.muted, letterSpacing: "0.08em" }}>DECK PARTAGÉ</span>
+              <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: C.muted, letterSpacing: "0.08em" }}>
+                {lang === "en" ? "SHARED DECK" : "DECK PARTAGÉ"}
+              </span>
               {isUnlocked ? (
                 <a href={deckUrl} target="_blank" rel="noopener noreferrer" style={{
                   fontFamily: FONT_SANS, fontSize: 10, color: C.text, textDecoration: "none",
                   border: `1px solid ${C.border}`, padding: "3px 10px",
                 }}>
-                  Télécharger →
+                  {lang === "en" ? "Download →" : "Télécharger →"}
                 </a>
               ) : (
                 <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#555", letterSpacing: "0.06em" }}>
-                  🔒 Verrouillé
+                  {lang === "en" ? "🔒 Locked" : "🔒 Verrouillé"}
                 </span>
               )}
             </div>
@@ -729,7 +776,7 @@ function DeckSection({
       {/* Site web */}
       {websiteUrl && (
         <div style={{ marginBottom: 28 }}>
-          <Label>Site web</Label>
+          <Label>{lang === "en" ? "Website" : "Site web"}</Label>
           <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{
             display: "flex", alignItems: "center", gap: 10, marginTop: 8,
             padding: "12px 16px", border: `1px solid ${C.border}`, background: C.bgSubtle,
@@ -744,7 +791,7 @@ function DeckSection({
       {/* Shared docs from chat */}
       {docMessages.length > 0 && (
         <div>
-          <Label>Documents partagés dans la Room</Label>
+          <Label>{lang === "en" ? "Documents shared in the Room" : "Documents partagés dans la Room"}</Label>
           <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
             {docMessages.map(m => (
               <div
@@ -757,14 +804,14 @@ function DeckSection({
                 <span style={{ fontSize: 18 }}>📎</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C.text }}>{m.docTitle}</div>
-                  <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted, marginTop: 2 }}>{formatTime(m.created_at)}</div>
+                  <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted, marginTop: 2 }}>{formatTime(m.created_at, lang)}</div>
                 </div>
                 {isUnlocked ? (
                   <a href={m.docUrl} target="_blank" rel="noopener noreferrer" style={{
                     fontFamily: FONT_SANS, fontSize: 10, color: C.text, textDecoration: "none",
                     border: `1px solid ${C.border}`, padding: "3px 10px", flexShrink: 0,
                   }}>
-                    Télécharger →
+                    {lang === "en" ? "Download →" : "Télécharger →"}
                   </a>
                 ) : (
                   <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#555", letterSpacing: "0.06em", flexShrink: 0 }}>
@@ -778,7 +825,10 @@ function DeckSection({
       )}
 
       {!deckUrl && !websiteUrl && docMessages.length === 0 && !opportunity && (
-        <EmptyState icon="📊" text="Aucun document partagé. Partagez des liens via le chat (bouton 📎)." />
+        <EmptyState icon="📊" text={lang === "en"
+          ? "No documents shared. Share links via chat (📎 button)."
+          : "Aucun document partagé. Partagez des liens via le chat (bouton 📎)."
+        } />
       )}
     </div>
   )
@@ -787,15 +837,32 @@ function DeckSection({
 // ─── Vision ───────────────────────────────────────────────────────────────────
 
 function VisionSection({ roomId }: { roomId: string }) {
+  const { lang } = useLang()
   const jitsiRoom = `crochet-${roomId.slice(0, 8)}`
   const jitsiUrl = `https://meet.jit.si/${jitsiRoom}`
   const [embedded, setEmbedded] = useState(false)
+
+  const instructions = lang === "en"
+    ? [
+        "Click \"Start call\" to join the video room.",
+        "Share the access code with other participants in this Room.",
+        "The call remains active until the Room is closed.",
+        "You can share your screen to present the deck.",
+        "The session is not recorded automatically.",
+      ]
+    : [
+        "Cliquez « Démarrer l'appel » pour rejoindre la salle vidéo.",
+        "Partagez le code d'accès avec les autres participants de cette Room.",
+        "L'appel reste actif jusqu'à la fermeture de la Room.",
+        "Vous pouvez partager votre écran pour présenter le deck.",
+        "La session n'est pas enregistrée automatiquement.",
+      ]
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {!embedded ? (
         <div style={{ padding: "32px 36px", overflowY: "auto" }}>
-          <SectionHeader label="Appel Vision" />
+          <SectionHeader label={lang === "en" ? "Vision Call" : "Appel Vision"} />
 
           <div style={{
             border: `1px solid ${C.border}`,
@@ -810,10 +877,13 @@ function VisionSection({ roomId }: { roomId: string }) {
             <span style={{ fontSize: 48 }}>🎥</span>
             <div>
               <h2 style={{ fontFamily: FONT_SERIF, fontStyle: "italic", fontSize: 28, fontWeight: 700, color: C.text, margin: "0 0 8px" }}>
-                Appel sécurisé
+                {lang === "en" ? "Secure call" : "Appel sécurisé"}
               </h2>
               <p style={{ fontFamily: FONT_SANS, fontSize: 13, color: C.muted, lineHeight: 1.7, margin: 0, maxWidth: 400 }}>
-                L&apos;appel vidéo est chiffré de bout en bout. Seuls les membres de cette Secure Room y ont accès via le code ci-dessous.
+                {lang === "en"
+                  ? "The video call is end-to-end encrypted. Only members of this Secure Room have access via the code below."
+                  : "L\u2019appel vidéo est chiffré de bout en bout. Seuls les membres de cette Secure Room y ont accès via le code ci-dessous."
+                }
               </p>
             </div>
 
@@ -822,7 +892,9 @@ function VisionSection({ roomId }: { roomId: string }) {
               background: C.bgSubtle,
               border: `1px solid ${C.border}`,
             }}>
-              <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted, letterSpacing: "0.1em", marginBottom: 6 }}>CODE D&apos;ACCÈS</div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted, letterSpacing: "0.1em", marginBottom: 6 }}>
+                {lang === "en" ? "ACCESS CODE" : "CODE D\u2019ACCÈS"}
+              </div>
               <div style={{ fontFamily: FONT_MONO, fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "0.04em" }}>
                 {jitsiRoom}
               </div>
@@ -833,7 +905,7 @@ function VisionSection({ roomId }: { roomId: string }) {
                 onClick={() => setEmbedded(true)}
                 style={{ ...btnStyle(false), padding: "12px 32px", fontSize: 13 }}
               >
-                🎥 Démarrer l&apos;appel
+                {lang === "en" ? "🎥 Start call" : "🎥 Démarrer l\u2019appel"}
               </button>
               <a
                 href={jitsiUrl}
@@ -841,7 +913,7 @@ function VisionSection({ roomId }: { roomId: string }) {
                 rel="noopener noreferrer"
                 style={{ ...btnStyle(true), padding: "12px 24px", fontSize: 12, textDecoration: "none" }}
               >
-                Ouvrir dans un onglet →
+                {lang === "en" ? "Open in a tab →" : "Ouvrir dans un onglet →"}
               </a>
             </div>
           </div>
@@ -849,15 +921,9 @@ function VisionSection({ roomId }: { roomId: string }) {
           {/* Instructions */}
           <div style={{ border: `1px solid ${C.border}`, padding: "20px 24px" }}>
             <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 14, paddingBottom: 10, borderBottom: `1px solid ${C.border}` }}>
-              Instructions
+              {lang === "en" ? "Instructions" : "Instructions"}
             </div>
-            {[
-              "Cliquez « Démarrer l'appel » pour rejoindre la salle vidéo.",
-              "Partagez le code d'accès avec les autres participants de cette Room.",
-              "L'appel reste actif jusqu'à la fermeture de la Room.",
-              "Vous pouvez partager votre écran pour présenter le deck.",
-              "La session n'est pas enregistrée automatiquement.",
-            ].map((step, i) => (
+            {instructions.map((step, i) => (
               <div key={i} style={{ display: "flex", gap: 12, marginBottom: 10, alignItems: "flex-start" }}>
                 <span style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted, flexShrink: 0, paddingTop: 2, minWidth: 16 }}>
                   {String(i + 1).padStart(2, "0")}
@@ -875,10 +941,10 @@ function VisionSection({ roomId }: { roomId: string }) {
             background: C.bgSubtle, flexShrink: 0,
           }}>
             <span style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted, letterSpacing: "0.08em" }}>
-              APPEL EN COURS · {jitsiRoom}
+              {lang === "en" ? `CALL IN PROGRESS · ${jitsiRoom}` : `APPEL EN COURS · ${jitsiRoom}`}
             </span>
             <button onClick={() => setEmbedded(false)} style={{ ...btnStyle(true), padding: "4px 12px", fontSize: 11 }}>
-              Réduire
+              {lang === "en" ? "Minimize" : "Réduire"}
             </button>
           </div>
           <iframe
@@ -901,6 +967,7 @@ function RdvSection({
   messages: ParsedMessage[]
   onSend: (content: string) => Promise<void>
 }) {
+  const { lang } = useLang()
   const meetingMessages = messages.filter(m => m.kind === "meeting")
   const [date, setDate] = useState("")
   const [time, setTime] = useState("")
@@ -922,12 +989,12 @@ function RdvSection({
 
   return (
     <div style={{ height: "100%", overflowY: "auto", padding: "32px 36px" }}>
-      <SectionHeader label="Rendez-vous" />
+      <SectionHeader label={lang === "en" ? "Appointments" : "Rendez-vous"} />
 
       {/* Proposer */}
       <div style={{ border: `1px solid ${C.border}`, padding: "24px", marginBottom: 32 }}>
         <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 20, paddingBottom: 12, borderBottom: `1px solid ${C.border}` }}>
-          Proposer un créneau
+          {lang === "en" ? "Propose a slot" : "Proposer un créneau"}
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 20 }}>
@@ -937,7 +1004,7 @@ function RdvSection({
               style={fieldStyle} />
           </div>
           <div>
-            <Label>Heure</Label>
+            <Label>{lang === "en" ? "Time" : "Heure"}</Label>
             <input type="time" value={time} onChange={e => setTime(e.target.value)}
               style={fieldStyle} />
           </div>
@@ -945,18 +1012,18 @@ function RdvSection({
             <Label>Format</Label>
             <select value={format} onChange={e => setFormat(e.target.value as "video" | "phone")}
               style={fieldStyle}>
-              <option value="video">🎥 Vidéo</option>
-              <option value="phone">📞 Téléphone</option>
+              <option value="video">{lang === "en" ? "🎥 Video" : "🎥 Vidéo"}</option>
+              <option value="phone">{lang === "en" ? "📞 Phone" : "📞 Téléphone"}</option>
             </select>
           </div>
           <div>
-            <Label>Durée (min)</Label>
+            <Label>{lang === "en" ? "Duration (min)" : "Durée (min)"}</Label>
             <select value={duration} onChange={e => setDuration(Number(e.target.value))}
               style={fieldStyle}>
               <option value={30}>30 min</option>
-              <option value={60}>1 heure</option>
+              <option value={60}>{lang === "en" ? "1 hour" : "1 heure"}</option>
               <option value={90}>1h30</option>
-              <option value={120}>2 heures</option>
+              <option value={120}>{lang === "en" ? "2 hours" : "2 heures"}</option>
             </select>
           </div>
         </div>
@@ -966,23 +1033,28 @@ function RdvSection({
           disabled={!date || !time || sending}
           style={btnStyle(false)}
         >
-          {sending ? "Envoi…" : "Proposer ce créneau"}
+          {sending ? "…" : (lang === "en" ? "Propose this slot" : "Proposer ce créneau")}
         </button>
       </div>
 
       {/* Liste des RDV proposés */}
       <div>
         <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, marginBottom: 16, paddingBottom: 10, borderBottom: `1px solid ${C.border}` }}>
-          Propositions ({meetingMessages.length})
+          {lang === "en" ? `Proposals (${meetingMessages.length})` : `Propositions (${meetingMessages.length})`}
         </div>
         {meetingMessages.length === 0 ? (
-          <EmptyState icon="📅" text="Aucun rendez-vous proposé. La room reste ouverte jusqu'au closing." />
+          <EmptyState icon="📅" text={lang === "en"
+            ? "No appointments proposed. The room remains open until closing."
+            : "Aucun rendez-vous proposé. La room reste ouverte jusqu'au closing."
+          } />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {meetingMessages.map(m => {
               const mt = m.meeting!
               const statusColor = { accepted: "#22c55e", declined: "#dc2626", pending: C.muted }
-              const statusLabel = { accepted: "Confirmé", declined: "Refusé", pending: "En attente" }
+              const statusLabel = lang === "en"
+                ? { accepted: "Confirmed", declined: "Declined", pending: "Pending" }
+                : { accepted: "Confirmé", declined: "Refusé", pending: "En attente" }
               return (
                 <div key={m.id} style={{
                   border: `1px solid ${mt.status === "accepted" ? "#bbf7d0" : C.border}`,
@@ -992,10 +1064,13 @@ function RdvSection({
                 }}>
                   <div>
                     <div style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 4 }}>
-                      {formatDateFr(mt.datetime)}
+                      {formatDateFr(mt.datetime, lang)}
                     </div>
                     <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted }}>
-                      {mt.format === "video" ? "🎥 Vidéo" : "📞 Téléphone"} · {mt.duration} min
+                      {mt.format === "video"
+                        ? (lang === "en" ? "🎥 Video" : "🎥 Vidéo")
+                        : (lang === "en" ? "📞 Phone" : "📞 Téléphone")
+                      } · {mt.duration} min
                     </div>
                   </div>
                   <div style={{
@@ -1029,6 +1104,7 @@ function ClosingSection({
   onStatusChange: (s: string) => void
   onValidationsChange: (v: Validation[]) => void
 }) {
+  const { lang } = useLang()
   const [loading, setLoading] = useState(false)
 
   const hasValidated = validations.some(v => v.user_id === userId)
@@ -1062,7 +1138,7 @@ function ClosingSection({
 
   return (
     <div style={{ height: "100%", overflowY: "auto", padding: "32px 36px" }}>
-      <SectionHeader label="Closing & Validation du Deal" />
+      <SectionHeader label={lang === "en" ? "Closing & Deal Validation" : "Closing & Validation du Deal"} />
 
       {/* ── CLOSED DEAL ── */}
       {roomStatus === "closed_deal" && (
@@ -1081,10 +1157,13 @@ function ClosingSection({
           </div>
           <div>
             <div style={{ fontFamily: FONT_SANS, fontSize: 15, fontWeight: 700, color: "#22c55e", marginBottom: 6 }}>
-              Deal validé par les deux parties
+              {lang === "en" ? "Deal validated by both parties" : "Deal validé par les deux parties"}
             </div>
             <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#4ade80", lineHeight: 1.7 }}>
-              La Room est archivée. Les documents sont maintenant téléchargeables.
+              {lang === "en"
+                ? "The Room is archived. Documents are now downloadable."
+                : "La Room est archivée. Les documents sont maintenant téléchargeables."
+              }
             </div>
           </div>
         </div>
@@ -1097,30 +1176,41 @@ function ClosingSection({
           background: "#0f0f0f", border: "1px solid #3a3a3a",
         }}>
           <div style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#555", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>
-            Room archivée · Lecture seule
+            {lang === "en" ? "Archived room · Read only" : "Room archivée · Lecture seule"}
           </div>
           <div style={{ fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: "#7A746E", marginBottom: 6 }}>
-            Deal décliné
+            {lang === "en" ? "Deal declined" : "Deal décliné"}
           </div>
           <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#555", lineHeight: 1.7 }}>
-            La Room est archivée en lecture seule. Les échanges et documents partagés restent visibles pour les deux parties, mais les documents ne sont pas téléchargeables.
+            {lang === "en"
+              ? "The Room is archived as read-only. Exchanges and shared documents remain visible to both parties, but documents are not downloadable."
+              : "La Room est archivée en lecture seule. Les échanges et documents partagés restent visibles pour les deux parties, mais les documents ne sont pas téléchargeables."
+            }
           </div>
         </div>
       )}
 
-      {/* ── ACTIVE — personne n'a encore validé ── */}
+      {/* ── ACTIVE — no one has validated yet ── */}
       {!isDone && !isPendingClose && (
         <>
           <div style={{ border: `1px solid ${C.border}`, padding: "20px 24px", marginBottom: 28 }}>
             <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 14, paddingBottom: 10, borderBottom: `1px solid ${C.border}` }}>
-              Conditions de fermeture
+              {lang === "en" ? "Closing conditions" : "Conditions de fermeture"}
             </div>
-            {[
-              "Les deux parties doivent confirmer le deal indépendamment.",
-              "Une fois les deux validations reçues, la Room est clôturée.",
-              "Les documents deviennent téléchargeables uniquement après clôture.",
-              "Chaque partie peut révoquer sa validation tant que l'autre n'a pas encore validé.",
-            ].map((rule, i) => (
+            {(lang === "en"
+              ? [
+                  "Both parties must confirm the deal independently.",
+                  "Once both validations are received, the Room is closed.",
+                  "Documents become downloadable only after closure.",
+                  "Each party can revoke their validation as long as the other has not yet validated.",
+                ]
+              : [
+                  "Les deux parties doivent confirmer le deal indépendamment.",
+                  "Une fois les deux validations reçues, la Room est clôturée.",
+                  "Les documents deviennent téléchargeables uniquement après clôture.",
+                  "Chaque partie peut révoquer sa validation tant que l'autre n'a pas encore validé.",
+                ]
+            ).map((rule, i) => (
               <div key={i} style={{ display: "flex", gap: 12, marginBottom: 10, alignItems: "flex-start" }}>
                 <span style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted, flexShrink: 0, paddingTop: 2 }}>
                   {String(i + 1).padStart(2, "0")}
@@ -1132,30 +1222,41 @@ function ClosingSection({
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
             <div style={{ border: `1px solid ${C.border}`, padding: "20px", background: C.bg }}>
-              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Votre position</div>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
+                {lang === "en" ? "Your position" : "Votre position"}
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.muted, flexShrink: 0 }} />
-                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: C.muted, letterSpacing: "0.06em" }}>EN ATTENTE</span>
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: C.muted, letterSpacing: "0.06em" }}>
+                  {lang === "en" ? "PENDING" : "EN ATTENTE"}
+                </span>
               </div>
               <button onClick={handleValidate} disabled={loading} style={{ ...btnStyle(false), fontSize: 11, padding: "10px 20px" }}>
-                {loading ? "…" : "Valider le deal"}
+                {loading ? "…" : (lang === "en" ? "Validate deal" : "Valider le deal")}
               </button>
             </div>
             <div style={{ border: `1px solid ${C.border}`, padding: "20px", background: C.bg }}>
-              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Autre partie</div>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
+                {lang === "en" ? "Other party" : "Autre partie"}
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.muted, flexShrink: 0 }} />
-                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: C.muted, letterSpacing: "0.06em" }}>EN ATTENTE</span>
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: C.muted, letterSpacing: "0.06em" }}>
+                  {lang === "en" ? "PENDING" : "EN ATTENTE"}
+                </span>
               </div>
             </div>
           </div>
 
           <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 20 }}>
             <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: "#dc2626", marginBottom: 12 }}>
-              Zone de refus
+              {lang === "en" ? "Refusal zone" : "Zone de refus"}
             </div>
             <p style={{ fontFamily: FONT_SANS, fontSize: 12, color: C.muted, marginBottom: 14, lineHeight: 1.7 }}>
-              Refuser le deal ferme la Room immédiatement et l&apos;archive sans débloquer les documents.
+              {lang === "en"
+                ? "Declining the deal closes the Room immediately and archives it without unlocking documents."
+                : "Refuser le deal ferme la Room immédiatement et l\u2019archive sans débloquer les documents."
+              }
             </p>
             <button
               onClick={handleDecline}
@@ -1166,13 +1267,13 @@ function ClosingSection({
                 fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer",
               }}
             >
-              Refuser le deal
+              {lang === "en" ? "Decline deal" : "Refuser le deal"}
             </button>
           </div>
         </>
       )}
 
-      {/* ── PENDING CLOSE — J'ai validé, j'attends l'autre ── */}
+      {/* ── PENDING CLOSE — I validated, waiting for other ── */}
       {iWaitingForOther && (
         <>
           <div style={{
@@ -1186,41 +1287,58 @@ function ClosingSection({
             }} />
             <div>
               <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: "#f59e0b", marginBottom: 4 }}>
-                En attente de confirmation de l&apos;autre partie
+                {lang === "en"
+                  ? "Waiting for confirmation from the other party"
+                  : "En attente de confirmation de l\u2019autre partie"
+                }
               </div>
               <div style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#92600a", lineHeight: 1.6 }}>
-                Votre validation a été enregistrée. La Room se fermera automatiquement dès que l&apos;autre partie confirmera.
+                {lang === "en"
+                  ? "Your validation has been recorded. The Room will close automatically once the other party confirms."
+                  : "Votre validation a été enregistrée. La Room se fermera automatiquement dès que l\u2019autre partie confirmera."
+                }
               </div>
             </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
             <div style={{ border: "1px solid #16a34a", padding: "20px", background: "#052e16" }}>
-              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Votre position</div>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
+                {lang === "en" ? "Your position" : "Votre position"}
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
-                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#22c55e", letterSpacing: "0.06em" }}>DEAL CONFIRMÉ</span>
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#22c55e", letterSpacing: "0.06em" }}>
+                  {lang === "en" ? "DEAL CONFIRMED" : "DEAL CONFIRMÉ"}
+                </span>
               </div>
               <button onClick={handleRevoke} disabled={loading} style={{ ...btnStyle(true), fontSize: 10, padding: "6px 14px" }}>
-                {loading ? "…" : "Révoquer ma validation"}
+                {loading ? "…" : (lang === "en" ? "Revoke my validation" : "Révoquer ma validation")}
               </button>
             </div>
             <div style={{ border: `1px solid ${C.border}`, padding: "20px", background: C.bg }}>
-              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Autre partie</div>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
+                {lang === "en" ? "Other party" : "Autre partie"}
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b", flexShrink: 0 }} />
-                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#f59e0b", letterSpacing: "0.06em" }}>EN ATTENTE</span>
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#f59e0b", letterSpacing: "0.06em" }}>
+                  {lang === "en" ? "PENDING" : "EN ATTENTE"}
+                </span>
               </div>
             </div>
           </div>
 
           <p style={{ fontFamily: FONT_SANS, fontSize: 11, color: C.muted, margin: 0, lineHeight: 1.7 }}>
-            Vous pouvez révoquer votre validation tant que l&apos;autre partie n&apos;a pas encore confirmé. Une fois les deux parties validées, le deal est verrouillé.
+            {lang === "en"
+              ? "You can revoke your validation as long as the other party has not yet confirmed. Once both parties have validated, the deal is locked."
+              : "Vous pouvez révoquer votre validation tant que l\u2019autre partie n\u2019a pas encore confirmé. Une fois les deux parties validées, le deal est verrouillé."
+            }
           </p>
         </>
       )}
 
-      {/* ── PENDING CLOSE — L'autre a validé, c'est à moi de décider ── */}
+      {/* ── PENDING CLOSE — Other validated, my turn to decide ── */}
       {otherWaitsForMe && (
         <>
           <div style={{
@@ -1228,13 +1346,16 @@ function ClosingSection({
             border: "1px solid #3b82f6", background: "#0c1a3a",
           }}>
             <div style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#3b82f6", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
-              Action requise
+              {lang === "en" ? "Action required" : "Action requise"}
             </div>
             <div style={{ fontFamily: FONT_SANS, fontSize: 15, fontWeight: 700, color: "#FFFFFF", marginBottom: 8 }}>
-              L&apos;autre partie a validé le deal.
+              {lang === "en" ? "The other party has validated the deal." : "L\u2019autre partie a validé le deal."}
             </div>
             <div style={{ fontFamily: FONT_SANS, fontSize: 13, color: "#93c5fd", lineHeight: 1.7, marginBottom: 24 }}>
-              Confirmez-vous le deal ? Si vous confirmez, la Room est clôturée et les documents sont débloqués pour les deux parties. Si vous déclinez, la Room est archivée sans accès aux documents.
+              {lang === "en"
+                ? "Do you confirm the deal? If you confirm, the Room is closed and documents are unlocked for both parties. If you decline, the Room is archived without access to documents."
+                : "Confirmez-vous le deal ? Si vous confirmez, la Room est clôturée et les documents sont débloqués pour les deux parties. Si vous déclinez, la Room est archivée sans accès aux documents."
+              }
             </div>
             <div style={{ display: "flex", gap: 12 }}>
               <button
@@ -1246,7 +1367,7 @@ function ClosingSection({
                   textTransform: "uppercase", cursor: loading ? "wait" : "pointer", opacity: loading ? 0.5 : 1,
                 }}
               >
-                {loading ? "…" : "Confirmer le deal"}
+                {loading ? "…" : (lang === "en" ? "Confirm deal" : "Confirmer le deal")}
               </button>
               <button
                 onClick={handleDecline}
@@ -1258,24 +1379,32 @@ function ClosingSection({
                   cursor: loading ? "wait" : "pointer", opacity: loading ? 0.5 : 1,
                 }}
               >
-                Décliner
+                {lang === "en" ? "Decline" : "Décliner"}
               </button>
             </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div style={{ border: "1px solid #16a34a", padding: "20px", background: "#052e16" }}>
-              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Autre partie</div>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
+                {lang === "en" ? "Other party" : "Autre partie"}
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
-                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#22c55e", letterSpacing: "0.06em" }}>DEAL CONFIRMÉ</span>
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#22c55e", letterSpacing: "0.06em" }}>
+                  {lang === "en" ? "DEAL CONFIRMED" : "DEAL CONFIRMÉ"}
+                </span>
               </div>
             </div>
             <div style={{ border: "1px solid #3b82f6", padding: "20px", background: "#0c1a3a" }}>
-              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>Votre position</div>
+              <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: C.muted, marginBottom: 12 }}>
+                {lang === "en" ? "Your position" : "Votre position"}
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#3b82f6", flexShrink: 0 }} />
-                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#3b82f6", letterSpacing: "0.06em" }}>DÉCISION REQUISE</span>
+                <span style={{ fontFamily: FONT_MONO, fontSize: 11, color: "#3b82f6", letterSpacing: "0.06em" }}>
+                  {lang === "en" ? "DECISION REQUIRED" : "DÉCISION REQUISE"}
+                </span>
               </div>
             </div>
           </div>
@@ -1292,25 +1421,58 @@ function InfoSection({
 }: {
   roomRef: string; ndaSigned: boolean; roomStatus: string; opportunity: Record<string, unknown> | null
 }) {
+  const { lang } = useLang()
+  const securityFields = lang === "en"
+    ? [
+        { label: "Room Reference", value: roomRef },
+        { label: "Status", value: roomStatus === "active" ? "Active" : roomStatus },
+        { label: "NDA", value: ndaSigned ? "Signed" : "Not signed" },
+        { label: "Protocol", value: "NDA-CROCHET-V1" },
+        { label: "Jurisdiction", value: "French law — Paris" },
+        { label: "Confidentiality period", value: "2 years post-closing" },
+      ]
+    : [
+        { label: "Référence Room", value: roomRef },
+        { label: "Statut", value: roomStatus === "active" ? "Actif" : roomStatus },
+        { label: "NDA", value: ndaSigned ? "Signé" : "Non signé" },
+        { label: "Protocole", value: "NDA-CROCHET-V1" },
+        { label: "Juridiction", value: "Droit français — Paris" },
+        { label: "Durée confidentialité", value: "2 ans post-closing" },
+      ]
+  const rules = lang === "en"
+    ? [
+        "All communications exchanged in this Room are covered by the NDA.",
+        "Shared documents remain the exclusive property of the Disclosing Party.",
+        "Reproduction or transmission to third parties is strictly prohibited.",
+        "Any violation incurs criminal and civil liability for the offenders.",
+        "The Room remains open until closing or mutual termination.",
+        "CROCHET is not a party to the negotiations — intermediary role only.",
+      ]
+    : [
+        "Toutes les communications échangées dans cette Room sont couvertes par le NDA.",
+        "Les documents partagés restent la propriété exclusive de la Partie Divulgatrice.",
+        "La reproduction ou transmission à des tiers est strictement interdite.",
+        "Toute violation engage la responsabilité pénale et civile des contrevenants.",
+        "La Room reste ouverte jusqu'au closing ou résiliation mutuelle.",
+        "CROCHET n'est pas partie aux négociations — rôle d'intermédiaire uniquement.",
+      ]
+
   return (
     <div style={{ height: "100%", overflowY: "auto", padding: "32px 36px" }}>
-      <SectionHeader label="Sécurité & Confidentialité" />
+      <SectionHeader label={lang === "en" ? "Security & Confidentiality" : "Sécurité & Confidentialité"} />
 
       {/* Security status */}
       <div style={{ border: `1px solid ${C.border}`, marginBottom: 24 }}>
         <div style={{ padding: "12px 18px", background: "#0A0A0A", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontFamily: FONT_MONO, fontSize: 10, color: "#555", letterSpacing: "0.1em" }}>ZONE SÉCURISÉE CROCHET</span>
-          <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#22c55e", letterSpacing: "0.08em" }}>CHIFFRÉ</span>
+          <span style={{ fontFamily: FONT_MONO, fontSize: 10, color: "#555", letterSpacing: "0.1em" }}>
+            {lang === "en" ? "CROCHET SECURE ZONE" : "ZONE SÉCURISÉE CROCHET"}
+          </span>
+          <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: "#22c55e", letterSpacing: "0.08em" }}>
+            {lang === "en" ? "ENCRYPTED" : "CHIFFRÉ"}
+          </span>
         </div>
         <div style={{ padding: "20px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-          {[
-            { label: "Référence Room", value: roomRef },
-            { label: "Statut", value: roomStatus === "active" ? "Actif" : roomStatus },
-            { label: "NDA", value: ndaSigned ? "Signé" : "Non signé" },
-            { label: "Protocole", value: "NDA-CROCHET-V1" },
-            { label: "Juridiction", value: "Droit français — Paris" },
-            { label: "Durée confidentialité", value: "2 ans post-closing" },
-          ].map(({ label, value }) => (
+          {securityFields.map(({ label, value }) => (
             <div key={label}>
               <div style={{ fontFamily: FONT_SANS, fontSize: 9, color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 3 }}>{label}</div>
               <div style={{ fontFamily: FONT_MONO, fontSize: 12, color: C.text }}>{value}</div>
@@ -1324,29 +1486,28 @@ function InfoSection({
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: ndaSigned ? 0 : 10 }}>
           <span style={{ width: 8, height: 8, borderRadius: "50%", background: ndaSigned ? "#22c55e" : "#f59e0b", flexShrink: 0 }} />
           <span style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C.text }}>
-            {ndaSigned ? "Accord de Confidentialité signé" : "NDA en attente de signature"}
+            {ndaSigned
+              ? (lang === "en" ? "Confidentiality Agreement signed" : "Accord de Confidentialité signé")
+              : (lang === "en" ? "NDA pending signature" : "NDA en attente de signature")
+            }
           </span>
         </div>
         {!ndaSigned && (
           <p style={{ fontFamily: FONT_SANS, fontSize: 12, color: C.muted, margin: 0, lineHeight: 1.7 }}>
-            L&apos;accès aux documents confidentiels nécessite la signature du NDA. Rendez-vous sur la page du dossier pour générer et signer l&apos;accord.
+            {lang === "en"
+              ? "Access to confidential documents requires signing the NDA. Go to the file page to generate and sign the agreement."
+              : "L\u2019accès aux documents confidentiels nécessite la signature du NDA. Rendez-vous sur la page du dossier pour générer et signer l\u2019accord."
+            }
           </p>
         )}
       </div>
 
-      {/* Règles */}
+      {/* Rules */}
       <div>
         <div style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, marginBottom: 16, paddingBottom: 10, borderBottom: `1px solid ${C.border}` }}>
-          Règles de la Secure Room
+          {lang === "en" ? "Secure Room Rules" : "Règles de la Secure Room"}
         </div>
-        {[
-          "Toutes les communications échangées dans cette Room sont couvertes par le NDA.",
-          "Les documents partagés restent la propriété exclusive de la Partie Divulgatrice.",
-          "La reproduction ou transmission à des tiers est strictement interdite.",
-          "Toute violation engage la responsabilité pénale et civile des contrevenants.",
-          "La Room reste ouverte jusqu'au closing ou résiliation mutuelle.",
-          "CROCHET n'est pas partie aux négociations — rôle d'intermédiaire uniquement.",
-        ].map((rule, i) => (
+        {rules.map((rule, i) => (
           <div key={i} style={{ display: "flex", gap: 12, marginBottom: 12, alignItems: "flex-start" }}>
             <span style={{ fontFamily: FONT_MONO, fontSize: 10, color: C.muted, flexShrink: 0, paddingTop: 1, minWidth: 20 }}>
               {String(i + 1).padStart(2, "0")}
@@ -1496,6 +1657,7 @@ export function RoomShell({
     if (error) console.error("[send]", error)
   }
 
+  const { lang } = useLang()
   const opportunityTitle = opportunity?.title as string | undefined
   const isDone = roomStatus === "closed_deal" || roomStatus === "closed_no_deal"
 
@@ -1518,13 +1680,16 @@ export function RoomShell({
           }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b", flexShrink: 0 }} />
             <span style={{ fontFamily: FONT_SANS, fontSize: 12, color: "#fbbf24" }}>
-              Une partie a validé le deal — en attente de confirmation de l&apos;autre partie.
+              {lang === "en"
+                ? "One party has validated the deal — waiting for confirmation from the other party."
+                : "Une partie a validé le deal — en attente de confirmation de l\u2019autre partie."
+              }
             </span>
             <button
               onClick={() => setTab("closing")}
               style={{ marginLeft: "auto", ...btnStyle(true), padding: "4px 14px", fontSize: 11, borderColor: "#5a4000", color: "#f59e0b" }}
             >
-              Voir →
+              {lang === "en" ? "View →" : "Voir →"}
             </button>
           </div>
         )}
