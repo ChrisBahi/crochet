@@ -22,7 +22,7 @@ export async function approveAdmission(id: string, email: string, name: string) 
     type: "invite",
     email,
     options: {
-      data: { full_name: name },
+      data: { full_name: name, tunnel },
       redirectTo: `${siteUrl}/auth/callback`,
     },
   });
