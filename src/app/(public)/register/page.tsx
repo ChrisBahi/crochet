@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/lib/lang/context";
 
@@ -120,21 +121,30 @@ function Field({
   );
 }
 
-export default function RegisterPage() {
+function RegisterForm() {
   const { lang } = useLang();
   const tx = translations[lang];
+  const searchParams = useSearchParams();
+  const refSource = searchParams.get("ref") || null;
+  const roleParam = searchParams.get("role") || "";
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     linkedin: "",
     city: "",
-    role: "",
+    role: roleParam,
     siret: "",
     ticket: "",
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Si le param role change après hydration, on l'applique
+  useEffect(() => {
+    if (roleParam) setForm((f) => ({ ...f, role: roleParam }));
+  }, [roleParam]);
 
   function set(key: keyof typeof form) {
     return (v: string) => setForm((f) => ({ ...f, [key]: v }));
@@ -153,6 +163,7 @@ export default function RegisterPage() {
       siret: form.siret || null,
       ticket: form.ticket || null,
       message: form.message || null,
+      source: refSource,
     });
     setLoading(false);
     if (error) {
@@ -372,5 +383,13 @@ export default function RegisterPage() {
       </div>
     </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }
