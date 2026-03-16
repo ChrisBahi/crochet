@@ -56,10 +56,10 @@ export function AppShell({
       }}>
         {/* Logo */}
         <Link href="/app" style={{ textDecoration: "none", flexShrink: 0 }}>
-          <span style={{
+          <span className="logo-animated" style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
             fontStyle: "normal", fontSize: 18, fontWeight: 700,
-            color: "#0A0A0A", letterSpacing: "0.06em", textTransform: "uppercase",
+            color: "#0A0A0A", textTransform: "uppercase",
           }}>
             CROCHET.
           </span>
