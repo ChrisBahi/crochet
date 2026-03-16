@@ -163,6 +163,35 @@ export default async function AdminPage({
   }
   const sourceStats = Object.entries(sourceMap).sort((a, b) => b[1] - a[1]);
 
+  // Entonnoir par source : { source -> { total, approved, rejected, pending } }
+  const sourceFunnel: Record<string, { total: number; approved: number; rejected: number; pending: number }> = {};
+  for (const r of admissions) {
+    const src = r.source ?? "direct";
+    if (!sourceFunnel[src]) sourceFunnel[src] = { total: 0, approved: 0, rejected: 0, pending: 0 };
+    sourceFunnel[src].total++;
+    if (r.status === "approved") sourceFunnel[src].approved++;
+    else if (r.status === "rejected") sourceFunnel[src].rejected++;
+    else sourceFunnel[src].pending++;
+  }
+  const sourceFunnelStats = Object.entries(sourceFunnel).sort((a, b) => b[1].total - a[1].total);
+
+  // Matrice source × tunnel
+  const sourceXTunnel: Record<string, { cedant: number; repreneur: number; fonds: number; none: number }> = {};
+  for (const r of admissions) {
+    const src = r.source ?? "direct";
+    if (!sourceXTunnel[src]) sourceXTunnel[src] = { cedant: 0, repreneur: 0, fonds: 0, none: 0 };
+    const t = r.tunnel as string | null;
+    if (t === "cedant") sourceXTunnel[src].cedant++;
+    else if (t === "repreneur") sourceXTunnel[src].repreneur++;
+    else if (t === "fonds") sourceXTunnel[src].fonds++;
+    else sourceXTunnel[src].none++;
+  }
+  const sourceXTunnelStats = Object.entries(sourceXTunnel).sort((a, b) => {
+    const ta = a[1].cedant + a[1].repreneur + a[1].fonds + a[1].none;
+    const tb = b[1].cedant + b[1].repreneur + b[1].fonds + b[1].none;
+    return tb - ta;
+  });
+
   // Conversion essai → payant
   const totalSubs = subscriptions.length;
   const paidSubs = subscriptions.filter((s) => s.plan !== "trial" && s.status === "active").length;
@@ -545,6 +574,135 @@ export default async function AdminPage({
               ))}
             </div>
           </div>
+
+          {/* Row 4 : Entonnoir par source */}
+          {sourceFunnelStats.length > 0 && (
+            <div style={{ border: "1px solid #E0DAD0", padding: "24px 28px" }}>
+              <div style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+                color: "#7A746E", marginBottom: 20,
+              }}>
+                Entonnoir par source — lead → approuvé
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-dm-sans), sans-serif" }}>
+                  <thead>
+                    <tr>
+                      {["Source", "Total", "Approuvés", "En attente", "Rejetés", "Taux approbation"].map((h) => (
+                        <th key={h} style={{
+                          textAlign: h === "Source" ? "left" : "right",
+                          fontFamily: "var(--font-jetbrains), monospace",
+                          fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
+                          color: "#7A746E", fontWeight: 400,
+                          padding: "0 12px 12px", borderBottom: "1px solid #E0DAD0",
+                          paddingLeft: h === "Source" ? 0 : 12,
+                        }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sourceFunnelStats.map(([src, f]) => {
+                      const approvalRate = f.total > 0 ? Math.round((f.approved / f.total) * 100) : 0;
+                      return (
+                        <tr key={src} style={{ borderBottom: "1px solid #F0EBE3" }}>
+                          <td style={{ padding: "12px 0", fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "#0A0A0A" }}>
+                            {src}
+                          </td>
+                          <td style={{ padding: "12px", textAlign: "right", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, fontWeight: 700, color: "#0A0A0A" }}>
+                            {f.total}
+                          </td>
+                          <td style={{ padding: "12px", textAlign: "right", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "#2D6A4F", fontWeight: 700 }}>
+                            {f.approved}
+                          </td>
+                          <td style={{ padding: "12px", textAlign: "right", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "#B7791F" }}>
+                            {f.pending}
+                          </td>
+                          <td style={{ padding: "12px", textAlign: "right", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "#C0392B" }}>
+                            {f.rejected}
+                          </td>
+                          <td style={{ padding: "12px", textAlign: "right" }}>
+                            <span style={{
+                              fontFamily: "var(--font-jetbrains), monospace",
+                              fontSize: 13, fontWeight: 700,
+                              color: approvalRate >= 50 ? "#2D6A4F" : approvalRate >= 25 ? "#B7791F" : "#7A746E",
+                            }}>
+                              {approvalRate}%
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Row 5 : Matrice source × tunnel */}
+          {sourceXTunnelStats.length > 0 && (
+            <div style={{ border: "1px solid #E0DAD0", padding: "24px 28px" }}>
+              <div style={{
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+                color: "#7A746E", marginBottom: 20,
+              }}>
+                Source × Profil — quel canal amène quel type de membre
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-dm-sans), sans-serif" }}>
+                  <thead>
+                    <tr>
+                      {["Source", "Cédants", "Repreneurs", "Fonds / FO", "Non qualifié"].map((h) => (
+                        <th key={h} style={{
+                          textAlign: h === "Source" ? "left" : "right",
+                          fontFamily: "var(--font-jetbrains), monospace",
+                          fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
+                          color: "#7A746E", fontWeight: 400,
+                          padding: "0 12px 12px", borderBottom: "1px solid #E0DAD0",
+                          paddingLeft: h === "Source" ? 0 : 12,
+                        }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sourceXTunnelStats.map(([src, t]) => {
+                      const total = t.cedant + t.repreneur + t.fonds + t.none;
+                      const cell = (val: number, color: string) => (
+                        <td style={{ padding: "12px", textAlign: "right" }}>
+                          {val > 0 ? (
+                            <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, fontWeight: 700, color }}>
+                              {val}
+                              <span style={{ fontSize: 10, fontWeight: 400, color: "#B0AA9E", marginLeft: 4 }}>
+                                ({Math.round((val / total) * 100)}%)
+                              </span>
+                            </span>
+                          ) : (
+                            <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "#D0CAC0" }}>—</span>
+                          )}
+                        </td>
+                      );
+                      return (
+                        <tr key={src} style={{ borderBottom: "1px solid #F0EBE3" }}>
+                          <td style={{ padding: "12px 0", fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "#0A0A0A" }}>
+                            {src}
+                          </td>
+                          {cell(t.cedant, "#2D6A4F")}
+                          {cell(t.repreneur, "#1A4A8A")}
+                          {cell(t.fonds, "#7B2C6E")}
+                          {cell(t.none, "#9A9490")}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
         </div>
       ) : isMembersView ? (
