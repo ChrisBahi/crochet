@@ -145,24 +145,26 @@ J60-J90 → 5 fonds clients = 25k€/mois récurrent
 - ✅ Pages bilingues FR/EN
 - ✅ Admin panel avec déclencheur match engine
 
-### Ce qui est fait (session précédente)
+### Ce qui est fait (sessions précédentes)
 - ✅ Dispatch IA au signup (3 questions → tunnel cedant/repreneur/fonds)
 - ✅ Migration SQL champs `tunnel` + `intent_size` + `intent_horizon`
 - ✅ Landing page `/partenaires/sowefund` avec tracking UTM
+- ✅ Dashboard admin stats (onglet Stats : tunnels, sources UTM, conversion, MRR, timeline 7j)
+- ✅ Email bienvenue différencié par tunnel (3 sujets/textes/CTAs distincts)
+- ✅ Cron job hebdomadaire match engine (lundi 08h UTC, `vercel.json`)
+- ✅ Weekly digest email (lundi 09h UTC, résumé matches/semaine par membre)
 
 ### Ce qui manque (prochaines priorités)
 
 **Immédiat :**
-1. **Dashboard admin stats temps réel** ← PROCHAIN
-2. Email de bienvenue différencié selon le rôle (cédant / repreneur / fonds)
-3. Match engine cron job (hebdomadaire automatique)
-4. Weekly digest email (résumé nouveaux matches)
+1. **Onboarding drip J1→J3→J7** ← PROCHAIN (conversion essai → payant)
+2. Tunnels d'onboarding différenciés post-signup (pages dédiées par rôle)
+3. Page experts-comptables (rev share 20%)
+4. Suivi UTM complet dans l'admin (déjà partiellement en place)
 
 **Moyen terme :**
-5. Onboarding drip J1→J3→J7 (conversion essai → payant)
-6. Tunnels d'onboarding différenciés post-signup
-7. Page experts-comptables (rev share 20%)
-8. Suivi UTM complet dans l'admin
+5. Ajouter `CRON_SECRET` dans les variables env Vercel (nécessaire pour activer les crons)
+6. Churn prevention (après avoir des users à churner)
 
 ---
 
