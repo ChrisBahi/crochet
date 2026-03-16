@@ -95,7 +95,7 @@ export default function WelcomeDefault() {
         textTransform: "uppercase",
         animation: "fadeIn 0.8s ease 1s both",
       }}>
-        CROCHET.
+        CROCHETT.
       </div>
 
       <style>{`
