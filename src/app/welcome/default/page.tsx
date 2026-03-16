@@ -90,7 +90,7 @@ export default function WelcomeDefault() {
         marginTop: 64,
         fontFamily: "var(--font-jetbrains), monospace",
         fontSize: 9,
-        color: "#666",
+        color: "#FFFFFF",
         letterSpacing: "0.18em",
         textTransform: "uppercase",
         animation: "fadeIn 0.8s ease 1s both",
