@@ -156,16 +156,14 @@ J60-J90 → 5 fonds clients = 25k€/mois récurrent
 - ✅ Onboarding drip J1→J3→J7 (9 templates par tunnel, cron quotidien 10h UTC, tracking `drip_j*_sent_at`)
 - ✅ Landing page `/partenaires/experts-comptables` — programme apporteur d'affaires 20% rev share
 - ✅ Suivi UTM complet dans l'admin : entonnoir par source (lead→approuvé→rejeté + taux) + matrice source×tunnel
+- ✅ Tunnels d'onboarding différenciés post-signup (pages /welcome/cedant, /welcome/repreneur, /welcome/fonds — dispatch automatique selon tunnel)
 
 ### Ce qui manque (prochaines priorités)
 
-**Immédiat :**
-1. **Tunnels d'onboarding différenciés post-signup** (pages /welcome/cedant, /welcome/repreneur, /welcome/fonds)
-
-**Moyen terme :**
-2. `CRON_SECRET` dans les variables env Vercel ← action manuelle requise
-3. Appliquer la migration `20260316000003_drip_columns.sql` en prod (Supabase SQL Editor)
-4. Churn prevention (après avoir des users à churner)
+**Moyen terme (actions manuelles requises) :**
+1. `CRON_SECRET` dans les variables env Vercel ← action manuelle requise
+2. Appliquer la migration `20260316000003_drip_columns.sql` en prod (Supabase SQL Editor)
+3. Churn prevention (après avoir des users à churner)
 
 ---
 
@@ -198,7 +196,7 @@ src/app/
 
 ## Conventions de développement
 
-- Branche active : `claude/go-setup-waEVi`
+- Branche active : `claude/setup-go-implementation-WX6hO`
 - Toujours pusher sur la branche désignée : `git push -u origin <branch>`
 - Les branches Claude commencent par `claude/` et finissent par l'ID de session
 - Commits en français ou anglais, préfixe conventionnel (`feat:`, `fix:`, `chore:`)
