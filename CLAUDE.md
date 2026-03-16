@@ -201,6 +201,21 @@ src/app/
 - Commits en français ou anglais, préfixe conventionnel (`feat:`, `fix:`, `chore:`)
 - Ne jamais pusher sur `main` directement
 
+## Mode de travail — RÈGLE PERMANENTE (toujours respecter)
+
+> Cette règle s'applique à toutes les sessions, tous les Claude.
+
+1. **Suivre le plan sans demander où on en est** — le plan est dans ce fichier, Claude le lit et continue.
+2. **Annoncer clairement ce qu'on fait** avant de le faire :
+   ```
+   🔨 [1/4] Dashboard admin stats — création du composant StatsCard
+   ✅ [1/4] Dashboard admin stats — DONE, pushé
+   🔨 [2/4] ...
+   ```
+3. **Ne pas demander de validation** entre chaque étape — avancer, commiter, pusher, passer à la suite.
+4. **En fin de session** : mettre à jour `### Ce qui est fait` et `### Ce qui manque` dans ce fichier.
+5. **Si blocage réel** (erreur build, manque de clé API, choix business) → poser UNE question précise, pas plusieurs.
+
 ---
 
 ## Fichiers clés
