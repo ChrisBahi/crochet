@@ -154,18 +154,18 @@ J60-J90 → 5 fonds clients = 25k€/mois récurrent
 - ✅ Cron job hebdomadaire match engine (lundi 08h UTC, `vercel.json`)
 - ✅ Weekly digest email (lundi 09h UTC, résumé matches/semaine par membre)
 - ✅ Onboarding drip J1→J3→J7 (9 templates par tunnel, cron quotidien 10h UTC, tracking `drip_j*_sent_at`)
+- ✅ Landing page `/partenaires/experts-comptables` — programme apporteur d'affaires 20% rev share
+- ✅ Suivi UTM complet dans l'admin : entonnoir par source (lead→approuvé→rejeté + taux) + matrice source×tunnel
 
 ### Ce qui manque (prochaines priorités)
 
 **Immédiat :**
-1. **Tunnels d'onboarding différenciés post-signup** ← PROCHAIN (pages /welcome/cedant, /welcome/repreneur, /welcome/fonds)
-2. Page experts-comptables (rev share 20%)
-3. Suivi UTM complet dans l'admin (déjà partiellement en place)
+1. **Tunnels d'onboarding différenciés post-signup** (pages /welcome/cedant, /welcome/repreneur, /welcome/fonds)
 
 **Moyen terme :**
-4. `CRON_SECRET` dans les variables env Vercel ← action manuelle requise
-5. Appliquer la migration `20260316000003_drip_columns.sql` en prod (Supabase SQL Editor)
-6. Churn prevention (après avoir des users à churner)
+2. `CRON_SECRET` dans les variables env Vercel ← action manuelle requise
+3. Appliquer la migration `20260316000003_drip_columns.sql` en prod (Supabase SQL Editor)
+4. Churn prevention (après avoir des users à churner)
 
 ---
 
