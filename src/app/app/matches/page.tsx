@@ -97,7 +97,7 @@ export default async function MatchesPage({
 }: {
   searchParams: Promise<{ match?: string }>
 }) {
-  await requireUser()
+  const user = await requireUser()
   const wsId = await requireActiveWorkspaceId()
   const params = await searchParams
   const cookieStore = await cookies()
@@ -124,9 +124,15 @@ export default async function MatchesPage({
 
   const supabase = await createClient()
 
-  const matchesResult = wsId
-    ? await supabase.from("opportunity_matches").select("*").eq("workspace_id", wsId).order("ranking_score", { ascending: false })
-    : { data: [] }
+  // Query matches where user's workspace owns them OR user is the matched member
+  const orFilter = wsId
+    ? `workspace_id.eq.${wsId},member_id.eq.${user.id}`
+    : `member_id.eq.${user.id}`
+  const matchesResult = await supabase
+    .from("opportunity_matches")
+    .select("*")
+    .or(orFilter)
+    .order("ranking_score", { ascending: false })
 
   const typedMatches: Match[] = matchesResult.data ?? []
 
