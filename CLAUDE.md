@@ -161,6 +161,12 @@ J60-J90 → 5 fonds clients = 25k€/mois récurrent
 
 ### Ce qui est fait (actions manuelles confirmées)
 - ✅ `CRON_SECRET` configuré dans les variables env Vercel
+- ✅ `RESEND_API_KEY` configuré dans Vercel
+- ✅ `ANTHROPIC_API_KEY` configuré dans Vercel
+- ✅ `NEXT_PUBLIC_APP_URL` configuré dans Vercel
+- ✅ `NEXT_PUBLIC_SITE_URL` configuré dans Vercel
+- ✅ `MATCH_ENGINE_SECRET` configuré dans Vercel
+- ✅ `ADMIN_EMAILS` configuré dans Vercel
 - ✅ Migration `20260316000003_drip_columns.sql` appliquée en prod (Supabase)
 - ✅ Domaine `crochett.ai` vérifié dans Resend (DNS) — `contact@` et `support@` opérationnels
 
