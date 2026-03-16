@@ -12,12 +12,12 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.redirect(new URL("/login", req.url))
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const formData = await req.formData()
-  const priceId = formData.get("priceId") as string
-  const plan = formData.get("plan") as string
+  const body = await req.json().catch(() => ({}))
+  const priceId = body.priceId as string
+  const plan = body.plan as string
 
   if (!priceId) {
     return NextResponse.json({ error: "Missing priceId" }, { status: 400 })
@@ -31,13 +31,13 @@ export async function POST(req: NextRequest) {
     line_items: [{ price: priceId, quantity: 1 }],
     customer_email: user.email,
     metadata: { user_id: user.id, plan },
-    success_url: `${siteUrl}/app?upgraded=1`,
-    cancel_url: `${siteUrl}/pricing`,
+    success_url: `${siteUrl}/app/billing?success=1`,
+    cancel_url: `${siteUrl}/app/billing?canceled=1`,
     subscription_data: {
       trial_period_days: 14,
       metadata: { user_id: user.id, plan },
     },
   })
 
-  return NextResponse.redirect(session.url ?? `${siteUrl}/pricing`, { status: 303 })
+  return NextResponse.json({ url: session.url })
 }
