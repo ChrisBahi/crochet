@@ -32,7 +32,7 @@ export async function createNotification({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "CROCHET <no-reply@crochett.ai>",
+          from: "CROCHET <support@crochett.ai>",
           to: [email],
           subject: title,
           html: buildEmailHtml(title, body, link),
