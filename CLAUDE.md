@@ -159,14 +159,15 @@ J60-J90 → 5 fonds clients = 25k€/mois récurrent
 - ✅ Tunnels d'onboarding différenciés post-signup (pages /welcome/cedant, /welcome/repreneur, /welcome/fonds)
 - ✅ Dashboard tunnel-aware (cédants bypass profil investisseur, badge tunnel, tagline/CTA adaptés par tunnel)
 
+### Ce qui est fait (actions manuelles confirmées)
+- ✅ `CRON_SECRET` configuré dans les variables env Vercel
+- ✅ Migration `20260316000003_drip_columns.sql` appliquée en prod (Supabase)
+- ✅ Domaine `crochett.ai` vérifié dans Resend (DNS) — `contact@` et `support@` opérationnels
+
 ### Ce qui manque (prochaines priorités)
 
-**Actions manuelles requises :**
-1. `CRON_SECRET` dans les variables env Vercel ← action manuelle requise
-2. Appliquer la migration `20260316000003_drip_columns.sql` en prod (Supabase SQL Editor)
-
 **Features à construire :**
-3. Churn prevention (après avoir des users à churner)
+1. Churn prevention (après avoir des users à churner)
 
 ---
 
