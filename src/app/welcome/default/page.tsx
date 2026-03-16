@@ -89,11 +89,10 @@ export default function WelcomeDefault() {
       <div style={{
         marginTop: 64,
         fontFamily: "var(--font-jetbrains), monospace",
-        fontSize: 9,
+        fontSize: 11,
         color: "#FFFFFF",
         letterSpacing: "0.18em",
         textTransform: "uppercase",
-        animation: "fadeIn 0.8s ease 1s both",
       }}>
         CROCHET.
       </div>
