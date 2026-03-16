@@ -160,10 +160,12 @@ J60-J90 → 5 fonds clients = 25k€/mois récurrent
 
 ### Ce qui manque (prochaines priorités)
 
-**Moyen terme (actions manuelles requises) :**
-1. `CRON_SECRET` dans les variables env Vercel ← action manuelle requise
-2. Appliquer la migration `20260316000003_drip_columns.sql` en prod (Supabase SQL Editor)
-3. Churn prevention (après avoir des users à churner)
+**Moyen terme :**
+1. Churn prevention (après avoir des users à churner)
+
+**Infrastructure (fait) :**
+- ✅ `CRON_SECRET` dans les variables env Vercel
+- ✅ Migration `20260316000003_drip_columns.sql` appliquée en prod
 
 ---
 
