@@ -79,7 +79,7 @@ export async function approveAdmission(id: string, email: string, name: string) 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "CROCHET <no-reply@crochett.ai>",
+        from: "CROCHET <contact@crochett.ai>",
         to: [email],
         subject: content.subject,
         html: `<!DOCTYPE html>
@@ -138,7 +138,7 @@ export async function rejectAdmission(id: string) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "CROCHET <no-reply@crochett.ai>",
+        from: "CROCHET <contact@crochett.ai>",
         to: [req.email],
         subject: "Votre candidature CROCHET",
         html: `<!DOCTYPE html>

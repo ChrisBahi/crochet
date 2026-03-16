@@ -95,7 +95,7 @@ export async function GET(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "CROCHET <no-reply@crochett.ai>",
+        from: "CROCHET <support@crochett.ai>",
         to: [email],
         subject: `${count} nouveau${count > 1 ? "x" : ""} match${count > 1 ? "es" : ""} CROCHET cette semaine`,
         html,
