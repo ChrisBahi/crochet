@@ -59,22 +59,78 @@ Référence marché : Doctolib (patients vs médecins), ManoMano (pro vs particu
 
 ---
 
-## Go-to-market — 2 ICPs en parallèle
+## Stratégie acquisition — 50 → 150 membres → viral
 
-### ICP 1 — Sowefund (côté investisseurs)
-- Contexte : ami travaille chez Sowefund, rencontre en cours
-- Angle : Sowefund a des investisseurs non-servis sur le M&A PME
-- Proposition : partenariat apporteur d'affaires, convention simple, trial 14j offert
-- Action : valider la convention, onboarder leurs investisseurs sur Crochet
+### La logique
+50 membres bien qualifiés = masse critique → effet réseau → croissance organique.
+**Ne pas viser les cédants en direct au début** — cycle 6-18 mois, méfiants, trop long.
+
+### Les 4 priorités dans l'ordre
+```
+Priorité 1 : Acquisition (avant d'automatiser la rétention)
+Priorité 2 : Match engine cron + weekly digest (rétention passive)
+Priorité 3 : Onboarding drip (conversion essai → payant)
+Priorité 4 : Le reste (churn prevention, etc.)
+```
+> Ne construis pas la churn prevention avant d'avoir des users à churner.
+
+### Stack outreach décidée (solo founder)
+| Besoin | Outil | Coût |
+|--------|-------|------|
+| Domaine email | Google Workspace | ~6€/mois |
+| Cold outreach | Instantly.ai ou Lemlist | ~30-50€/mois |
+| Support client | Crisp (gratuit) ou Intercom | 0-50€/mois |
+
+### Structure emails décidée
+```
+contact@crochett.ai  → cold outreach + commercial (garder)
+support@crochett.ai  → créer pour clients onboardés
+hello@crochett.ai    → optionnel, campagnes marketing
+```
+**Règle clé :** ne jamais faire du cold depuis `support@` — finit en spam.
+
+### Plan 90 jours → 1M€ an 1
+```
+J1-J30  → 3 meetings Sowefund + pitch partenariat
+         → Onboard 5 experts-comptables en beta gratuite
+         → Kelly Massol : 1 post LinkedIn co-signé
+
+J30-J60 → Premier fonds client (5k€/mois)
+         → Landing page dispatch IA en ligne
+         → contact@ reste support commercial
+         → support@ pour onboarding clients
+
+J60-J90 → 5 fonds clients = 25k€/mois récurrent
+         → Pipeline 50 repreneurs qualifiés
+         → Lever ou pas selon traction
+```
+
+---
+
+## Go-to-market — 2 connexions = vraie Priorité 1
+
+### ICP 1 — Sowefund (canal de distribution)
+- Contexte : ami DG de Sowefund — pas juste un contact, c'est un canal de distribution
+- Sowefund a des entrepreneurs qui lèvent des fonds → ils connaissent repreneurs + cédants potentiels
+- Angle : Sowefund ne fait PAS le M&A PME (cessions 500k-5M€) → gap qu'on comble
+- Proposition : partenariat co-branded, convention apporteur d'affaires, trial 14j offert
+- Potentiel : **50-100 leads qualifiés dès la semaine 1**
 
 **Script pour la réunion Sowefund :**
 > "On a une plateforme qui fait exactement ce que vous ne faites pas — le M&A PME, les cessions de boîtes entre 500k et 5M€. Vos investisseurs qui cherchent du deal flow hors levée de fonds, on peut les accueillir. Partenariat simple : vous recommandez, on partage le revenu."
 
-### ICP 2 — Kelly Massol
+**Ce qui est déjà construit :**
+- Landing page `/partenaires/sowefund` dédiée
+- Tracking `?ref=sowefund` dans la DB
+- `?ref=sowefund&role=investisseur` → bypass qualification, direct formulaire investisseur
+- Trial 14j dans Stripe
+
+### ICP 2 — Kelly Massol (audience + crédibilité)
 - Qui : entrepreneur, fondatrice Les Secrets de Lulu
-- Question ouverte : cédante potentielle (dossier vitrine) ou ambassadrice/apporteuse de cédants ?
-  - Si **cédante** → 1 dossier flagship très visible, effet vitrine pour attirer d'autres cédants
-  - Si **réseau** → elle devient ambassadrice, apporte son réseau d'entrepreneurs
+- Sa communauté d'entrepreneurs = cédants potentiels + repreneurs potentiels
+- Angle : podcast / interview / co-création de contenu
+- Alignement : affiliation ou equity symbolique
+- Question ouverte : cédante vitrine (dossier flagship) ou ambassadrice réseau ?
 
 ---
 
@@ -89,16 +145,24 @@ Référence marché : Doctolib (patients vs médecins), ManoMano (pro vs particu
 - ✅ Pages bilingues FR/EN
 - ✅ Admin panel avec déclencheur match engine
 
+### Ce qui est fait (session précédente)
+- ✅ Dispatch IA au signup (3 questions → tunnel cedant/repreneur/fonds)
+- ✅ Migration SQL champs `tunnel` + `intent_size` + `intent_horizon`
+- ✅ Landing page `/partenaires/sowefund` avec tracking UTM
+
 ### Ce qui manque (prochaines priorités)
 
-**Pour supporter le go-to-market :**
-1. Email de bienvenue différencié selon le rôle (investisseur vs cédant vs repreneur)
-2. Landing page partenaire (ex: `crochett.ai/partenaires/sowefund`) avec tracking UTM
-3. Dashboard admin avec stats temps réel (inscriptions, matches, rooms actives, d'où viennent les users)
+**Immédiat :**
+1. **Dashboard admin stats temps réel** ← PROCHAIN
+2. Email de bienvenue différencié selon le rôle (cédant / repreneur / fonds)
+3. Match engine cron job (hebdomadaire automatique)
+4. Weekly digest email (résumé nouveaux matches)
 
-**Pour le modèle Dispatch IA :**
-4. Questions de qualification au signup (3 questions → tunnel A/B/C)
-5. Tunnels d'onboarding différenciés post-signup
+**Moyen terme :**
+5. Onboarding drip J1→J3→J7 (conversion essai → payant)
+6. Tunnels d'onboarding différenciés post-signup
+7. Page experts-comptables (rev share 20%)
+8. Suivi UTM complet dans l'admin
 
 ---
 
