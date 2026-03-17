@@ -103,7 +103,7 @@ export default function SowefundPartnerPage() {
             letterSpacing: "-0.02em",
             maxWidth: 760,
           }}>
-            Le deal flow M&A PME
+            Sowefund vous ouvre l&apos;accès
           </h1>
           <h1 style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
@@ -115,7 +115,7 @@ export default function SowefundPartnerPage() {
             lineHeight: 1.05,
             letterSpacing: "-0.02em",
           }}>
-            que Sowefund ne couvre pas.
+            au M&amp;A PME qualifié par IA.
           </h1>
 
           <p style={{
