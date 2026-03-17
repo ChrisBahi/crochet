@@ -27,6 +27,12 @@ export async function POST(req: Request) {
     }
   }
 
+  // Optional: reset existing matches before re-running (admin only)
+  const url = new URL(req.url)
+  if (url.searchParams.get("reset") === "true") {
+    await supabase.from("opportunity_matches").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+  }
+
   // Fetch ALL active opportunities across all workspaces
   const { data: opportunities, error: fetchError } = await supabase
     .from("opportunities")
@@ -96,24 +102,25 @@ export async function POST(req: Request) {
       }
 
       // Insert two rows: one per side, with deduplication
+      // opportunity_id = the COUNTERPART's opportunity (what the user will see in their match view)
       const rows = [
         {
           workspace_id: a.workspace_id,
-          opportunity_id: a.id,
+          opportunity_id: b.id,           // A sees B's opportunity
           member_id: b.created_by ?? null,
           fit_score: fitScore,
           ranking_score: fitScore,
-          breakdown: { d_score: dScoreA, p_score, structured_score: preScore },
+          breakdown: { d_score: dScoreB, p_score, structured_score: preScore },
           why,
           status: "pending",
         },
         {
           workspace_id: b.workspace_id,
-          opportunity_id: b.id,
+          opportunity_id: a.id,           // B sees A's opportunity
           member_id: a.created_by ?? null,
           fit_score: fitScore,
           ranking_score: fitScore,
-          breakdown: { d_score: dScoreB, p_score, structured_score: preScore },
+          breakdown: { d_score: dScoreA, p_score, structured_score: preScore },
           why,
           status: "pending",
         },
