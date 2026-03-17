@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk"
 import { createNotification } from "@/lib/notifications/create"
+import { withRetry } from "@/lib/ai/withRetry"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -110,11 +111,14 @@ export async function runQualification(
   }, { onConflict: "opportunity_id" })
 
   try {
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
-      messages: [{ role: "user", content: buildPrompt(opp) }],
-    })
+    const message = await withRetry(
+      () => client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 4096,
+        messages: [{ role: "user", content: buildPrompt(opp) }],
+      }),
+      "qualify memo"
+    )
 
     let raw = (message.content[0] as { type: string; text: string }).text.trim()
     raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim()

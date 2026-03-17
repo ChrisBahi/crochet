@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk"
+import { withRetry } from "@/lib/ai/withRetry"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -43,11 +44,14 @@ CRITÈRES D'ÉVALUATION (pondérés) :
 Réponds UNIQUEMENT en JSON :
 { "score": <entier 0-100>, "note": "<justification 2-3 phrases max, en français>" }`
 
-  const msg = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 256,
-    messages: [{ role: "user", content: prompt }],
-  })
+  const msg = await withRetry(
+    () => client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 256,
+      messages: [{ role: "user", content: prompt }],
+    }),
+    "admission score"
+  )
 
   const raw = (msg.content[0] as { type: string; text: string }).text.trim()
   const match = raw.match(/\{[\s\S]*\}/)

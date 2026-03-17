@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk"
+import { withRetry } from "@/lib/ai/withRetry"
 
 const client = new Anthropic()
 
@@ -138,7 +139,8 @@ Valorisation: ${fmt(o.valuation, " €")}
 Montant recherché: ${fmt(o.amount, " €")}
 Description: ${o.description ?? "—"}`
 
-  const response = await client.messages.create({
+  const response = await withRetry(
+    () => client.messages.create({
     model: "claude-opus-4-6",
     max_tokens: 512,
     output_config: {
@@ -186,7 +188,9 @@ Retourne un JSON :
 - "why" : 2–3 phrases courtes en français, factuelles et spécifiques à CES deux dossiers`,
       },
     ],
-  })
+    }),
+    "scoreMatch p_score"
+  )
 
   const text =
     response.content[0].type === "text" ? response.content[0].text : "{}"

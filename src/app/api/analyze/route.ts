@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import Anthropic from "@anthropic-ai/sdk"
+import { withRetry } from "@/lib/ai/withRetry"
+
+export const dynamic = "force-dynamic"
 
 const client = new Anthropic()
 
@@ -33,11 +36,14 @@ export async function POST(req: NextRequest) {
         },
       ]
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
-    messages: [{ role: "user", content: contentBlocks }],
-  })
+  const message = await withRetry(
+    () => client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: contentBlocks }],
+    }),
+    "analyze document"
+  )
 
   const raw = message.content[0].type === "text" ? message.content[0].text : ""
 

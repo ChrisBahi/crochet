@@ -84,8 +84,18 @@ export async function POST(req: Request) {
       const dScoreB: number = (b.opportunity_decks as { d_score?: number } | null)?.d_score ?? 0
       const dScoreAvg = (dScoreA + dScoreB) / 2
 
-      // Call Claude for AI scoring
-      const { p_score, why } = await scoreMatch(a, b)
+      // Call Claude for AI scoring — skip pair on any failure
+      let p_score: number
+      let why: string[]
+      try {
+        const result = await scoreMatch(a, b)
+        p_score = result.p_score
+        why = result.why
+      } catch (err) {
+        console.error(`[match/run] scoreMatch failed for pair (${a.id}, ${b.id}):`, err)
+        skipped_mscore++
+        continue
+      }
 
       // M-Score = 50% AI p_score + 30% structured + 20% D-Score avg
       const fitScore = Math.round(p_score * 0.5 + preScore * 0.3 + dScoreAvg * 0.2)
