@@ -30,7 +30,7 @@ export default function SowefundPartnerPage() {
               letterSpacing: "0.06em",
               textTransform: "uppercase",
             }}>
-              CROCHET.
+              CROCHETT.
             </span>
           </Link>
           <span style={{
@@ -336,13 +336,13 @@ export default function SowefundPartnerPage() {
           fontSize: 14, fontWeight: 700, color: "#AAA",
           letterSpacing: "0.06em", textTransform: "uppercase",
         }}>
-          CROCHET.
+          CROCHETT.
         </span>
         <span style={{
           fontFamily: "var(--font-jetbrains), monospace",
           fontSize: 9, color: "#444", letterSpacing: "0.08em",
         }}>
-          © 2025 CROCHET — CONFIDENTIEL
+          © 2025 CROCHETT — CONFIDENTIEL
         </span>
       </footer>
 

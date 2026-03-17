@@ -109,7 +109,7 @@ function BillingContent() {
             fontSize: 14,
             color: "#166534",
           }}>
-            Abonnement activé. Bienvenue sur CROCHET.
+            Abonnement activé. Bienvenue sur CROCHETT.
           </div>
         )}
         {canceled && (

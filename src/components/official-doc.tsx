@@ -150,7 +150,7 @@ export function OfficialDoc({
           letterSpacing: "0.06em",
           textTransform: "uppercase",
         }}>
-          CROCHET.
+          CROCHETT.
         </div>
         <div style={{
           fontFamily: "var(--font-dm-sans), sans-serif",
@@ -234,7 +234,7 @@ export function OfficialDoc({
             letterSpacing: "0.08em",
             textTransform: "uppercase",
           }}>
-            CROCHET.
+            CROCHETT.
           </span>
           <span style={{
             fontFamily: "var(--font-dm-sans), sans-serif",

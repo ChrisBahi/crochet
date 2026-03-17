@@ -30,7 +30,7 @@ export default async function RegisterStatusPage() {
     pending: {
       label: "En cours d'examen",
       title: "En attente de validation.",
-      description: "Votre profil est en cours d'examen par l'équipe CROCHET. Vous recevrez un email dès que votre candidature sera traitée.",
+      description: "Votre profil est en cours d'examen par l'équipe CROCHETT. Vous recevrez un email dès que votre candidature sera traitée.",
       dotColor: "#B7791F",
     },
     rejected: {
@@ -69,7 +69,7 @@ export default async function RegisterStatusPage() {
             letterSpacing: "0.06em",
             textTransform: "uppercase" as const,
           }}>
-            CROCHET.
+            CROCHETT.
           </span>
         </Link>
       </header>
@@ -214,7 +214,7 @@ export default async function RegisterStatusPage() {
           letterSpacing: "0.08em",
           textTransform: "uppercase" as const,
         }}>
-          CROCHET. · Infrastructure privée de transactions
+          CROCHETT. · Infrastructure privée de transactions
         </span>
         <span style={{
           fontFamily: "var(--font-jetbrains), monospace",

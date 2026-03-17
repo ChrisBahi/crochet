@@ -61,7 +61,7 @@ export function AppShell({
             fontStyle: "normal", fontSize: 18, fontWeight: 700,
             color: "#0A0A0A", letterSpacing: "0.06em", textTransform: "uppercase",
           }}>
-            CROCHET.
+            CROCHETT.
           </span>
         </Link>
 

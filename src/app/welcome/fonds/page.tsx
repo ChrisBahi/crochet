@@ -156,7 +156,7 @@ export default function WelcomeFonds() {
         textTransform: "uppercase",
         animation: "fadeIn 0.8s ease 1s both",
       }}>
-        CROCHET.
+        CROCHETT.
       </div>
 
       <style>{`

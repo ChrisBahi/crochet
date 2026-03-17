@@ -26,7 +26,7 @@ export default function OnePageSowefund() {
           </div>
           <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 32 }}>
             <div style={{ fontSize: 22, fontFamily: "Playfair Display, Georgia, serif", fontWeight: 700, letterSpacing: "-0.02em" }}>
-              CROCHET.
+              CROCHETT.
             </div>
             <div style={{ fontSize: 10, fontFamily: "JetBrains Mono, monospace", color: "#7A746E", letterSpacing: "0.1em", marginTop: 4 }}>
               × SOWEFUND
