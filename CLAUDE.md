@@ -158,14 +158,20 @@ J60-J90 → 5 fonds clients = 25k€/mois récurrent
 - ✅ Landing page `/partenaires/experts-comptables` — programme apporteur d'affaires 20% rev share
 - ✅ Suivi UTM complet dans l'admin : entonnoir par source (lead→approuvé→rejeté + taux) + matrice source×tunnel
 - ✅ Tunnels d'onboarding différenciés post-signup (pages /welcome/cedant, /welcome/repreneur, /welcome/fonds — dispatch automatique selon tunnel)
-- ✅ One-pager Sowefund optimisé print/PDF (`/onepager/sowefund`) — pour la réunion partenariat
-- ✅ One-pager Experts-Comptables print/PDF (`/onepager/experts-comptables`) — programme rev share 20%
-- ✅ Index one-pagers (`/onepager`) — hub interne PDF imprimables
+- ✅ Fix matches (error handling IA + fallback + bouton reset admin + RLS opportunity_id)
 
-### Ce qui manque (prochaines priorités)
+### Ce qui manque — À FAIRE dans crochet-app (prochaine session)
+
+> ⚠️ IMPORTANT : Les commits suivants ont été poussés sur `ChrisBahi/crochet` (mauvais repo) au lieu de `ChrisBahi/crochet-app`.
+> Il faut les recréer dans `crochet-app` depuis une session Claude Code ouverte depuis ce repo.
+
+**Pages manquantes en prod (404 sur crochett.ai) :**
+1. `/onepager/sowefund` — one-pager print/PDF pour réunion partenariat Sowefund
+2. `/onepager/experts-comptables` — one-pager print/PDF programme rev share 20%
+3. `/onepager` — index hub interne des one-pagers imprimables
 
 **Moyen terme :**
-1. Churn prevention (après avoir des users à churner)
+- Churn prevention (après avoir des users à churner)
 
 **Infrastructure (fait) :**
 - ✅ `CRON_SECRET` dans les variables env Vercel
