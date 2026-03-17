@@ -1,11 +1,16 @@
-import Sidebar from "@/components/dashboard/sidebar";
+import { AppShell } from "@/components/app-shell"
+import { createClient } from "@/lib/supabase/server"
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex">
-      <Sidebar />
+function getAdminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean);
+}
 
-      <div className="flex-1 p-8">{children}</div>
-    </div>
-  );
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const isAdmin = getAdminEmails().includes(user?.email ?? "")
+  return <AppShell userId={user?.id ?? null} isAdmin={isAdmin}>{children}</AppShell>
 }

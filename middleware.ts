@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 function getEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
@@ -33,11 +33,36 @@ export async function middleware(req: NextRequest) {
 
   const {
     data: { session },
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
 
   if (!session && req.nextUrl.pathname.startsWith("/app")) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
+  if (session && req.nextUrl.pathname.startsWith("/app")) {
+    const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+
+    const isAdmin = adminEmails.includes(session.user.email ?? "");
+
+    if (!isAdmin) {
+      const { data } = await supabase
+        .from("admission_requests")
+        .select("status")
+        .eq("email", session.user.email)
+        .single();
+
+      if (!data || data.status !== "approved") {
+        return NextResponse.redirect(new URL("/register/status", req.url));
+      }
+    }
+  }
+
   return res;
 }
+
+export const config = {
+  matcher: ["/app/:path*"],
+};

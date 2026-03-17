@@ -1,41 +1,61 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
-import { scoreMatch } from "@/lib/matching/scoreMatch"
+import { createAdminClient as createClient } from "@/lib/supabase/admin"
+import { scoreMatch, areComplementary, structuredScore } from "@/lib/matching/scoreMatch"
+import { createNotification } from "@/lib/notifications/create"
 
-export async function POST() {
+// Vercel: allow up to 5 minutes for this route (Pro plan)
+export const maxDuration = 300
 
-  const supabase = await createClient()
+// Only call Claude when the structured pre-score is high enough
+const STRUCTURED_THRESHOLD = 30
+// Only create a match when the final M-Score reaches this level
+const MSCORE_THRESHOLD = 55
 
-  const { data: { user } } = await supabase.auth.getUser()
+export async function POST(req: Request) {
 
-  if (!user) {
-    return NextResponse.json({ error: "not authenticated" }, { status: 401 })
+  // Admin-only: verify secret header or admin email
+  const supabase = createClient()
+  const authHeader = req.headers.get("authorization")
+  const adminSecret = process.env.MATCH_ENGINE_SECRET
+
+  if (adminSecret && authHeader !== `Bearer ${adminSecret}`) {
+    // Allow logged-in admins too
+    const { data: { user } } = await supabase.auth.getUser(authHeader?.replace("Bearer ", "") ?? "")
+    const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map(e => e.trim()).filter(Boolean)
+    if (!user || !adminEmails.includes(user.email ?? "")) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 })
+    }
   }
 
-  // workspace actif
-  const { data: settings } = await supabase
-    .from("user_settings")
-    .select("active_workspace_id")
-    .eq("user_id", user.id)
-    .single()
-
-  const workspaceId = settings?.active_workspace_id
-
-  if (!workspaceId) {
-    return NextResponse.json({ error: "no workspace" }, { status: 400 })
-  }
-
-  // récupérer opportunités
-  const { data: opportunities } = await supabase
+  // Fetch ALL active opportunities across all workspaces
+  const { data: opportunities, error: fetchError } = await supabase
     .from("opportunities")
-    .select("*")
-    .eq("workspace_id", workspaceId)
+    .select("*, opportunity_decks(d_score)")
+    .eq("status", "active")
+
+  if (fetchError) {
+    return NextResponse.json({ error: fetchError.message }, { status: 500 })
+  }
 
   if (!opportunities || opportunities.length < 2) {
-    return NextResponse.json({ message: "not enough opportunities" })
+    return NextResponse.json({ message: "not enough opportunities", count: opportunities?.length ?? 0 })
   }
 
+  // Load existing matches to avoid duplicates (pair of opportunity IDs)
+  const { data: existingMatches } = await supabase
+    .from("opportunity_matches")
+    .select("opportunity_id, member_id")
+
+  const existingPairs = new Set(
+    (existingMatches ?? []).map((m: { opportunity_id: string; member_id: string }) => `${m.opportunity_id}:${m.member_id}`)
+  )
+
   let created = 0
+  let skipped_complement = 0
+  let skipped_structured = 0
+  let skipped_mscore = 0
+  let skipped_duplicate = 0
+  const updatedUserIds = new Set<string>()
 
   for (let i = 0; i < opportunities.length; i++) {
     for (let j = i + 1; j < opportunities.length; j++) {
@@ -43,24 +63,136 @@ export async function POST() {
       const a = opportunities[i]
       const b = opportunities[j]
 
-      if (a.id === b.id) continue
-      const scoring = scoreMatch(a, b)
+      // Skip if same author
+      if (a.created_by && b.created_by && a.created_by === b.created_by) continue
 
-      const { error } = await supabase
-        .from("matches")
-        .insert({
-          workspace_id: workspaceId,
-          opportunity_a: a.id,
-          opportunity_b: b.id,
-          score: scoring.score,
-          reason: scoring.reason
-        })
+      // Skip if deal types are not complementary
+      if (!areComplementary(a.deal_type, b.deal_type)) {
+        skipped_complement++
+        continue
+      }
 
-      if (!error) created++
+      // Fast structured pre-score — skip Claude API if too low
+      const preScore = structuredScore(a, b)
+      if (preScore < STRUCTURED_THRESHOLD) {
+        skipped_structured++
+        continue
+      }
+
+      // D-Scores
+      const dScoreA: number = (a.opportunity_decks as { d_score?: number } | null)?.d_score ?? 0
+      const dScoreB: number = (b.opportunity_decks as { d_score?: number } | null)?.d_score ?? 0
+      const dScoreAvg = (dScoreA + dScoreB) / 2
+
+      // Call Claude for AI scoring
+      const { p_score, why } = await scoreMatch(a, b)
+
+      // M-Score = 50% AI p_score + 30% structured + 20% D-Score avg
+      const fitScore = Math.round(p_score * 0.5 + preScore * 0.3 + dScoreAvg * 0.2)
+
+      if (fitScore < MSCORE_THRESHOLD) {
+        skipped_mscore++
+        continue
+      }
+
+      // Insert two rows: one per side, with deduplication
+      const rows = [
+        {
+          workspace_id: a.workspace_id,
+          opportunity_id: a.id,
+          member_id: b.created_by ?? null,
+          fit_score: fitScore,
+          ranking_score: fitScore,
+          breakdown: { d_score: dScoreA, p_score, structured_score: preScore },
+          why,
+          status: "pending",
+        },
+        {
+          workspace_id: b.workspace_id,
+          opportunity_id: b.id,
+          member_id: a.created_by ?? null,
+          fit_score: fitScore,
+          ranking_score: fitScore,
+          breakdown: { d_score: dScoreB, p_score, structured_score: preScore },
+          why,
+          status: "pending",
+        },
+      ]
+
+      for (const row of rows) {
+        const pairKey = `${row.opportunity_id}:${row.member_id}`
+        if (existingPairs.has(pairKey)) {
+          skipped_duplicate++
+          continue
+        }
+
+        const { error, data: insertedMatch } = await supabase
+          .from("opportunity_matches")
+          .insert(row)
+          .select("id")
+          .single()
+
+        if (!error && insertedMatch) {
+          created++
+          existingPairs.add(pairKey)
+          if (row.member_id) updatedUserIds.add(row.member_id)
+
+          // Notify the recipient workspace owner
+          if (row.workspace_id) {
+            try {
+              const { data: authUser } = await supabase.auth.admin.getUserById(
+                row.member_id ?? row.workspace_id
+              )
+              await createNotification({
+                supabase,
+                userId: row.member_id ?? row.workspace_id,
+                workspaceId: row.workspace_id,
+                type: "new_match",
+                title: "Nouveau match disponible",
+                body: `Un nouveau match avec un M-Score de ${fitScore} vient d'être identifié pour votre dossier.`,
+                link: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/app/matches?match=${insertedMatch.id}`,
+                email: authUser?.user?.email,
+              })
+            } catch (err) {
+              console.error("[match/run] notification failed:", err)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Mise à jour du P-Score dans workspace_members pour chaque user concerné
+  for (const userId of updatedUserIds) {
+    const { data: recent } = await supabase
+      .from("opportunity_matches")
+      .select("breakdown")
+      .eq("member_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    if (recent?.length) {
+      const avg = Math.round(
+        recent.reduce((sum, m) => {
+          const b = m.breakdown as { p_score?: number } | null
+          return sum + (b?.p_score ?? 0)
+        }, 0) / recent.length
+      )
+      await supabase
+        .from("workspace_members")
+        .update({ p_score: avg })
+        .eq("user_id", userId)
     }
   }
 
   return NextResponse.json({
-    matches_created: created
+    opportunities_scanned: opportunities.length,
+    matches_created: created,
+    skipped: {
+      not_complementary: skipped_complement,
+      low_structured_score: skipped_structured,
+      low_mscore: skipped_mscore,
+      duplicates: skipped_duplicate,
+    },
   })
 }
