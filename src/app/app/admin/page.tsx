@@ -6,6 +6,7 @@ import { AdmissionActions } from "./admission-actions";
 import { KycActions } from "./kyc-actions";
 import { runAiAnalysis } from "./actions";
 import { MatchEngineButton } from "./match-engine-button";
+import { SeedButton } from "./seed-button";
 import { cookies } from "next/headers";
 
 function formatDate(iso: string, locale: string) {
@@ -338,6 +339,19 @@ export default async function AdminPage({
           </div>
         </div>
         <MatchEngineButton />
+      </div>
+
+      {/* Seed engine — cold start */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 24px", background: "#F0FDF4", border: "1px solid #86efac", borderRadius: 8, marginBottom: 24, gap: 24, flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 13, fontWeight: 600, color: "#0A0A0A", marginBottom: 4 }}>
+            Seed plateforme — cold start
+          </div>
+          <div style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 12, color: "#7A746E" }}>
+            Injecte 12 dossiers réalistes avant les premiers vrais clients (Sowefund, experts-comptables).
+          </div>
+        </div>
+        <SeedButton />
       </div>
 
       {/* View switcher */}
