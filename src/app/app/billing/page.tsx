@@ -186,7 +186,7 @@ function BillingContent() {
                     alignItems: "center",
                     gap: 8,
                   }}>
-                    <span style={{ color: i === 1 ? "#7A746E" : "#C0B9AF", fontSize: 10 }}>—</span>
+                    <span style={{ color: i === 1 ? "#4ADE80" : "#22c55e", fontSize: 12, fontWeight: 700, lineHeight: 1 }}>✓</span>
                     {f}
                   </li>
                 ))}
