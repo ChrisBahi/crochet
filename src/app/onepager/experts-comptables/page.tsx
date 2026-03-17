@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Programme Apporteur — Crochett.ai × Experts-comptables",
+  title: "Programme Apporteur — Crochet. × Experts-comptables",
   description: "One-pager programme apporteur d'affaires — rev share 20%",
   robots: "noindex",
 }
@@ -45,7 +45,7 @@ export default function OnePageExpertsComptables() {
             </p>
             <p style={{ fontSize: 13, color: "#7A746E", margin: 0, lineHeight: 1.7 }}>
               Bilans, trésorerie, EBITDA, horizons de retraite : vous avez accès à l'information clé 3 à 5 ans avant la cession.
-              Crochett.ai transforme cette connaissance en valeur — pour vos clients, et pour vous.
+              Crochet. transforme cette connaissance en valeur — pour vos clients, et pour vous.
             </p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
@@ -69,7 +69,7 @@ export default function OnePageExpertsComptables() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
-              { num: "01", title: "Vous identifiez un client cédant", body: "Un client parle de transmission ? Retraite ? Rachat ? Vous pensez à Crochett.ai." },
+              { num: "01", title: "Vous identifiez un client cédant", body: "Un client parle de transmission ? Retraite ? Rachat ? Vous pensez à Crochet." },
               { num: "02", title: "Vous lui partagez votre lien partenaire personnalisé", body: "Un lien unique avec votre code référence. Il s'inscrit — son dossier est analysé par notre IA en 60 secondes." },
               { num: "03", title: "On s'occupe de tout", body: "Qualification, matching avec les repreneurs et fonds, NDA, Secure Room. Votre client est en bonne main." },
               { num: "04", title: "Vous touchez 20% du revenu généré", body: "Tant que votre client est abonné. Automatiquement, via virement mensuel." },

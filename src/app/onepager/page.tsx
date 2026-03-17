@@ -2,7 +2,7 @@ import Link from "next/link"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "One-pagers — Crochett.ai",
+  title: "One-pagers — Crochet.",
   description: "Documents de présentation partenaires",
   robots: "noindex",
 }
