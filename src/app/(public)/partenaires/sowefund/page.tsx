@@ -43,11 +43,12 @@ export default function SowefundPartnerPage() {
             ×
           </span>
           <span style={{
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 13,
-            fontWeight: 600,
+            fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
+            fontSize: 18,
+            fontWeight: 700,
             color: "#FFFFFF",
-            letterSpacing: "0.04em",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
           }}>
             SOWEFUND
           </span>
@@ -95,6 +96,7 @@ export default function SowefundPartnerPage() {
 
           <h1 style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
+            fontStyle: "italic",
             fontSize: "clamp(40px, 5vw, 72px)",
             fontWeight: 800,
             color: "#0A0A0A",
@@ -103,11 +105,10 @@ export default function SowefundPartnerPage() {
             letterSpacing: "-0.02em",
             maxWidth: 760,
           }}>
-            Le deal flow M&A PME
+            Sowefund vous ouvre l&apos;accès
           </h1>
           <h1 style={{
             fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
-            fontStyle: "italic",
             fontSize: "clamp(40px, 5vw, 72px)",
             fontWeight: 800,
             color: "#0A0A0A",
@@ -115,7 +116,7 @@ export default function SowefundPartnerPage() {
             lineHeight: 1.05,
             letterSpacing: "-0.02em",
           }}>
-            que Sowefund ne couvre pas.
+            au M&amp;A PME qualifié par IA.
           </h1>
 
           <p style={{
@@ -126,9 +127,9 @@ export default function SowefundPartnerPage() {
             lineHeight: 1.75,
             maxWidth: 540,
           }}>
-            Cessions de sociétés entre 500k et 5M€, qualifiées par IA, avec
-            NDA automatique et closing intégré. Accès réservé aux membres
-            Sowefund via ce lien.
+            Cessions de sociétés entre 500k et 5M€, analysées par IA, avec
+            NDA automatique et closing intégré. Un service sélectionné par
+            Sowefund, en accès exclusif pour ses membres.
           </p>
 
           <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
