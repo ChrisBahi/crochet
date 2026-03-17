@@ -29,7 +29,7 @@ export default function OnePagersIndex() {
         {/* Header */}
         <div style={{ marginBottom: 48 }}>
           <div style={{ fontSize: 11, fontFamily: "JetBrains Mono, monospace", letterSpacing: "0.15em", color: "#7A746E", textTransform: "uppercase", marginBottom: 16 }}>
-            CROCHETT.AI — DOCUMENTS INTERNES
+            CROCHET.AI — DOCUMENTS INTERNES
           </div>
           <h1 style={{ fontSize: 32, fontFamily: "Playfair Display, Georgia, serif", fontWeight: 700, lineHeight: 1.2, margin: "0 0 12px" }}>
             Hub one-pagers

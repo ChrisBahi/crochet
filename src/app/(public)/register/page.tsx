@@ -175,7 +175,7 @@ function QualScreen({
             fontSize: 18, fontWeight: 700, color: "#FFFFFF",
             letterSpacing: "0.06em", textTransform: "uppercase",
           }}>
-            CROCHETT.
+            CROCHET.
           </span>
         </Link>
         {/* Progress dots */}
@@ -447,7 +447,7 @@ function RegisterForm() {
             fontSize: 20, fontWeight: 700, color: "#FFFFFF",
             letterSpacing: "0.06em", textTransform: "uppercase" as const,
           }}>
-            CROCHETT.
+            CROCHET.
           </span>
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>

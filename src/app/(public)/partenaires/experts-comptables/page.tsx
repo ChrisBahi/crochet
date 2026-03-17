@@ -32,7 +32,7 @@ export default function ExpertsComptablesPage() {
               letterSpacing: "0.06em",
               textTransform: "uppercase",
             }}>
-              CROCHETT.
+              CROCHET.
             </span>
           </Link>
           <span style={{
@@ -518,7 +518,7 @@ export default function ExpertsComptablesPage() {
           fontSize: 14, fontWeight: 700, color: "#AAA",
           letterSpacing: "0.06em", textTransform: "uppercase",
         }}>
-          CROCHETT.
+          CROCHET.
         </span>
         <span style={{
           fontFamily: "var(--font-jetbrains), monospace",

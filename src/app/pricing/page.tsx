@@ -108,7 +108,7 @@ export default async function PricingPage() {
       <header style={{ background: "#0A0A0A", height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", paddingInline: "clamp(16px, 4vw, 48px)", position: "sticky", top: 0, zIndex: 100 }}>
         <Link href="/" style={{ textDecoration: "none" }}>
           <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: 18, fontWeight: 700, color: "#FFF", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-            CROCHETT.
+            CROCHET.
           </span>
         </Link>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -237,7 +237,7 @@ export default async function PricingPage() {
 
       {/* ── FOOTER ── */}
       <footer style={{ background: "#0A0A0A", borderTop: "1px solid #1A1A1A", padding: "24px clamp(16px, 4vw, 48px)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-        <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: 14, fontWeight: 700, color: "#AAA", letterSpacing: "0.06em", textTransform: "uppercase" }}>CROCHETT.</span>
+        <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: 14, fontWeight: 700, color: "#AAA", letterSpacing: "0.06em", textTransform: "uppercase" }}>CROCHET.</span>
         <div style={{ display: "flex", gap: 24 }}>
           <Link href="/faq" style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 11, color: "#666", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>FAQ</Link>
           <Link href="/rgpd" style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 11, color: "#666", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>RGPD</Link>

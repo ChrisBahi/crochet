@@ -48,7 +48,7 @@ export default async function MemoPage({
     {
       number: "00",
       title: "",
-      content: `Ce mémorandum est généré par le Moteur de qualification CROCHETT. Il synthétise les éléments clés du dossier référencé ci-dessous à des fins d'évaluation confidentielle par les parties autorisées.`,
+      content: `Ce mémorandum est généré par le Moteur de qualification CROCHET. Il synthétise les éléments clés du dossier référencé ci-dessous à des fins d'évaluation confidentielle par les parties autorisées.`,
     },
     {
       number: "01",

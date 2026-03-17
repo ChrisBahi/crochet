@@ -28,7 +28,7 @@ export default function UnauthorizedPage() {
             letterSpacing: "0.06em",
             textTransform: "uppercase" as const,
           }}>
-            CROCHETT.
+            CROCHET.
           </span>
         </Link>
       </header>
@@ -88,7 +88,7 @@ export default function UnauthorizedPage() {
             lineHeight: 1.75,
             margin: "0 0 40px",
           }}>
-            Votre profil est en cours d&apos;examen par l&apos;équipe CROCHETT.
+            Votre profil est en cours d&apos;examen par l&apos;équipe CROCHET.
             Chaque admission est traitée individuellement.
             Vous recevrez un email dès que votre candidature sera approuvée.
           </p>
@@ -190,7 +190,7 @@ export default function UnauthorizedPage() {
           letterSpacing: "0.08em",
           textTransform: "uppercase" as const,
         }}>
-          CROCHETT. · Infrastructure privée de transactions
+          CROCHET. · Infrastructure privée de transactions
         </span>
         <span style={{
           fontFamily: "var(--font-jetbrains), monospace",

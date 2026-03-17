@@ -15,7 +15,7 @@ export default function OnePageExpertsComptables() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 48, paddingBottom: 32, borderBottom: "2px solid #0A0A0A" }}>
           <div>
             <div style={{ fontSize: 11, fontFamily: "JetBrains Mono, monospace", letterSpacing: "0.15em", color: "#7A746E", textTransform: "uppercase", marginBottom: 10 }}>
-              CROCHETT.AI — PROGRAMME PARTENAIRES
+              CROCHET.AI — PROGRAMME PARTENAIRES
             </div>
             <h1 style={{ fontSize: 36, fontFamily: "Playfair Display, Georgia, serif", fontWeight: 700, lineHeight: 1.15, margin: "0 0 10px" }}>
               Programme apporteur<br /><em>experts-comptables</em>
@@ -26,7 +26,7 @@ export default function OnePageExpertsComptables() {
           </div>
           <div style={{ textAlign: "right", flexShrink: 0 }}>
             <div style={{ fontSize: 28, fontFamily: "Playfair Display, Georgia, serif", fontWeight: 700, letterSpacing: "-0.02em" }}>
-              CROCHETT.
+              CROCHET.
             </div>
             <div style={{ fontSize: 11, fontFamily: "JetBrains Mono, monospace", color: "#7A746E", letterSpacing: "0.1em", marginTop: 4 }}>
               crochett.ai

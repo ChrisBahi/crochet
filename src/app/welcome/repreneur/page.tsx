@@ -155,7 +155,7 @@ export default function WelcomeRepreneur() {
         textTransform: "uppercase",
         animation: "fadeIn 0.8s ease 1s both",
       }}>
-        CROCHETT.
+        CROCHET.
       </div>
 
       <style>{`

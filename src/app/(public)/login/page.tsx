@@ -47,7 +47,7 @@ export default function LoginPage() {
             fontSize: 20, fontWeight: 700, color: "#FFFFFF",
             letterSpacing: "0.06em", textTransform: "uppercase" as const,
           }}>
-            CROCHETT.
+            CROCHET.
           </span>
         </Link>
         <Link href="/register" style={{

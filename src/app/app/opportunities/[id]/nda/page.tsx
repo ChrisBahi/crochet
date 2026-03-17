@@ -308,7 +308,7 @@ export default async function NdaPage({
               letterSpacing: "0.06em",
               textTransform: "uppercase",
             }}>
-              CROCHETT.
+              CROCHET.
             </div>
             <div style={{ flex: 1 }}>
               <div style={{

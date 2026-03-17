@@ -17,7 +17,7 @@ export default async function ProfileEditPage({
 
   const t = {
     passport:       lang === "en" ? "Transactional passport" : "Passeport transactionnel",
-    welcomeTitle:   lang === "en" ? "Welcome to CROCHETT." : "Bienvenue sur CROCHETT.",
+    welcomeTitle:   lang === "en" ? "Welcome to CROCHET." : "Bienvenue sur CROCHET.",
     welcomeBody:    lang === "en"
       ? "Complete your transactional passport to activate the matching engine."
       : "Complétez votre passeport transactionnel pour activer le moteur de matching.",

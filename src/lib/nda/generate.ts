@@ -88,7 +88,7 @@ function buildNdaPrompt(input: NdaInput, date: string): string {
   const ref = `CROCHET-${input.opportunityId.slice(0, 8).toUpperCase()}`
   const opts = input.options ?? NDA_OPTIONS_DEFAULT
 
-  return `Tu es le moteur juridique CROCHETT. Génère un Accord de Confidentialité (NDA) bilatéral complet, rédigé en droit français.
+  return `Tu es le moteur juridique CROCHET. Génère un Accord de Confidentialité (NDA) bilatéral complet, rédigé en droit français.
 
 OPPORTUNITÉ RÉFÉRENCÉE :
 - Titre : ${input.opportunityTitle}

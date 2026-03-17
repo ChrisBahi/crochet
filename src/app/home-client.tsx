@@ -111,7 +111,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
             letterSpacing: "0.06em",
             textTransform: "uppercase",
           }}>
-            CROCHETT.
+            CROCHET.
           </span>
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -332,7 +332,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
       {/* ── FOOTER ── */}
       <footer className={styles.footer} style={{ background: "#0A0A0A", borderTop: "1px solid #1A1A1A" }}>
         <span style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontSize: 14, fontWeight: 700, color: "#AAA", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-          CROCHETT.
+          CROCHET.
         </span>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <Link href="/pricing" style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 11, color: "#666", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
