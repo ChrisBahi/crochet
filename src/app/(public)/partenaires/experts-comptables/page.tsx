@@ -128,7 +128,7 @@ export default function ExpertsComptablesPage() {
             lineHeight: 1.75,
             maxWidth: 540,
           }}>
-            Recommandez Crochett.ai à vos clients cédants ou repreneurs.
+            Recommandez Crochet. à vos clients cédants ou repreneurs.
             À chaque abonnement activé, vous touchez 20% récurrents — sans
             gestion, sans friction, sans engagement.
           </p>

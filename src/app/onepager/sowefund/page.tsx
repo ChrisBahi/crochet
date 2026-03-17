@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Partenariat Sowefund × Crochett.ai",
+  title: "Partenariat Sowefund × Crochet.",
   description: "One-pager partenariat — réunion co-distribution M&A PME",
   robots: "noindex",
 }
@@ -42,14 +42,14 @@ export default function OnePageSowefund() {
           <div style={{ background: "#0A0A0A", color: "#fff", borderRadius: 8, padding: "18px 22px", fontSize: 14, lineHeight: 1.6 }}>
             <strong>85% des cessions PME (500k–5M€) ne passent par aucune plateforme structurée.</strong>
             {" "}Les cédants et repreneurs se trouvent par réseau ou par hasard — cycle 6–18 mois, taux d'échec élevé.
-            Sowefund maîtrise ces réseaux. Crochett.ai structure le processus.
+            Sowefund maîtrise ces réseaux. Crochet. structure le processus.
           </div>
         </div>
 
         {/* Ce qu'on apporte */}
         <div style={{ marginBottom: 28 }}>
           <div style={{ fontSize: 10, fontFamily: "JetBrains Mono, monospace", letterSpacing: "0.14em", color: "#7A746E", textTransform: "uppercase", marginBottom: 12 }}>
-            02 — CE QUE CROCHETT.AI APPORTE À VOS CLIENTS
+            02 — CE QUE CROCHET.AI APPORTE À VOS CLIENTS
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
             {[
