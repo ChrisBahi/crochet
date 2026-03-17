@@ -27,9 +27,10 @@ export async function POST(req: Request) {
     }
   }
 
-  // Optional: reset existing matches before re-running (admin only)
+  // Optional: reset existing matches before re-running (admin only, destructive)
   const url = new URL(req.url)
-  if (url.searchParams.get("reset") === "true") {
+  const reset = url.searchParams.get("reset") === "true"
+  if (reset) {
     await supabase.from("opportunity_matches").delete().neq("id", "00000000-0000-0000-0000-000000000000")
   }
 
@@ -61,6 +62,9 @@ export async function POST(req: Request) {
   let skipped_structured = 0
   let skipped_mscore = 0
   let skipped_duplicate = 0
+  let ai_errors = 0
+  let ai_fallbacks = 0
+  const errors: { pair: string; error: string }[] = []
   const updatedUserIds = new Set<string>()
 
   for (let i = 0; i < opportunities.length; i++) {
@@ -90,8 +94,29 @@ export async function POST(req: Request) {
       const dScoreB: number = (b.opportunity_decks as { d_score?: number } | null)?.d_score ?? 0
       const dScoreAvg = (dScoreA + dScoreB) / 2
 
-      // Call Claude for AI scoring
-      const { p_score, why } = await scoreMatch(a, b)
+      // Call Claude for AI scoring — with error handling + fallback
+      let p_score: number
+      let why: string[]
+
+      try {
+        const result = await scoreMatch(a, b)
+        p_score = result.p_score
+        why = result.why
+      } catch (err) {
+        // AI scoring failed: fallback to structured score only
+        ai_errors++
+        ai_fallbacks++
+        const pairLabel = `${a.id.slice(0, 8)}×${b.id.slice(0, 8)}`
+        errors.push({ pair: pairLabel, error: err instanceof Error ? err.message : String(err) })
+        console.error(`[match/run] Claude scoring failed for ${pairLabel}:`, err)
+
+        // Fallback: use structured score as p_score, generic why
+        p_score = preScore
+        why = [
+          "Correspondance sectorielle et géographique validée (scoring structuré)",
+          "Score IA indisponible — évaluation basée sur les critères objectifs",
+        ]
+      }
 
       // M-Score = 50% AI p_score + 30% structured + 20% D-Score avg
       const fitScore = Math.round(p_score * 0.5 + preScore * 0.3 + dScoreAvg * 0.2)
@@ -133,13 +158,13 @@ export async function POST(req: Request) {
           continue
         }
 
-        const { error, data: insertedMatch } = await supabase
+        const { error: insertError, data: insertedMatch } = await supabase
           .from("opportunity_matches")
           .insert(row)
           .select("id")
           .single()
 
-        if (!error && insertedMatch) {
+        if (!insertError && insertedMatch) {
           created++
           existingPairs.add(pairKey)
           if (row.member_id) updatedUserIds.add(row.member_id)
@@ -164,6 +189,8 @@ export async function POST(req: Request) {
               console.error("[match/run] notification failed:", err)
             }
           }
+        } else if (insertError) {
+          console.error("[match/run] insert failed:", insertError.message)
         }
       }
     }
@@ -193,6 +220,7 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({
+    reset,
     opportunities_scanned: opportunities.length,
     matches_created: created,
     skipped: {
@@ -200,6 +228,11 @@ export async function POST(req: Request) {
       low_structured_score: skipped_structured,
       low_mscore: skipped_mscore,
       duplicates: skipped_duplicate,
+    },
+    ai: {
+      errors: ai_errors,
+      fallbacks: ai_fallbacks,
+      ...(errors.length > 0 && { error_details: errors }),
     },
   })
 }
