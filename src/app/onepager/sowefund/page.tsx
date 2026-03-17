@@ -18,7 +18,7 @@ export default function OnePageSowefund() {
               CONFIDENTIEL — PROPOSITION PARTENARIAT
             </div>
             <h1 style={{ fontSize: 32, fontFamily: "Playfair Display, Georgia, serif", fontWeight: 700, lineHeight: 1.2, margin: "0 0 8px" }}>
-              Sowefund vous ouvre l&apos;accès<br />au M&amp;A PME qualifié par IA.
+              Sowefund vous ouvre l&apos;accès<br />au M<span style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 700 }}>&</span>A PME qualifié par IA.
             </h1>
             <p style={{ fontSize: 13, color: "#7A746E", margin: 0 }}>
               Proposition confidentielle — Mars 2026
