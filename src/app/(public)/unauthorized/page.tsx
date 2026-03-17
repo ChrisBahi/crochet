@@ -17,9 +17,14 @@ export default function UnauthorizedPage() {
       <p style={{ color: "#555", marginBottom: "2rem", textAlign: "center", maxWidth: 360 }}>
         Votre accès n&apos;a pas encore été validé. Vous recevrez un email dès que votre candidature sera approuvée.
       </p>
-      <Link href="/login" style={{ color: "#333", textDecoration: "underline", fontSize: "0.875rem" }}>
-        Retour à la connexion
-      </Link>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
+        <Link href="/register/status" style={{ color: "#333", textDecoration: "underline", fontSize: "0.875rem" }}>
+          Voir l&apos;état de ma candidature
+        </Link>
+        <Link href="/login" style={{ color: "#333", textDecoration: "underline", fontSize: "0.875rem" }}>
+          Retour à la connexion
+        </Link>
+      </div>
     </div>
   )
 }

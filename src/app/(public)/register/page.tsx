@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const inputStyle: React.CSSProperties = {
@@ -69,6 +70,7 @@ function Field({
 }
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -79,8 +81,9 @@ export default function RegisterPage() {
     ticket: "",
     message: "",
   });
-  const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [progressStep, setProgressStep] = useState<1 | 2>(1);
 
   function set(key: keyof typeof form) {
     return (v: string) => setForm((f) => ({ ...f, [key]: v }));
@@ -88,7 +91,10 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setErrorMsg(null);
+    setProgressStep(1);
     setLoading(true);
+    setProgressStep(2);
     const supabase = createClient();
     const { error } = await supabase.from("admission_requests").insert({
       name: form.name,
@@ -102,54 +108,11 @@ export default function RegisterPage() {
     });
     setLoading(false);
     if (error) {
-      alert("Erreur lors de l'envoi : " + error.message);
+      setErrorMsg("Erreur lors de l'envoi. Vérifie les champs puis réessaie.");
+      setProgressStep(1);
       return;
     }
-    setSubmitted(true);
-  }
-
-  if (submitted) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        background: "#F5F2EE",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 24px",
-      }}>
-        <div style={{ textAlign: "center", maxWidth: 480 }}>
-          <div style={{
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 10,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "#7A746E",
-            marginBottom: 20,
-          }}>
-            Demande reçue
-          </div>
-          <h2 style={{
-            fontFamily: "var(--font-playfair), Georgia, serif",
-            fontSize: 36,
-            fontWeight: 700,
-            color: "#0A0A0A",
-            margin: "0 0 16px",
-            lineHeight: 1.15,
-          }}>
-            Votre dossier est en cours d&apos;examen.
-          </h2>
-          <p style={{
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 14,
-            color: "#7A746E",
-            lineHeight: 1.7,
-          }}>
-            Chaque admission est traitée individuellement. Vous recevrez une réponse sous 48h.
-          </p>
-        </div>
-      </div>
-    );
+    router.push("/register/status?submitted=1");
   }
 
   return (
@@ -299,6 +262,44 @@ export default function RegisterPage() {
             >
               {loading ? "Envoi…" : "Soumettre ma candidature"}
             </button>
+            <div style={{ marginTop: 14 }}>
+              <div style={{
+                height: 4,
+                width: 280,
+                maxWidth: "100%",
+                background: "#ECE6DD",
+              }}>
+                <div style={{
+                  height: "100%",
+                  width: loading ? (progressStep === 1 ? "40%" : "85%") : "0%",
+                  background: "#0A0A0A",
+                  transition: "width 220ms ease",
+                }} />
+              </div>
+              <p style={{
+                margin: "8px 0 0",
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 11,
+                color: "#7A746E",
+                letterSpacing: "0.02em",
+              }}>
+                {loading
+                  ? progressStep === 1
+                    ? "Étape 1/2 · Validation du dossier"
+                    : "Étape 2/2 · Enregistrement de la candidature"
+                  : "Votre candidature apparaîtra ensuite dans la page d’état."}
+              </p>
+              {errorMsg && (
+                <p style={{
+                  margin: "10px 0 0",
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 12,
+                  color: "#B91C1C",
+                }}>
+                  {errorMsg}
+                </p>
+              )}
+            </div>
 
           </form>
         </div>

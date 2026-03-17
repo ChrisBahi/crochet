@@ -9,6 +9,22 @@ function formatDate(d: Date) {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
 }
 
+function buildFallbackMemo(opp: {
+  title: string
+  deal_type?: string | null
+  sector?: string | null
+}): string {
+  const dealType = opp.deal_type ?? "non précisé"
+  const sector = opp.sector ?? "non précisé"
+  return [
+    `Synthèse exécutive : ${opp.title} est un dossier de type ${dealType} dans le secteur ${sector}. En l'absence de données détaillées normalisées, ce mémo présente une lecture préliminaire orientée qualification investisseur.`,
+    "Proposition de valeur et modèle : le positionnement semble construit autour d'un cas d'usage B2B avec potentiel de scalabilité. Les hypothèses de différenciation, de moat et de pricing doivent être confirmées par des éléments clients et opérationnels.",
+    "Traction et fondamentaux : les informations financières et commerciales disponibles sont partielles. La priorité est de consolider la preuve de traction (revenus récurrents, croissance mensuelle, rétention, concentration clients, marge brute) avant décision d'intro.",
+    "Structuration du deal et risques : la cohérence ticket/valorisation/stade reste à valider. Les risques principaux portent sur la qualité des données, la dépendance à quelques comptes clés et la visibilité court terme sur l'exécution.",
+    "Verdict Crochet : dossier potentiellement intéressant mais actuellement sous-documenté. Recommandation : qualification complémentaire avant exposition large au deal flow, avec collecte d'un pack minimum (KPIs, cap table, historique ventes, plan 18 mois).",
+  ].join("\n\n")
+}
+
 export default async function MemoPage({
   params,
 }: {
@@ -37,9 +53,10 @@ export default async function MemoPage({
   const tags: string[] = Array.isArray(deck?.tags) ? deck.tags : []
   const status = deck?.status ?? "pending"
   const generatedAt: string = deck?.created_at ?? new Date().toISOString()
+  const effectiveMemo = memoText.trim().length >= 280 ? memoText : buildFallbackMemo(opp)
 
   // Parse memo paragraphs into numbered sections for the official layout
-  const rawParagraphs = memoText
+  const rawParagraphs = effectiveMemo
     .split(/\n\n+/)
     .map(p => p.trim())
     .filter(Boolean)

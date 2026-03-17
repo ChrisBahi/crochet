@@ -90,6 +90,7 @@ export default async function NewOpportunityPage() {
       .insert({
         workspace_id: workspaceId,
         created_by: user.id,
+        status: "active",
         title,
         description: fullDescription,
         sector,
@@ -128,6 +129,18 @@ export default async function NewOpportunityPage() {
           Cookie: cookieHeader,
         },
         body: JSON.stringify({ opportunity_id: opportunityId }),
+      })
+
+      // Trigger matching pass right after qualification so the matches page is populated.
+      const matchHeaders: HeadersInit = { "Content-Type": "application/json" }
+      if (process.env.MATCH_ENGINE_SECRET) {
+        matchHeaders.Authorization = `Bearer ${process.env.MATCH_ENGINE_SECRET}`
+      } else {
+        matchHeaders.Cookie = cookieHeader
+      }
+      await fetch(`${baseUrl}/api/match/run`, {
+        method: "POST",
+        headers: matchHeaders,
       })
     } catch {
       // Qualification failed silently — deck stays "pending", detail page handles it

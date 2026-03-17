@@ -26,6 +26,59 @@ export interface NdaResult {
   sections: DocSection[]
 }
 
+function extractJsonPayload(raw: string): string {
+  const noFence = raw
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim()
+
+  const start = noFence.indexOf("{")
+  const end = noFence.lastIndexOf("}")
+  if (start === -1 || end === -1 || end <= start) return noFence
+  return noFence.slice(start, end + 1)
+}
+
+function normalizeJsonPayload(payload: string): string[] {
+  const normalizedQuotes = payload
+    .replace(/\u201c|\u201d/g, "\"")
+    .replace(/\u2018|\u2019/g, "'")
+  const withoutTrailingCommas = normalizedQuotes.replace(/,\s*([}\]])/g, "$1")
+  return [payload, normalizedQuotes, withoutTrailingCommas]
+}
+
+function coerceSections(parsed: unknown): DocSection[] | null {
+  if (!parsed || typeof parsed !== "object") return null
+  const sections = (parsed as { sections?: unknown }).sections
+  if (!Array.isArray(sections)) return null
+
+  const output: DocSection[] = []
+  for (const item of sections) {
+    if (!item || typeof item !== "object") return null
+    const rec = item as Record<string, unknown>
+    if (
+      typeof rec.number !== "string" ||
+      typeof rec.title !== "string" ||
+      typeof rec.content !== "string"
+    ) return null
+    output.push({ number: rec.number, title: rec.title, content: rec.content })
+  }
+  return output
+}
+
+function fallbackSections(input: NdaInput): DocSection[] {
+  return [
+    { number: "01", title: "PARTIES", content: `La Partie Divulgatrice est ${partyLine(input.divulgateur)}.\nLa Partie Réceptrice est ${partyLine(input.recepteur)}.` },
+    { number: "02", title: "OBJET", content: `Le présent accord encadre les échanges confidentiels relatifs à l'opportunité "${input.opportunityTitle}".` },
+    { number: "03", title: "DÉFINITION DES INFORMATIONS CONFIDENTIELLES", content: "Sont confidentielles toutes les informations non publiques communiquées oralement, par écrit ou sous format numérique." },
+    { number: "04", title: "OBLIGATIONS DES PARTIES", content: "La Partie Réceptrice s'engage à ne pas divulguer les informations et à les utiliser uniquement pour évaluer l'opération." },
+    { number: "05", title: "EXCEPTIONS", content: "Sont exclues les informations publiques, déjà connues légitimement ou reçues d'un tiers non tenu à confidentialité." },
+    { number: "06", title: "DURÉE", content: "Les obligations de confidentialité s'appliquent pendant deux (2) ans à compter de la signature." },
+    { number: "07", title: "SANCTIONS ET RESPONSABILITÉ", content: "Toute violation ouvre droit à réparation intégrale et mesures conservatoires appropriées." },
+    { number: "08", title: "DROIT APPLICABLE ET JURIDICTION", content: "Le présent accord est soumis au droit français. Juridiction exclusive: Paris." },
+  ]
+}
+
 function formatDate(d: Date) {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
 }
@@ -90,15 +143,29 @@ export async function generateNda(input: NdaInput): Promise<NdaResult> {
     messages: [{ role: "user", content: buildNdaPrompt(input, date) }],
   })
 
-  const rawText = (message.content[0] as { type: string; text: string }).text.trim()
-  // Extract JSON object from response (handles markdown fences or extra text)
-  const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw new Error("No JSON object found in NDA response")
-  const parsed = JSON.parse(jsonMatch[0]) as { sections?: DocSection[] }
+  const rawText = message.content
+    .filter((b) => b.type === "text")
+    .map((b) => (b as { type: string; text: string }).text)
+    .join("\n")
+    .trim()
+
+  const payload = extractJsonPayload(rawText)
+  let sections: DocSection[] | null = null
+  for (const candidate of normalizeJsonPayload(payload)) {
+    try {
+      sections = coerceSections(JSON.parse(candidate))
+      if (sections) break
+    } catch {
+      // keep trying next candidate
+    }
+  }
+  if (!sections) {
+    sections = fallbackSections(input)
+  }
 
   return {
     reference: ref,
     date,
-    sections: parsed.sections,
+    sections,
   }
 }

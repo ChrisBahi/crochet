@@ -581,6 +581,29 @@ function DeckSection({
   const isDemo = oppId === "demo" || !oppId
   const dScore = deck?.d_score as number | null | undefined
   const memoReady = deck?.status === "done"
+  const [ndaReady, setNdaReady] = useState(Boolean(deck?.nda_text))
+  const ndaWarmupKeyRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (isDemo || !oppId || ndaReady) return
+    if (ndaWarmupKeyRef.current === oppId) return
+    ndaWarmupKeyRef.current = oppId
+
+    let alive = true
+    fetch("/api/nda/ensure", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ opportunity_id: oppId }),
+    })
+      .then((res) => {
+        if (!alive) return
+        if (res.ok) setNdaReady(true)
+      })
+
+    return () => {
+      alive = false
+    }
+  }, [isDemo, oppId, ndaReady])
 
   return (
     <div style={{ height: "100%", overflowY: "auto", padding: "32px 36px" }}>
@@ -654,8 +677,6 @@ function DeckSection({
             {/* NDA */}
             <a
               href={`/app/opportunities/${oppId}/nda`}
-              target="_blank"
-              rel="noopener noreferrer"
               style={{
                 display: "flex", alignItems: "center", gap: 16,
                 padding: "14px 18px", border: `1px solid ${C.border}`,
@@ -665,10 +686,12 @@ function DeckSection({
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: FONT_SANS, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, marginBottom: 2 }}>NDA</div>
                 <div style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C.text }}>Accord de Confidentialité</div>
-                <div style={{ fontFamily: FONT_SANS, fontSize: 11, color: C.muted, marginTop: 2 }}>Bilatéral · Droit français · eIDAS</div>
+                <div style={{ fontFamily: FONT_SANS, fontSize: 11, color: C.muted, marginTop: 2 }}>
+                  {ndaReady ? "Bilatéral · Droit français · eIDAS" : "Préparation automatique du document NDA…"}
+                </div>
               </div>
               <span style={{ fontFamily: FONT_SANS, fontSize: 10, color: C.text, border: `1px solid ${C.border}`, padding: "3px 10px", flexShrink: 0 }}>
-                Signer / Lire →
+                {ndaReady ? "Signer / Lire →" : "Ouvrir NDA →"}
               </span>
             </a>
 

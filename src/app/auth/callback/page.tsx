@@ -6,23 +6,19 @@ import { createClient } from "@/lib/supabase/client"
 
 export default function AuthCallbackPage() {
   const router = useRouter()
-  const [error, setError] = useState<string | null>(null)
+  const [error] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null
+    const params = new URLSearchParams(window.location.search)
+    return params.get("error_description") ?? params.get("error")
+  })
 
   useEffect(() => {
-    // Check for OAuth error in URL params
-    const params = new URLSearchParams(window.location.search)
-    const oauthError = params.get("error")
-    const oauthErrorDesc = params.get("error_description")
-
-    if (oauthError) {
-      setError(oauthErrorDesc ?? oauthError)
-      return
-    }
+    if (error) return
 
     const supabase = createClient()
 
     // createBrowserClient auto-detects ?code= and handles PKCE exchange.
-    // We just listen for the result.
+    // Access control is enforced server-side in middleware.
     async function checkAndRedirect(session: { user: { email?: string } }) {
       const email = session.user.email
       if (!email) {
@@ -30,18 +26,7 @@ export default function AuthCallbackPage() {
         router.replace("/unauthorized")
         return
       }
-      const { data } = await supabase
-        .from("admission_requests")
-        .select("status")
-        .eq("email", email)
-        .eq("status", "approved")
-        .maybeSingle()
-      if (!data) {
-        await supabase.auth.signOut()
-        router.replace("/unauthorized")
-      } else {
-        router.replace("/app")
-      }
+      router.replace("/app")
     }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -56,7 +41,7 @@ export default function AuthCallbackPage() {
     })
 
     return () => subscription.unsubscribe()
-  }, [router])
+  }, [router, error])
 
   if (error) {
     return (

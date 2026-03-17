@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 import Link from "next/link"
@@ -24,6 +25,12 @@ type Opportunity = {
   geo?: string
   deal_type?: string
   stage?: string
+}
+
+type DeckInfo = {
+  opportunity_id: string
+  status?: string | null
+  summary?: string | null
 }
 
 function ScoreBadge({ label, value }: { label: string; value: number | undefined }) {
@@ -86,38 +93,101 @@ export default async function MatchesPage({
 }: {
   searchParams: Promise<{ match?: string }>
 }) {
-  await requireUser()
+  const user = await requireUser()
   const wsId = await requireActiveWorkspaceId()
   const params = await searchParams
 
   const supabase = await createClient()
 
-  const { data: rawMatches } = wsId
-    ? await supabase
+  const { data: ownedOpps } = await supabase
+    .from("opportunities")
+    .select("id")
+    .eq("created_by", user.id)
+
+  const ownedIds = (ownedOpps ?? []).map((o) => o.id)
+
+  const [wsMatchesRes, ownerMatchesRes, memberMatchesRes] = await Promise.all([
+    wsId
+      ? supabase
+          .from("opportunity_matches")
+          .select("*")
+          .eq("workspace_id", wsId)
+          .order("ranking_score", { ascending: false })
+      : Promise.resolve({ data: [] as Match[] }),
+    ownedIds.length
+      ? supabase
+          .from("opportunity_matches")
+          .select("*")
+          .in("opportunity_id", ownedIds)
+          .order("ranking_score", { ascending: false })
+      : Promise.resolve({ data: [] as Match[] }),
+    supabase
+      .from("opportunity_matches")
+      .select("*")
+      .eq("member_id", user.id)
+      .order("ranking_score", { ascending: false }),
+  ])
+
+  const dedup = new Map<string, Match>()
+  for (const list of [wsMatchesRes.data ?? [], ownerMatchesRes.data ?? [], memberMatchesRes.data ?? []]) {
+    for (const m of list as Match[]) dedup.set(m.id, m)
+  }
+  let rawMatches = [...dedup.values()].sort((a, b) => (b.ranking_score ?? 0) - (a.ranking_score ?? 0))
+
+  // Fallback for workspaces where RLS hides matches from deal owners.
+  if (rawMatches.length === 0 && wsId) {
+    try {
+      const admin = createAdminClient()
+      const { data: adminMatches } = await admin
         .from("opportunity_matches")
         .select("*")
         .eq("workspace_id", wsId)
         .order("ranking_score", { ascending: false })
-    : { data: [] }
+
+      const visible = (adminMatches ?? []).filter((m) => {
+        const member = (m as { member_id?: string | null }).member_id
+        const oppId = (m as { opportunity_id?: string | null }).opportunity_id
+        return member === user.id || (oppId ? ownedIds.includes(oppId) : false)
+      })
+      rawMatches = visible as Match[]
+    } catch {
+      // If service key is unavailable locally, keep the standard RLS result.
+    }
+  }
 
   const typedMatches: Match[] = rawMatches ?? []
+  const opportunityIds = [...new Set(typedMatches.map((m) => m.opportunity_id).filter(Boolean))]
 
-  const opportunityIds = [...new Set(typedMatches.map(m => m.opportunity_id).filter(Boolean))]
+  const [opportunitiesRes, decksRes] = await Promise.all([
+    opportunityIds.length
+      ? supabase
+          .from("opportunities")
+          .select("id,title,description,sector,geo,deal_type,stage")
+          .in("id", opportunityIds)
+      : Promise.resolve({ data: [] as Opportunity[] }),
+    opportunityIds.length
+      ? supabase
+          .from("opportunity_decks")
+          .select("opportunity_id,status,summary")
+          .in("opportunity_id", opportunityIds)
+      : Promise.resolve({ data: [] as DeckInfo[] }),
+  ])
 
-  const { data: opportunities } = opportunityIds.length
-    ? await supabase
-        .from("opportunities")
-        .select("id,title,description,sector,geo,deal_type,stage")
-        .in("id", opportunityIds)
-    : { data: [] }
+  const opportunities = opportunitiesRes.data ?? []
+  const decks = (decksRes.data ?? []) as DeckInfo[]
 
   const oppMap = Object.fromEntries((opportunities ?? []).map(o => [o.id, o as Opportunity]))
+  const deckMap = Object.fromEntries(decks.map((d) => [d.opportunity_id, d]))
 
-  const selectedId = params.match ?? typedMatches[0]?.id
-  const selected = typedMatches.find(m => m.id === selectedId)
+  // Keep full ranking list (no hard limit, no forced grouping).
+  const visibleMatches = typedMatches
+
+  const selectedId = params.match ?? visibleMatches[0]?.id
+  const selected = visibleMatches.find((m) => m.id === selectedId) ?? visibleMatches[0]
   const selectedOpp = selected ? oppMap[selected.opportunity_id] : null
 
-  const empty = typedMatches.length === 0
+  const selectedDeck = selected ? deckMap[selected.opportunity_id] : null
+  const empty = visibleMatches.length === 0
 
   return (
     <div style={{
@@ -158,7 +228,7 @@ export default async function MatchesPage({
               fontSize: 11,
               color: "#7A746E",
             }}>
-              {typedMatches.length}
+              {visibleMatches.length}
             </span>
           )}
         </div>
@@ -181,7 +251,7 @@ export default async function MatchesPage({
             </span>
           </div>
         ) : (
-          typedMatches.map((m, i) => {
+          visibleMatches.map((m, i) => {
             const opp = oppMap[m.opportunity_id]
             const isActive = m.id === selectedId
             return (
@@ -471,11 +541,13 @@ export default async function MatchesPage({
                   fontFamily: "var(--font-dm-sans), sans-serif",
                   fontSize: 13,
                   color: "#7A746E",
-                  fontStyle: "italic",
+                  fontStyle: selectedDeck?.summary ? "normal" : "italic",
                   margin: 0,
                   lineHeight: 1.8,
                 }}>
-                  Le MEMO sera disponible après validation du dossier par le moteur de qualification.
+                  {selectedDeck?.summary
+                    ? selectedDeck.summary.slice(0, 420)
+                    : "Le MEMO sera disponible après validation du dossier par le moteur de qualification."}
                 </p>
               </div>
             </div>
