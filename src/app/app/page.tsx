@@ -1,7 +1,10 @@
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
+import { redirect } from "next/navigation"
 import Link from "next/link"
+import { cookies } from "next/headers"
 
 function Stat({ value, label }: { value: number | string; label: string }) {
   return (
@@ -38,6 +41,64 @@ export default async function DashboardPage() {
   const user = await requireUser()
   const wsId = await requireActiveWorkspaceId()
   const supabase = await createClient()
+  const cookieStore = await cookies()
+  const lang = (cookieStore.get("crochet_lang")?.value ?? "fr") as "fr" | "en"
+
+  // Resolve tunnel for this user
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map(e => e.trim()).filter(Boolean)
+  const isAdmin = adminEmails.includes(user.email ?? "")
+  let tunnel = (user.user_metadata?.tunnel as string) ?? ""
+  if (!tunnel && !isAdmin) {
+    const admin = createAdminClient()
+    const { data: ar } = await admin
+      .from("admission_requests")
+      .select("tunnel")
+      .eq("email", user.email)
+      .maybeSingle()
+    tunnel = ar?.tunnel ?? ""
+  }
+
+  // Cédants don't fill investor profiles — only redirect repreneurs/fonds
+  const needsInvestorProfile = !isAdmin && tunnel !== "cedant"
+  if (needsInvestorProfile) {
+    const { data: profile } = await supabase
+      .from("investor_profiles")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle()
+    if (!profile) redirect("/app/profile/edit?onboarding=1")
+  }
+
+  const isCedant = tunnel === "cedant"
+  const t = {
+    subtitle:       lang === "en" ? "Private infrastructure · CROCHET" : "Infrastructure privée · CROCHET",
+    tagline:        isCedant
+      ? (lang === "en" ? "Your file, your value." : "Votre dossier, votre valeur.")
+      : (lang === "en" ? "The signal, not the noise." : "Le signal, pas le bruit."),
+    statDossiers:   lang === "en" ? "Files" : "Dossiers",
+    statMatches:    "Matches",
+    statRooms:      lang === "en" ? "Active rooms" : "Rooms actives",
+    recentFiles:    isCedant
+      ? (lang === "en" ? "My files" : "Mes dossiers")
+      : (lang === "en" ? "Recent files" : "Dossiers récents"),
+    seeAll:         lang === "en" ? "See all →" : "Voir tout →",
+    noFiles:        isCedant
+      ? (lang === "en" ? "No file submitted yet." : "Aucun dossier soumis pour l'instant.")
+      : (lang === "en" ? "No files submitted." : "Aucun dossier soumis."),
+    submitFile:     isCedant
+      ? (lang === "en" ? "+ Submit my file" : "+ Soumettre mon dossier")
+      : (lang === "en" ? "+ Submit a file" : "+ Soumettre un dossier"),
+    seeMatches:     isCedant
+      ? (lang === "en" ? "See my matches" : "Voir mes matches")
+      : (lang === "en" ? "See matches" : "Voir les matches"),
+    tunnelBadge:    isCedant
+      ? (lang === "en" ? "SELLER — CONFIDENTIAL SPACE" : "CÉDANT — ESPACE CONFIDENTIEL")
+      : tunnel === "fonds"
+        ? (lang === "en" ? "FUND — DEAL FLOW" : "FONDS — DEAL FLOW")
+        : tunnel === "repreneur"
+          ? (lang === "en" ? "BUYER — DEAL FLOW" : "REPRENEUR — DEAL FLOW")
+          : null,
+  }
 
   const [
     { count: oppCount },
@@ -69,15 +130,29 @@ export default async function DashboardPage() {
 
       {/* Header */}
       <div style={{ marginBottom: 40 }}>
-        <div style={{
-          fontFamily: "var(--font-dm-sans), sans-serif",
-          fontSize: 10,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "#7A746E",
-          marginBottom: 10,
-        }}>
-          Infrastructure privée · CROCHET
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 10 }}>
+          <div style={{
+            fontFamily: "var(--font-dm-sans), sans-serif",
+            fontSize: 10,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "#7A746E",
+          }}>
+            {t.subtitle}
+          </div>
+          {t.tunnelBadge && (
+            <div style={{
+              fontFamily: "var(--font-jetbrains), monospace",
+              fontSize: 9,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "#4A4A4A",
+              border: "1px solid #E0DAD0",
+              padding: "3px 10px",
+            }}>
+              {t.tunnelBadge}
+            </div>
+          )}
         </div>
         <h1 style={{
           fontFamily: "var(--font-playfair), Georgia, serif",
@@ -96,7 +171,7 @@ export default async function DashboardPage() {
           color: "#7A746E",
           margin: 0,
         }}>
-          Le signal, pas le bruit.
+          {t.tagline}
         </p>
       </div>
 
@@ -104,9 +179,9 @@ export default async function DashboardPage() {
 
       {/* Stats */}
       <div style={{ display: "flex", gap: 12, marginBottom: 40 }}>
-        <Stat value={oppCount ?? 0} label="Dossiers" />
-        <Stat value={matchCount ?? 0} label="Matches" />
-        <Stat value={roomCount ?? 0} label="Rooms actives" />
+        <Stat value={oppCount ?? 0} label={t.statDossiers} />
+        <Stat value={matchCount ?? 0} label={t.statMatches} />
+        <Stat value={roomCount ?? 0} label={t.statRooms} />
       </div>
 
       {/* Recent opportunities */}
@@ -126,7 +201,7 @@ export default async function DashboardPage() {
             textTransform: "uppercase",
             color: "#7A746E",
           }}>
-            Dossiers récents
+            {t.recentFiles}
           </span>
           <Link href="/app/opportunities" style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
@@ -135,7 +210,7 @@ export default async function DashboardPage() {
             textDecoration: "none",
             letterSpacing: "0.04em",
           }}>
-            Voir tout →
+            {t.seeAll}
           </Link>
         </div>
 
@@ -148,7 +223,7 @@ export default async function DashboardPage() {
             color: "#7A746E",
             fontStyle: "italic",
           }}>
-            Aucun dossier soumis.
+            {t.noFiles}
           </div>
         ) : (
           <div>
@@ -218,7 +293,7 @@ export default async function DashboardPage() {
           letterSpacing: "0.06em",
           textTransform: "uppercase",
         }}>
-          + Soumettre un dossier
+          {t.submitFile}
         </Link>
         <Link href="/app/matches" style={{
           padding: "12px 28px",
@@ -232,7 +307,7 @@ export default async function DashboardPage() {
           letterSpacing: "0.06em",
           textTransform: "uppercase",
         }}>
-          Voir les matches
+          {t.seeMatches}
         </Link>
       </div>
 

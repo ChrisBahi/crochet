@@ -3,6 +3,9 @@ import { createAdminClient as createClient } from "@/lib/supabase/admin"
 import { scoreMatch, areComplementary, structuredScore } from "@/lib/matching/scoreMatch"
 import { createNotification } from "@/lib/notifications/create"
 
+// Vercel: allow up to 5 minutes for this route (Pro plan)
+export const maxDuration = 300
+
 // Only call Claude when the structured pre-score is high enough
 const STRUCTURED_THRESHOLD = 30
 // Only create a match when the final M-Score reaches this level

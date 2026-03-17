@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
 import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 import Link from "next/link"
 import { IntroButton } from "@/components/intro-button"
+import { OpenRoomButton } from "@/components/open-room-button"
+import { cookies } from "next/headers"
 
 type Match = {
   id: string
@@ -27,21 +28,23 @@ type Opportunity = {
   stage?: string
 }
 
-type DeckInfo = {
-  opportunity_id: string
-  status?: string | null
-  summary?: string | null
+
+function scoreColor(v: number): string {
+  if (v >= 70) return "#22c55e"
+  if (v >= 55) return "#f59e0b"
+  return "#7A746E"
 }
 
 function ScoreBadge({ label, value }: { label: string; value: number | undefined }) {
   const display = value !== undefined ? Math.round(value) : "—"
+  const color = value !== undefined ? scoreColor(value) : "#7A746E"
   return (
     <div style={{ textAlign: "center" }}>
       <div style={{
         fontFamily: "var(--font-jetbrains), monospace",
         fontSize: 36,
         fontWeight: 700,
-        color: "#0A0A0A",
+        color,
         lineHeight: 1,
         letterSpacing: "-0.02em",
       }}>
@@ -61,16 +64,17 @@ function ScoreBadge({ label, value }: { label: string; value: number | undefined
   )
 }
 
-function StatusPill({ status }: { status?: string }) {
-  const map: Record<string, { label: string; bg: string; color: string }> = {
-    ready:            { label: "Ready",          bg: "#0A0A0A", color: "#FFFFFF" },
-    pending:          { label: "Pending",         bg: "#F5F0E8", color: "#7A746E" },
-    review:           { label: "Review",          bg: "#FEF3C7", color: "#92400E" },
-    intro_requested:  { label: "Intro envoyée",   bg: "#EFF6FF", color: "#1D4ED8" },
-    room_active:      { label: "Room active",     bg: "#052e16", color: "#22c55e" },
-    closing:          { label: "Closing",         bg: "#1E1B4B", color: "#818CF8" },
+function StatusPill({ status, lang }: { status?: string; lang: "fr" | "en" }) {
+  const map: Record<string, { labelFr: string; labelEn: string; bg: string; color: string }> = {
+    ready:            { labelFr: "Ready",              labelEn: "Ready",             bg: "#0A0A0A",  color: "#FFFFFF" },
+    pending:          { labelFr: "Pending",             labelEn: "Pending",           bg: "#F5F0E8",  color: "#7A746E" },
+    review:           { labelFr: "Review",              labelEn: "Review",            bg: "#FEF3C7",  color: "#92400E" },
+    intro_requested:  { labelFr: "Intro demandée",      labelEn: "Intro requested",   bg: "#EFF6FF",  color: "#1D4ED8" },
+    room_active:      { labelFr: "Room active",         labelEn: "Room active",       bg: "#052e16",  color: "#22c55e" },
+    closing:          { labelFr: "Closing",             labelEn: "Closing",           bg: "#1E1B4B",  color: "#818CF8" },
   }
   const s = map[status ?? "pending"] ?? map.pending
+  const label = lang === "en" ? s.labelEn : s.labelFr
   return (
     <span style={{
       display: "inline-block",
@@ -83,7 +87,7 @@ function StatusPill({ status }: { status?: string }) {
       letterSpacing: "0.08em",
       textTransform: "uppercase" as const,
     }}>
-      {s.label}
+      {label}
     </span>
   )
 }
@@ -93,101 +97,52 @@ export default async function MatchesPage({
 }: {
   searchParams: Promise<{ match?: string }>
 }) {
-  const user = await requireUser()
+  await requireUser()
   const wsId = await requireActiveWorkspaceId()
   const params = await searchParams
+  const cookieStore = await cookies()
+  const lang = (cookieStore.get("crochet_lang")?.value ?? "fr") as "fr" | "en"
+
+  const t = {
+    noMatch:        lang === "en" ? "No match available." : "Aucun match disponible.",
+    noMatchHint:    lang === "en" ? "Submit a file to activate the engine." : "Soumettez un dossier pour activer le moteur.",
+    noMatchDisplay: lang === "en" ? "No match to display." : "Aucun match à afficher.",
+    selectMatch:    lang === "en" ? "Select a match." : "Sélectionnez un match.",
+    whyMatch:       lang === "en" ? "Why this match" : "Pourquoi ce match",
+    introTitle:     lang === "en" ? "Intro requested · Awaiting activation" : "Intro demandée · En attente d'activation",
+    introBody:      lang === "en"
+      ? "A notification has been sent to the counterpart. You can also open the Room directly."
+      : "Une notification a été envoyée à la contrepartie. Vous pouvez également ouvrir la Room directement.",
+    memoBody:       lang === "en"
+      ? "The full MEMO is accessible through the file or the Secure Room."
+      : "Le MEMO complet est accessible via le dossier ou la Secure Room.",
+    openFile:       lang === "en" ? "Open file" : "Ouvrir le dossier",
+    accessRoom:     lang === "en" ? "Access Room" : "Accéder à la Room",
+    aiConfidential: lang === "en" ? "AI · Confidential" : "IA · Confidentiel",
+    untitled:       lang === "en" ? "Untitled opportunity" : "Opportunité sans titre",
+  }
 
   const supabase = await createClient()
 
-  const { data: ownedOpps } = await supabase
-    .from("opportunities")
-    .select("id")
-    .eq("created_by", user.id)
+  const matchesResult = wsId
+    ? await supabase.from("opportunity_matches").select("*").eq("workspace_id", wsId).order("ranking_score", { ascending: false })
+    : { data: [] }
 
-  const ownedIds = (ownedOpps ?? []).map((o) => o.id)
+  const typedMatches: Match[] = matchesResult.data ?? []
 
-  const [wsMatchesRes, ownerMatchesRes, memberMatchesRes] = await Promise.all([
-    wsId
-      ? supabase
-          .from("opportunity_matches")
-          .select("*")
-          .eq("workspace_id", wsId)
-          .order("ranking_score", { ascending: false })
-      : Promise.resolve({ data: [] as Match[] }),
-    ownedIds.length
-      ? supabase
-          .from("opportunity_matches")
-          .select("*")
-          .in("opportunity_id", ownedIds)
-          .order("ranking_score", { ascending: false })
-      : Promise.resolve({ data: [] as Match[] }),
-    supabase
-      .from("opportunity_matches")
-      .select("*")
-      .eq("member_id", user.id)
-      .order("ranking_score", { ascending: false }),
-  ])
+  const opportunityIds = [...new Set(typedMatches.map(m => m.opportunity_id).filter(Boolean))]
 
-  const dedup = new Map<string, Match>()
-  for (const list of [wsMatchesRes.data ?? [], ownerMatchesRes.data ?? [], memberMatchesRes.data ?? []]) {
-    for (const m of list as Match[]) dedup.set(m.id, m)
-  }
-  let rawMatches = [...dedup.values()].sort((a, b) => (b.ranking_score ?? 0) - (a.ranking_score ?? 0))
-
-  // Fallback for workspaces where RLS hides matches from deal owners.
-  if (rawMatches.length === 0 && wsId) {
-    try {
-      const admin = createAdminClient()
-      const { data: adminMatches } = await admin
-        .from("opportunity_matches")
-        .select("*")
-        .eq("workspace_id", wsId)
-        .order("ranking_score", { ascending: false })
-
-      const visible = (adminMatches ?? []).filter((m) => {
-        const member = (m as { member_id?: string | null }).member_id
-        const oppId = (m as { opportunity_id?: string | null }).opportunity_id
-        return member === user.id || (oppId ? ownedIds.includes(oppId) : false)
-      })
-      rawMatches = visible as Match[]
-    } catch {
-      // If service key is unavailable locally, keep the standard RLS result.
-    }
-  }
-
-  const typedMatches: Match[] = rawMatches ?? []
-  const opportunityIds = [...new Set(typedMatches.map((m) => m.opportunity_id).filter(Boolean))]
-
-  const [opportunitiesRes, decksRes] = await Promise.all([
-    opportunityIds.length
-      ? supabase
-          .from("opportunities")
-          .select("id,title,description,sector,geo,deal_type,stage")
-          .in("id", opportunityIds)
-      : Promise.resolve({ data: [] as Opportunity[] }),
-    opportunityIds.length
-      ? supabase
-          .from("opportunity_decks")
-          .select("opportunity_id,status,summary")
-          .in("opportunity_id", opportunityIds)
-      : Promise.resolve({ data: [] as DeckInfo[] }),
-  ])
-
-  const opportunities = opportunitiesRes.data ?? []
-  const decks = (decksRes.data ?? []) as DeckInfo[]
+  const { data: opportunities } = opportunityIds.length
+    ? await supabase.from("opportunities").select("id,title,description,sector,geo,deal_type,stage").in("id", opportunityIds)
+    : { data: [] }
 
   const oppMap = Object.fromEntries((opportunities ?? []).map(o => [o.id, o as Opportunity]))
-  const deckMap = Object.fromEntries(decks.map((d) => [d.opportunity_id, d]))
 
-  // Keep full ranking list (no hard limit, no forced grouping).
-  const visibleMatches = typedMatches
-
-  const selectedId = params.match ?? visibleMatches[0]?.id
-  const selected = visibleMatches.find((m) => m.id === selectedId) ?? visibleMatches[0]
+  const selectedId = params.match ?? typedMatches[0]?.id
+  const selected = typedMatches.find(m => m.id === selectedId)
   const selectedOpp = selected ? oppMap[selected.opportunity_id] : null
 
-  const selectedDeck = selected ? deckMap[selected.opportunity_id] : null
-  const empty = visibleMatches.length === 0
+  const empty = typedMatches.length === 0
 
   return (
     <div style={{
@@ -205,10 +160,11 @@ export default async function MatchesPage({
         display: "flex",
         flexDirection: "column",
       }}>
+
         {/* Panel header */}
         <div style={{
-          padding: "20px 24px 16px",
-          borderBottom: "2px solid #0A0A0A",
+          padding: "16px 24px 12px",
+          borderBottom: "1px solid #E0DAD0",
           display: "flex",
           alignItems: "baseline",
           gap: 10,
@@ -216,11 +172,11 @@ export default async function MatchesPage({
           <span style={{
             fontFamily: "var(--font-playfair), Georgia, serif",
             fontStyle: "italic",
-            fontSize: 18,
+            fontSize: 15,
             fontWeight: 700,
             color: "#0A0A0A",
           }}>
-            Matches
+            Deal Flow
           </span>
           {!empty && (
             <span style={{
@@ -228,12 +184,12 @@ export default async function MatchesPage({
               fontSize: 11,
               color: "#7A746E",
             }}>
-              {visibleMatches.length}
+              {typedMatches.length}
             </span>
           )}
         </div>
 
-        {/* Items */}
+        {/* Match items */}
         {empty ? (
           <div style={{
             padding: 32,
@@ -241,19 +197,20 @@ export default async function MatchesPage({
             fontSize: 13,
             color: "#7A746E",
             textAlign: "center",
-            marginTop: 48,
+            marginTop: 32,
             lineHeight: 1.7,
           }}>
-            Aucun match disponible.
+            {t.noMatch}
             <br />
             <span style={{ fontSize: 11, display: "block", marginTop: 8 }}>
-              Soumettez un dossier pour activer le moteur.
+              {t.noMatchHint}
             </span>
           </div>
         ) : (
-          visibleMatches.map((m, i) => {
+          typedMatches.map((m, i) => {
             const opp = oppMap[m.opportunity_id]
             const isActive = m.id === selectedId
+            const mScoreVal = Math.round(m.fit_score ?? 0)
             return (
               <Link
                 key={m.id}
@@ -281,7 +238,7 @@ export default async function MatchesPage({
                   }}>
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <StatusPill status={m.status} />
+                  <StatusPill status={m.status} lang={lang} />
                 </div>
 
                 <div style={{
@@ -294,14 +251,14 @@ export default async function MatchesPage({
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                 }}>
-                  {opp?.title ?? "Opportunité sans titre"}
+                  {opp?.title ?? t.untitled}
                 </div>
 
                 <div style={{
                   fontFamily: "var(--font-dm-sans), sans-serif",
                   fontSize: 11,
                   color: "#7A746E",
-                  marginBottom: 12,
+                  marginBottom: 10,
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -309,55 +266,28 @@ export default async function MatchesPage({
                   {[opp?.sector, opp?.geo].filter(Boolean).join(" · ") || "—"}
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}>
+                  <span style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 9,
+                    color: "#7A746E",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
                   }}>
-                    <span style={{
-                      fontFamily: "var(--font-dm-sans), sans-serif",
-                      fontSize: 10,
-                      color: "#7A746E",
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                    }}>
-                      M-Score
-                    </span>
-                    <span style={{
-                      fontFamily: "var(--font-jetbrains), monospace",
-                      fontSize: 18,
-                      fontWeight: 700,
-                      color: "#0A0A0A",
-                    }}>
-                      {Math.round(m.fit_score ?? 0)}
-                    </span>
-                  </div>
-                  {m.breakdown?.d_score != null && (
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}>
-                      <span style={{
-                        fontFamily: "var(--font-dm-sans), sans-serif",
-                        fontSize: 10,
-                        color: "#7A746E",
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                      }}>
-                        D-Score
-                      </span>
-                      <span style={{
-                        fontFamily: "var(--font-jetbrains), monospace",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#7A746E",
-                      }}>
-                        {Math.round(m.breakdown.d_score)}
-                      </span>
-                    </div>
-                  )}
+                    M-Score
+                  </span>
+                  <span style={{
+                    fontFamily: "var(--font-jetbrains), monospace",
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: scoreColor(mScoreVal),
+                  }}>
+                    {mScoreVal}
+                  </span>
                 </div>
               </Link>
             )
@@ -377,9 +307,7 @@ export default async function MatchesPage({
             fontSize: 13,
             color: "#7A746E",
           }}>
-            {empty
-              ? "Aucun match à afficher."
-              : "Sélectionnez un match."}
+            {empty ? t.noMatchDisplay : t.selectMatch}
           </div>
         ) : (
           <div style={{ maxWidth: 720, padding: "40px 52px" }}>
@@ -393,7 +321,7 @@ export default async function MatchesPage({
                 marginBottom: 16,
                 flexWrap: "wrap",
               }}>
-                <StatusPill status={selected.status} />
+                <StatusPill status={selected.status} lang={lang} />
                 {[selectedOpp.sector, selectedOpp.geo, selectedOpp.deal_type].filter(Boolean).map((tag, i) => (
                   <span key={i} style={{
                     fontFamily: "var(--font-dm-sans), sans-serif",
@@ -470,7 +398,7 @@ export default async function MatchesPage({
                   color: "#7A746E",
                   marginBottom: 14,
                 }}>
-                  Why this match
+                  {t.whyMatch}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {selected.why.map((reason, i) => (
@@ -504,7 +432,48 @@ export default async function MatchesPage({
               </div>
             )}
 
-            {/* MEMO */}
+            {/* Intro requested — intermediate state */}
+            {selected.status === "intro_requested" && (
+              <div style={{
+                padding: "16px 20px",
+                background: "#EFF6FF",
+                border: "1px solid #BFDBFE",
+                marginBottom: 32,
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 14,
+              }}>
+                <div style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "#3B82F6",
+                  flexShrink: 0,
+                  marginTop: 4,
+                }} />
+                <div>
+                  <div style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#1D4ED8",
+                    marginBottom: 4,
+                  }}>
+                    {t.introTitle}
+                  </div>
+                  <div style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 12,
+                    color: "#3B82F6",
+                    lineHeight: 1.6,
+                  }}>
+                    {t.introBody}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MEMO placeholder */}
             <div style={{
               border: "1px solid #E0DAD0",
               marginBottom: 32,
@@ -533,7 +502,7 @@ export default async function MatchesPage({
                   color: "#7A746E",
                   letterSpacing: "0.04em",
                 }}>
-                  IA · Confidentiel
+                  {t.aiConfidential}
                 </span>
               </div>
               <div style={{ padding: "20px" }}>
@@ -541,18 +510,16 @@ export default async function MatchesPage({
                   fontFamily: "var(--font-dm-sans), sans-serif",
                   fontSize: 13,
                   color: "#7A746E",
-                  fontStyle: selectedDeck?.summary ? "normal" : "italic",
+                  fontStyle: "italic",
                   margin: 0,
                   lineHeight: 1.8,
                 }}>
-                  {selectedDeck?.summary
-                    ? selectedDeck.summary.slice(0, 420)
-                    : "Le MEMO sera disponible après validation du dossier par le moteur de qualification."}
+                  {t.memoBody}
                 </p>
               </div>
             </div>
 
-            {/* CTA */}
+            {/* CTA — dynamic by status */}
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <Link
                 href={`/app/opportunities/${selected.opportunity_id}`}
@@ -568,28 +535,30 @@ export default async function MatchesPage({
                   textTransform: "uppercase",
                 }}
               >
-                Ouvrir le dossier
+                {t.openFile}
               </Link>
 
-              {selected.status !== "intro_requested" &&
-               selected.status !== "room_active" &&
-               selected.status !== "closing" ? (
-                <IntroButton
-                  matchId={selected.id}
-                  opportunityId={selected.opportunity_id}
-                />
-              ) : (
+              {/* Status-based CTA */}
+              {(!selected.status || selected.status === "pending" || selected.status === "ready" || selected.status === "review") && (
+                <IntroButton matchId={selected.id} opportunityId={selected.opportunity_id} />
+              )}
+
+              {selected.status === "intro_requested" && (
+                <OpenRoomButton matchId={selected.id} opportunityId={selected.opportunity_id} />
+              )}
+
+              {(selected.status === "room_active" || selected.status === "closing") && (
                 <Link
                   href="/app/rooms"
                   style={{
                     padding: "12px 28px",
-                    background: "transparent",
-                    color: "#1D4ED8",
-                    border: "1px solid #BFDBFE",
+                    background: "#052e16",
+                    color: "#22c55e",
+                    border: "1px solid #16a34a",
                     textDecoration: "none",
                     fontFamily: "var(--font-dm-sans), sans-serif",
                     fontSize: 12,
-                    fontWeight: 500,
+                    fontWeight: 600,
                     letterSpacing: "0.06em",
                     textTransform: "uppercase",
                     display: "inline-flex",
@@ -597,7 +566,7 @@ export default async function MatchesPage({
                     gap: 6,
                   }}
                 >
-                  🔒 Accéder à la Room
+                  🔒 {t.accessRoom}
                 </Link>
               )}
             </div>

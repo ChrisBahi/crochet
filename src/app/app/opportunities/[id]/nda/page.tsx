@@ -37,24 +37,15 @@ export default async function NdaPage({
     ? await supabase.auth.admin.getUserById(opp.created_by).catch(() => ({ data: { user: null } }))
     : { data: { user } }
 
-  const fallbackDivulgateurName =
-    divulgateurUser?.user?.email?.split("@")[0] ??
-    opp.title ??
-    "Partie Divulgatrice"
-
   const divulgateur: NdaParty = {
-    name: divulgateurProfile?.name ?? divulgateurProfile?.firm ?? fallbackDivulgateurName,
+    name: divulgateurProfile?.name ?? divulgateurProfile?.firm ?? "Partie Divulgatrice",
     firm: divulgateurProfile?.firm ?? null,
     role: divulgateurProfile?.role ?? null,
     country: divulgateurProfile?.country ?? "France",
   }
 
-  const fallbackRecepteurName =
-    user.email?.split("@")[0] ??
-    "Investisseur"
-
   const recepteur: NdaParty = {
-    name: recepteurProfile?.name ?? recepteurProfile?.firm ?? fallbackRecepteurName,
+    name: recepteurProfile?.name ?? recepteurProfile?.firm ?? "Partie Réceptrice",
     firm: recepteurProfile?.firm ?? null,
     role: recepteurProfile?.role ?? null,
     country: recepteurProfile?.country ?? "France",

@@ -1,173 +1,230 @@
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createServerClient } from "@/lib/supabase/server";
 
-type AdmissionStatus = "pending" | "approved" | "rejected" | "unknown";
+export default async function RegisterStatusPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-function getStatusLabel(status: AdmissionStatus) {
-  if (status === "approved") return "Approuvée";
-  if (status === "rejected") return "Refusée";
-  if (status === "pending") return "En attente";
-  return "En cours d'analyse";
-}
+  let status: string | null = null;
+  let requestEmail: string | null = null;
 
-function getStatusText(status: AdmissionStatus) {
-  if (status === "approved") return "Votre accès est validé. Vous pouvez vous connecter à l'espace privé.";
-  if (status === "rejected") return "Votre candidature n'a pas été retenue pour le moment.";
-  if (status === "pending") return "Votre dossier est bien reçu et en cours de revue par l'équipe.";
-  return "Nous préparons votre dossier. Revenez dans quelques minutes.";
-}
-
-function getStatusColor(status: AdmissionStatus) {
-  if (status === "approved") return "#2D6A4F";
-  if (status === "rejected") return "#B91C1C";
-  return "#7A746E";
-}
-
-export default async function RegisterStatusPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ submitted?: string }>;
-}) {
-  const { submitted } = await searchParams;
-
-  let status: AdmissionStatus = submitted ? "pending" : "unknown";
-  let email: string | null = null;
-
-  try {
-    const supabase = await createServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    email = session?.user?.email ?? null;
-
-    if (email) {
-      const adminEmails = (process.env.ADMIN_EMAILS ?? "")
-        .split(",")
-        .map((e) => e.trim())
-        .filter(Boolean);
-
-      if (adminEmails.includes(email)) {
-        status = "approved";
-      } else {
-        const admin = createAdminClient();
-        const { data } = await admin
-          .from("admission_requests")
-          .select("status")
-          .eq("email", email)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (data?.status === "approved" || data?.status === "rejected" || data?.status === "pending") {
-          status = data.status;
-        } else if (submitted) {
-          status = "pending";
-        }
-      }
-    }
-  } catch {
-    if (submitted) status = "pending";
+  if (user?.email) {
+    requestEmail = user.email;
+    const { data } = await supabase
+      .from("admission_requests")
+      .select("status")
+      .eq("email", user.email)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    status = data?.status ?? null;
   }
+
+  const statusConfig: Record<string, { label: string; title: string; description: string; dotColor: string }> = {
+    approved: {
+      label: "Approuvée",
+      title: "Approuvée",
+      description: "Votre accès est validé. Vous pouvez vous connecter à l'espace privé.",
+      dotColor: "#276749",
+    },
+    pending: {
+      label: "En cours d'examen",
+      title: "En attente de validation.",
+      description: "Votre profil est en cours d'examen par l'équipe CROCHET. Vous recevrez un email dès que votre candidature sera traitée.",
+      dotColor: "#B7791F",
+    },
+    rejected: {
+      label: "Non retenue",
+      title: "Candidature non retenue.",
+      description: "Votre candidature n'a pas été retenue à ce stade. Pour toute question, contactez-nous à contact@crochett.ai.",
+      dotColor: "#C53030",
+    },
+  };
+
+  const current = status ? (statusConfig[status] ?? statusConfig.pending) : statusConfig.pending;
 
   return (
     <div style={{
       minHeight: "100vh",
       background: "#F5F2EE",
       display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "40px 24px",
+      flexDirection: "column",
     }}>
-      <div style={{ maxWidth: 620, width: "100%", background: "#FFFFFF", border: "1px solid #E0DAD0", padding: "40px 36px" }}>
-        <div style={{
-          fontFamily: "var(--font-dm-sans), sans-serif",
-          fontSize: 10,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          color: "#7A746E",
-          marginBottom: 16,
-        }}>
-          État de ma candidature
-        </div>
-
-        <h1 style={{
-          fontFamily: "var(--font-playfair), Georgia, serif",
-          fontSize: 38,
-          margin: "0 0 10px",
-          lineHeight: 1.1,
-          color: "#0A0A0A",
-        }}>
-          {getStatusLabel(status)}
-        </h1>
-
-        <p style={{
-          fontFamily: "var(--font-dm-sans), sans-serif",
-          fontSize: 14,
-          color: "#4A443D",
-          lineHeight: 1.7,
-          margin: "0 0 22px",
-        }}>
-          {getStatusText(status)}
-        </p>
-
-        <div style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "8px 12px",
-          border: "1px solid #E0DAD0",
-          marginBottom: 18,
-        }}>
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: getStatusColor(status) }} />
+      {/* Header */}
+      <header style={{
+        background: "#0A0A0A",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        height: 64,
+        paddingInline: 48,
+        flexShrink: 0,
+      }}>
+        <Link href="/" style={{ textDecoration: "none" }}>
           <span style={{
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 12,
-            color: getStatusColor(status),
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
+            fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
+            fontSize: 20,
+            fontWeight: 700,
+            color: "#FFFFFF",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase" as const,
           }}>
-            {getStatusLabel(status)}
+            CROCHET.
           </span>
-        </div>
+        </Link>
+      </header>
 
-        {email && (
-          <p style={{
-            fontFamily: "var(--font-jetbrains), monospace",
-            fontSize: 11,
+      {/* Content */}
+      <div style={{
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "64px 24px",
+      }}>
+        <div style={{ maxWidth: 520, width: "100%" }}>
+
+          {/* Label */}
+          <div style={{
+            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontSize: 10,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase" as const,
             color: "#7A746E",
-            margin: "0 0 24px",
-            wordBreak: "break-all",
+            marginBottom: 20,
           }}>
-            Compte connecté: {email}
-          </p>
-        )}
+            État de ma candidature
+          </div>
 
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <Link href="/login" style={{
-            padding: "10px 18px",
-            border: "1px solid #0A0A0A",
-            textDecoration: "none",
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 12,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
+          {/* Title */}
+          <h1 style={{
+            fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
+            fontSize: 42,
+            fontWeight: 700,
+            fontStyle: "italic",
             color: "#0A0A0A",
+            margin: "0 0 16px",
+            lineHeight: 1.15,
           }}>
-            Se connecter
-          </Link>
-          <Link href="/register" style={{
-            padding: "10px 18px",
-            border: "1px solid #E0DAD0",
-            textDecoration: "none",
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 12,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
+            {current.title}
+          </h1>
+
+          {/* Description */}
+          <p style={{
+            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontSize: 14,
             color: "#7A746E",
+            lineHeight: 1.75,
+            margin: "0 0 32px",
           }}>
-            Modifier ma candidature
-          </Link>
+            {current.description}
+          </p>
+
+          {/* Status badge */}
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            border: "1px solid #E0DAD0",
+            padding: "8px 16px",
+            marginBottom: 16,
+          }}>
+            <span style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: current.dotColor,
+              flexShrink: 0,
+              display: "inline-block",
+            }} />
+            <span style={{
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase" as const,
+              color: "#0A0A0A",
+            }}>
+              {current.label}
+            </span>
+          </div>
+
+          {/* Connected account */}
+          {requestEmail && (
+            <div style={{
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 12,
+              color: "#7A746E",
+              marginBottom: 36,
+            }}>
+              Compte connecté : {requestEmail}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" as const }}>
+            {status === "approved" && (
+              <Link href="/app" style={{
+                display: "inline-block",
+                background: "#0A0A0A",
+                color: "#FFFFFF",
+                padding: "14px 32px",
+                fontFamily: "var(--font-dm-sans), sans-serif",
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase" as const,
+                textDecoration: "none",
+              }}>
+                Se connecter
+              </Link>
+            )}
+            <Link href="/register" style={{
+              display: "inline-block",
+              border: "1px solid #E0DAD0",
+              color: "#0A0A0A",
+              padding: "14px 32px",
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase" as const,
+              textDecoration: "none",
+            }}>
+              Modifier ma candidature
+            </Link>
+          </div>
+
         </div>
       </div>
+
+      {/* Footer */}
+      <footer style={{
+        padding: "20px 48px",
+        borderTop: "1px solid #E0DAD0",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexShrink: 0,
+      }}>
+        <span style={{
+          fontFamily: "var(--font-dm-sans), sans-serif",
+          fontSize: 10,
+          color: "#C8C2B8",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase" as const,
+        }}>
+          CROCHET. · Infrastructure privée de transactions
+        </span>
+        <span style={{
+          fontFamily: "var(--font-jetbrains), monospace",
+          fontSize: 10,
+          color: "#C8C2B8",
+        }}>
+          crochett.ai
+        </span>
+      </footer>
+
     </div>
   );
 }

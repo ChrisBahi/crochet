@@ -2,28 +2,49 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/auth/require-user"
 import { createDemoRoom } from "./actions"
+import { cookies } from "next/headers"
 
 export default async function RoomsPage() {
   await requireUser()
   const supabase = await createClient()
+  const cookieStore = await cookies()
+  const lang = (cookieStore.get("crochet_lang")?.value ?? "fr") as "fr" | "en"
 
-  const { data: rooms } = await supabase
-    .from("rooms")
-    .select("id, created_at, match_id, opportunity_id, status")
-    .order("created_at", { ascending: false })
-
-  const statusLabel: Record<string, string> = {
-    active: "En négociation",
-    pending_close: "En attente de clôture",
-    closed_deal: "Deal conclu",
-    closed_no_deal: "Archivée",
+  const t = {
+    heading:        lang === "en" ? "Negotiation spaces." : "Espaces de négociation.",
+    subheading:     lang === "en"
+      ? "Each Room is a secured NDA space. It remains open until closing."
+      : "Chaque Room est une zone sécurisée NDA. Elle reste ouverte jusqu'au closing.",
+    secureZone:     lang === "en" ? "SECURE ZONE" : "ZONE SÉCURISÉE",
+    ndaNotice:      lang === "en"
+      ? "Exchanges in Secure Rooms are covered by a Confidentiality Agreement (NDA-CROCHET-V1). French law — Paris jurisdiction."
+      : "Les échanges dans les Secure Rooms sont couverts par un Accord de Confidentialité (NDA-CROCHET-V1). Droit français — Juridiction Paris.",
+    noRooms:        lang === "en"
+      ? "No active Secure Room. Rooms are created automatically upon an intro request."
+      : "Aucune Secure Room active. Les rooms sont créées automatiquement lors d'une demande d'intro.",
+    seeMatches:     lang === "en" ? "See my matches →" : "Voir mes matches →",
+    demoRoom:       lang === "en" ? "Open a demo room →" : "Ouvrir une room démo →",
+    createdOn:      lang === "en" ? "Created on" : "Créée le",
+    enter:          lang === "en" ? "Enter →" : "Entrer →",
   }
+
+  const statusLabel: Record<string, string> = lang === "en"
+    ? { active: "In negotiation", pending_close: "Awaiting closure", closed_deal: "Deal closed", closed_no_deal: "Archived" }
+    : { active: "En négociation", pending_close: "En attente de clôture", closed_deal: "Deal conclu", closed_no_deal: "Archivée" }
+
   const statusColor: Record<string, string> = {
     active: "#22c55e",
     pending_close: "#f59e0b",
     closed_deal: "#3b82f6",
     closed_no_deal: "#7A746E",
   }
+
+  const { data: rooms } = await supabase
+    .from("rooms")
+    .select("id, created_at, match_id, opportunity_id, status")
+    .order("created_at", { ascending: false })
+
+  const dateLocale = lang === "en" ? "en-GB" : "fr-FR"
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "48px 52px" }}>
@@ -49,7 +70,7 @@ export default async function RoomsPage() {
           margin: "0 0 8px",
           lineHeight: 1.2,
         }}>
-          Espaces de négociation.
+          {t.heading}
         </h1>
         <p style={{
           fontFamily: "var(--font-dm-sans), sans-serif",
@@ -58,7 +79,7 @@ export default async function RoomsPage() {
           margin: 0,
           lineHeight: 1.7,
         }}>
-          Chaque Room est une zone sécurisée NDA. Elle reste ouverte jusqu&apos;au closing.
+          {t.subheading}
         </p>
       </div>
 
@@ -81,7 +102,7 @@ export default async function RoomsPage() {
           flexShrink: 0,
           paddingTop: 1,
         }}>
-          ZONE SÉCURISÉE
+          {t.secureZone}
         </span>
         <p style={{
           fontFamily: "var(--font-dm-sans), sans-serif",
@@ -90,7 +111,7 @@ export default async function RoomsPage() {
           margin: 0,
           lineHeight: 1.7,
         }}>
-          Les échanges dans les Secure Rooms sont couverts par un Accord de Confidentialité (NDA-CROCHET-V1). Droit français — Juridiction Paris.
+          {t.ndaNotice}
         </p>
       </div>
 
@@ -110,7 +131,7 @@ export default async function RoomsPage() {
             margin: "0 0 16px",
             lineHeight: 1.7,
           }}>
-            Aucune Secure Room active. Les rooms sont créées automatiquement lors d&apos;une demande d&apos;intro.
+            {t.noRooms}
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/app/matches" style={{
@@ -123,7 +144,7 @@ export default async function RoomsPage() {
               letterSpacing: "0.06em",
               textTransform: "uppercase",
             }}>
-              Voir mes matches →
+              {t.seeMatches}
             </Link>
             <form action={createDemoRoom}>
               <button type="submit" style={{
@@ -137,7 +158,7 @@ export default async function RoomsPage() {
                 textTransform: "uppercase",
                 cursor: "pointer",
               }}>
-                Ouvrir une room démo →
+                {t.demoRoom}
               </button>
             </form>
           </div>
@@ -196,7 +217,7 @@ export default async function RoomsPage() {
                       color: "#7A746E",
                       letterSpacing: "0.04em",
                     }}>
-                      Créée le {new Date(r.created_at).toLocaleDateString("fr-FR", {
+                      {t.createdOn} {new Date(r.created_at).toLocaleDateString(dateLocale, {
                         day: "numeric", month: "long", year: "numeric",
                       })}
                     </div>
@@ -224,7 +245,7 @@ export default async function RoomsPage() {
                     color: "#7A746E",
                     letterSpacing: "0.04em",
                   }}>
-                    Entrer →
+                    {t.enter}
                   </span>
                 </div>
               </Link>

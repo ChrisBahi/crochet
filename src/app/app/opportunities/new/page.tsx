@@ -85,12 +85,26 @@ export default async function NewOpportunityPage() {
     const pitchDeckUrl = links["pitch_deck_url"] ?? null
     const websiteUrl = links["website_url"] ?? null
 
+    // Collect questionnaire answers
+    const questionnaireFields = [
+      "q_growth_rate", "q_active_customers", "q_revenue_type", "q_runway",
+      "q_main_risk", "q_cession_reason", "q_dependance_dirigeant", "q_employees",
+      "q_dette_bancaire", "q_non_concurrence", "q_revenue_model", "q_revenue_trend",
+      "q_debt_purpose", "q_repayment_capacity",
+      "q_guarantees", "q_revenue_stability", "q_rev_share_amount", "q_heirs",
+      "q_timeline", "q_fiscal_optim", "q_immo_type", "q_occupancy", "q_bail_duration",
+    ]
+    const questionnaire: Record<string, string> = {}
+    for (const field of questionnaireFields) {
+      const val = String(formData.get(field) || "").trim()
+      if (val) questionnaire[field] = val
+    }
+
     const { data: opp, error } = await supabase
       .from("opportunities")
       .insert({
         workspace_id: workspaceId,
         created_by: user.id,
-        status: "active",
         title,
         description: fullDescription,
         sector,
@@ -102,6 +116,8 @@ export default async function NewOpportunityPage() {
         revenue,
         pitch_deck_url: pitchDeckUrl,
         website_url: websiteUrl,
+        signal: Object.keys(questionnaire).length > 0 ? { questionnaire } : null,
+        status: "active",
       })
       .select("id")
       .single()
@@ -129,18 +145,6 @@ export default async function NewOpportunityPage() {
           Cookie: cookieHeader,
         },
         body: JSON.stringify({ opportunity_id: opportunityId }),
-      })
-
-      // Trigger matching pass right after qualification so the matches page is populated.
-      const matchHeaders: HeadersInit = { "Content-Type": "application/json" }
-      if (process.env.MATCH_ENGINE_SECRET) {
-        matchHeaders.Authorization = `Bearer ${process.env.MATCH_ENGINE_SECRET}`
-      } else {
-        matchHeaders.Cookie = cookieHeader
-      }
-      await fetch(`${baseUrl}/api/match/run`, {
-        method: "POST",
-        headers: matchHeaders,
       })
     } catch {
       // Qualification failed silently — deck stays "pending", detail page handles it
