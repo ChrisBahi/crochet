@@ -9,6 +9,7 @@
 
 **Crochett.ai** — plateforme de mise en relation M&A sécurisée par IA.
 - URL : crochett.ai
+- **Repo GitHub : `github.com/ChrisBahi/crochet-app`** (⚠ PAS `crochet`, toujours `crochet-app`)
 - Modèle : marketplace bilatérale (cédants ↔ repreneurs/investisseurs) avec IA de matching
 - Stack : Next.js 15, Supabase, Claude API (Opus 4.6), Resend, Stripe
 
