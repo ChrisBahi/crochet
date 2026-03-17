@@ -157,6 +157,9 @@ J60-J90 → 5 fonds clients = 25k€/mois récurrent
 - ✅ Landing page `/partenaires/experts-comptables` — programme apporteur d'affaires 20% rev share
 - ✅ Suivi UTM complet dans l'admin : entonnoir par source (lead→approuvé→rejeté + taux) + matrice source×tunnel
 - ✅ Tunnels d'onboarding différenciés post-signup (pages /welcome/cedant, /welcome/repreneur, /welcome/fonds — dispatch automatique selon tunnel)
+- ✅ One-pager Sowefund optimisé print/PDF (`/onepager/sowefund`) — pour la réunion partenariat
+- ✅ One-pager Experts-Comptables print/PDF (`/onepager/experts-comptables`) — programme rev share 20%
+- ✅ Index one-pagers (`/onepager`) — hub interne PDF imprimables
 
 ### Ce qui manque (prochaines priorités)
 
