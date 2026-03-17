@@ -43,11 +43,12 @@ export default function SowefundPartnerPage() {
             ×
           </span>
           <span style={{
-            fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: 13,
-            fontWeight: 600,
+            fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
+            fontSize: 18,
+            fontWeight: 700,
             color: "#FFFFFF",
-            letterSpacing: "0.04em",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
           }}>
             SOWEFUND
           </span>
@@ -101,7 +102,6 @@ export default function SowefundPartnerPage() {
             margin: "0 0 8px",
             lineHeight: 1.05,
             letterSpacing: "-0.02em",
-            maxWidth: 760,
           }}>
             Sowefund vous ouvre l&apos;accès
           </h1>
@@ -114,8 +114,9 @@ export default function SowefundPartnerPage() {
             margin: "0 0 40px",
             lineHeight: 1.05,
             letterSpacing: "-0.02em",
+            whiteSpace: "nowrap",
           }}>
-            au M&amp;A PME qualifié par IA.
+            au <span style={{ fontStyle: "normal" }}>M&amp;A</span> PME qualifié par IA.
           </h1>
 
           <p style={{
