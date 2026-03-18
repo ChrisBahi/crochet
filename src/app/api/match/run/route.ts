@@ -124,6 +124,9 @@ export async function POST(req: Request) {
   const updatedUserIds = new Set<string>()
 
   for (const { a, b, preScore, dScoreA, dScoreB, p_score, why } of scored) {
+    // Gate: if AI finds no complementarity, reject regardless of structural score
+    if (p_score < 40) { skipped_mscore++; continue }
+
     // M-Score: p_score is primary driver; d_score only added when available
     const avgDScore = (dScoreA + dScoreB) / 2
     const fitScore = avgDScore > 0
@@ -131,7 +134,6 @@ export async function POST(req: Request) {
       : Math.round(p_score * 0.65 + preScore * 0.35)
 
     if (fitScore < MSCORE_THRESHOLD) { skipped_mscore++; continue }
-
     const rows = [
       {
         workspace_id: a.workspace_id,
@@ -139,7 +141,7 @@ export async function POST(req: Request) {
         member_id: b.created_by ?? null,
         fit_score: fitScore,
         ranking_score: fitScore,
-        breakdown: { d_score: dScoreA, p_score, structured_score: preScore },
+        breakdown: { d_score: dScoreA, p_score, structured_score: preScore, linked_opportunity_id: b.id },
         why,
         status: "pending",
       },
@@ -149,13 +151,14 @@ export async function POST(req: Request) {
         member_id: a.created_by ?? null,
         fit_score: fitScore,
         ranking_score: fitScore,
-        breakdown: { d_score: dScoreB, p_score, structured_score: preScore },
+        breakdown: { d_score: dScoreB, p_score, structured_score: preScore, linked_opportunity_id: a.id },
         why,
         status: "pending",
       },
     ]
 
     for (const row of rows) {
+      if (!row.member_id) continue
       const pairKey = `${row.opportunity_id}:${row.member_id}`
       if (existingPairs.has(pairKey)) { skipped_duplicate++; continue }
 

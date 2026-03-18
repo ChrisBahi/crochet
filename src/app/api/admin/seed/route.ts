@@ -163,6 +163,20 @@ const SEED_OPPORTUNITIES = [
   },
   {
     created_by: null,
+    title: "Fonds seed legaltech & IA B2B – tickets 300k-1,2M€",
+    description: "Fonds d'investissement spécialisé dans les startups legaltech, regtech et IA B2B en phase pre-seed et seed. Portefeuille actif de 8 participations. Tickets 300k à 1,2M€, prise de participation minoritaire, accompagnement go-to-market et accès réseau avocats/cabinets partenaires. Conviction forte sur l'automatisation des contrats et la conformité réglementaire.",
+    sector: "tech",
+    geo: "france",
+    stage: "seed",
+    deal_type: "equity",
+    amount: 800000,
+    valuation: null,
+    revenue: null,
+    status: "active",
+    workspace_id: null,
+  },
+  {
+    created_by: null,
     title: "Family office immobilier & diversification – PME IDF, tickets 3-15M€",
     description: "Family office parisien diversifié : portefeuille immobilier commercial + participations PME. Recherche opportunités de cession PME rentables en Île-de-France, tous secteurs (consumer, services, industrie légère). Tickets 3 à 15M€. Horizon long terme, pas de LBO agressif.",
     sector: "consumer",
@@ -235,7 +249,7 @@ export async function POST(req: Request) {
 
   // Insert opportunity_decks with d_scores so M-Score formula uses full weights
   // Scores reflect realistic AI-generated quality assessments
-  const D_SCORES = [78, 72, 68, 81, 65, 70, 74, 83, 76, 69, 63, 71]
+  const D_SCORES = [78, 72, 68, 81, 65, 70, 74, 83, 76, 69, 63, 71, 79]
   const MEMOS = [
     "SaaS RH profitable à fort taux de rétention (NRR 118%). Dossier structuré, croissance validée, accompagnement fondateur prévu.",
     "Réseau boulangeries solide en IDF, baux sécurisés et équipes stables. Valorisation cohérente avec l'EBITDA de 14%.",
@@ -249,6 +263,7 @@ export async function POST(req: Request) {
     "Prêteur alternatif avec processus rapide (10j). Conditions de marché, secteurs ciblés cohérents avec l'offre PME.",
     "Business angel actif avec portefeuille diversifié. Apport réseau VC Tier 1, tickets adaptés aux dossiers seed/série A.",
     "Family office diversifié avec capacité de décision rapide. Approche long terme, tickets adaptés aux PME IDF.",
+    "Fonds seed spécialisé legaltech et IA B2B. Ticket 300k-1,2M€ adapté aux pre-seed, réseau cabinets d'avocats partenaires.",
   ]
 
   if (inserted && inserted.length > 0) {
@@ -280,24 +295,38 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 })
   }
 
-  // Delete seed opportunities + their matches (seed records: created_by=null)
-  const { data: seedOpps } = await supabase
+  // Delete seed opportunities + their matches
+  // Strategy 1: records with created_by=null (current seed format)
+  const { data: seedByNull } = await supabase
     .from("opportunities")
     .select("id")
     .is("created_by", null)
 
-  const seedIds = (seedOpps ?? []).map((o: { id: string }) => o.id)
+  // Strategy 2: records matching known seed titles (legacy seeds inserted with created_by=admin_id)
+  const SEED_TITLES = SEED_OPPORTUNITIES.map(o => o.title)
+  const { data: seedByTitle } = await supabase
+    .from("opportunities")
+    .select("id")
+    .in("title", SEED_TITLES)
 
-  if (seedIds.length === 0) {
+  const allSeedIds = Array.from(new Set([
+    ...(seedByNull ?? []).map((o: { id: string }) => o.id),
+    ...(seedByTitle ?? []).map((o: { id: string }) => o.id),
+  ]))
+
+  if (allSeedIds.length === 0) {
     return NextResponse.json({ message: "Aucun dossier de seed à supprimer." })
   }
 
-  await supabase.from("opportunity_matches").delete().in("opportunity_id", seedIds)
-  const { error } = await supabase.from("opportunities").delete().in("id", seedIds)
+  // Delete matches referencing seed opps (both directions)
+  await supabase.from("opportunity_matches").delete().in("opportunity_id", allSeedIds)
+  // Also clean orphaned rows where member_id IS NULL (created when seed.created_by=null matched real users)
+  await supabase.from("opportunity_matches").delete().is("member_id", null)
+  const { error } = await supabase.from("opportunities").delete().in("id", allSeedIds)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ deleted: seedIds.length, message: `${seedIds.length} dossiers de seed supprimés.` })
+  return NextResponse.json({ deleted: allSeedIds.length, message: `${allSeedIds.length} dossiers de seed supprimés (nettoyage complet).` })
 }

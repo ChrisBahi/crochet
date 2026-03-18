@@ -124,15 +124,14 @@ export default async function MatchesPage({
   }
 
   const supabase = await createClient()
-
-  const orFilter = wsId
-    ? `workspace_id.eq.${wsId},member_id.eq.${user.id}`
-    : `member_id.eq.${user.id},workspace_id.eq.${user.id}`
-  const matchesResult = await supabase
+  const matchesQuery = supabase
     .from("opportunity_matches")
     .select("*")
-    .or(orFilter)
     .order("ranking_score", { ascending: false })
+
+  const matchesResult = wsId && user
+    ? await matchesQuery.eq("workspace_id", wsId).eq("member_id", user.id)
+    : { data: [] }
 
   const typedMatches: Match[] = matchesResult.data ?? []
 

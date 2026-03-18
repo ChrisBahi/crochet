@@ -349,7 +349,7 @@ export default async function AdminPage({
             Seed plateforme — cold start
           </div>
           <div style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: 12, color: "#7A746E" }}>
-            Injecte 12 dossiers réalistes avant les premiers vrais clients (Sowefund, experts-comptables).
+            Injecte 13 dossiers réalistes avant les premiers vrais clients (Sowefund, experts-comptables).
           </div>
         </div>
         <SeedButton />
@@ -357,7 +357,6 @@ export default async function AdminPage({
 
       {/* Test email panel */}
       <TestEmailPanel />
-
       {/* View switcher */}
       <div style={{ display: "flex", gap: 0, marginBottom: 0, borderBottom: "1px solid #E0DAD0" }}>
         {[

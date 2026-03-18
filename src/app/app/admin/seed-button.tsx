@@ -82,7 +82,7 @@ export function SeedButton() {
             color: loading ? "#7A746E" : "#fff",
           }}
         >
-          {loading ? "En cours…" : "Seeder la plateforme (12 dossiers)"}
+          {loading ? "En cours…" : "Seeder la plateforme (13 dossiers)"}
         </button>
 
         {!showConfirmDelete ? (
@@ -135,7 +135,7 @@ export function SeedButton() {
         color: "#7A746E",
         lineHeight: 1.5,
       }}>
-        Insère 12 dossiers réalistes (6 cédants + 6 investisseurs) pour simuler l&apos;activité avant les premiers vrais clients.
+        Insère 13 dossiers réalistes (6 cédants + 7 investisseurs) pour simuler l&apos;activité avant les premiers vrais clients.
         Après le seed, lancez le Match Engine pour générer les matches.
       </div>
     </div>

@@ -127,19 +127,50 @@ export default async function OpportunityDetailPage({
 
   if (!opp) notFound()
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { data: deck } = await supabase
     .from("opportunity_decks")
     .select("*")
     .eq("opportunity_id", id)
     .maybeSingle()
 
-  const { data: matchData } = await supabase
+  let { data: matchData } = await supabase
     .from("opportunity_matches")
     .select("fit_score, breakdown, ranking_score")
     .eq("opportunity_id", id)
     .order("ranking_score", { ascending: false })
     .limit(1)
     .maybeSingle()
+
+  if (!matchData && user) {
+    const adminSupabase = createAdminClient()
+
+    // Preferred fallback for post-patch rows: row belongs to current user and points back to this opportunity.
+    const { data: linkedMatch } = await adminSupabase
+      .from("opportunity_matches")
+      .select("fit_score, breakdown, ranking_score")
+      .eq("member_id", user.id)
+      .eq("breakdown->>linked_opportunity_id", id)
+      .order("ranking_score", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    matchData = linkedMatch
+
+    // Compatibility fallback for older rows that don't yet have linked_opportunity_id.
+    if (!matchData) {
+      const { data: memberMatch } = await adminSupabase
+        .from("opportunity_matches")
+        .select("fit_score, breakdown, ranking_score")
+        .eq("member_id", user.id)
+        .order("ranking_score", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      matchData = memberMatch
+    }
+  }
 
   // D-Score: from deck (set by qualification engine) or fallback to match breakdown
   const dScore = deck?.d_score ?? matchData?.breakdown?.d_score ?? null
