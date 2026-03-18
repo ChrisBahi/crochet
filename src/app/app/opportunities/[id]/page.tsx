@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { requireUser } from "@/lib/auth/require-user"
 import { notFound } from "next/navigation"
 import Link from "next/link"
@@ -91,11 +92,38 @@ export default async function OpportunityDetailPage({
     analyzing:        lang === "en" ? "Analysis in progress…" : "Analyse en cours…",
   }
 
-  const { data: opp } = await supabase
+  // First try with RLS (own opportunities)
+  let { data: opp } = await supabase
     .from("opportunities")
     .select("*")
     .eq("id", id)
     .maybeSingle()
+
+  // If not found via RLS, check if current user has a match with this opportunity
+  // (counterparty opportunity — use admin client with auth check)
+  if (!opp) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const adminSupabase = createAdminClient()
+      // Verify user is authorized (has a match row with this opportunity_id)
+      const { data: matchCheck } = await adminSupabase
+        .from("opportunity_matches")
+        .select("id")
+        .eq("opportunity_id", id)
+        .eq("member_id", user.id)
+        .limit(1)
+        .maybeSingle()
+
+      if (matchCheck) {
+        const { data: adminOpp } = await adminSupabase
+          .from("opportunities")
+          .select("*")
+          .eq("id", id)
+          .maybeSingle()
+        opp = adminOpp
+      }
+    }
+  }
 
   if (!opp) notFound()
 

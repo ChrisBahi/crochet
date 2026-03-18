@@ -9,7 +9,7 @@ export const maxDuration = 300
 // Only call Claude when the structured pre-score is high enough
 const STRUCTURED_THRESHOLD = 30
 // Only create a match when the final M-Score reaches this level
-const MSCORE_THRESHOLD = 55
+const MSCORE_THRESHOLD = 45
 // Max concurrent Claude calls per batch
 const BATCH_SIZE = 10
 // Max Claude calls per run (avoid timeout with large datasets)
@@ -124,7 +124,11 @@ export async function POST(req: Request) {
   const updatedUserIds = new Set<string>()
 
   for (const { a, b, preScore, dScoreA, dScoreB, p_score, why } of scored) {
-    const fitScore = Math.round(p_score * 0.5 + preScore * 0.3 + ((dScoreA + dScoreB) / 2) * 0.2)
+    // M-Score: p_score is primary driver; d_score only added when available
+    const avgDScore = (dScoreA + dScoreB) / 2
+    const fitScore = avgDScore > 0
+      ? Math.round(p_score * 0.5 + preScore * 0.3 + avgDScore * 0.2)
+      : Math.round(p_score * 0.65 + preScore * 0.35)
 
     if (fitScore < MSCORE_THRESHOLD) { skipped_mscore++; continue }
 
