@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
-import Link from "next/link"
 import { IntroButton } from "@/components/intro-button"
 import { OpenRoomButton } from "@/components/open-room-button"
 import { cookies } from "next/headers"
@@ -13,7 +12,7 @@ type Match = {
   member_id: string
   fit_score: number
   ranking_score: number
-  breakdown: { d_score?: number; p_score?: number } | null
+  breakdown: { d_score?: number; p_score?: number; linked_opportunity_id?: string } | null
   why: string[] | null
   created_at: string
   status?: string
@@ -135,7 +134,10 @@ export default async function MatchesPage({
 
   const typedMatches: Match[] = matchesResult.data ?? []
 
-  const opportunityIds = [...new Set(typedMatches.map(m => m.opportunity_id).filter(Boolean))]
+  const opportunityIds = [...new Set([
+    ...typedMatches.map(m => m.opportunity_id).filter(Boolean),
+    ...typedMatches.map(m => m.breakdown?.linked_opportunity_id).filter(Boolean),
+  ])]
 
   // Use admin client to fetch opportunities — bypasses RLS for seed opps (created_by=null)
   const adminSupabase = createAdminClient()
@@ -215,88 +217,107 @@ export default async function MatchesPage({
           </div>
         ) : (
           typedMatches.map((m, i) => {
-            const opp = oppMap[m.opportunity_id]
+            const listOpp = m.breakdown?.linked_opportunity_id
+              ? oppMap[m.breakdown.linked_opportunity_id]
+              : oppMap[m.opportunity_id]
             const isActive = m.id === selectedId
             const mScoreVal = Math.round(m.fit_score ?? 0)
             return (
-              <Link
+              <form
                 key={m.id}
-                href={`/app/matches?match=${m.id}`}
                 style={{
                   display: "block",
-                  textDecoration: "none",
-                  padding: "16px 24px",
-                  borderBottom: "1px solid #E0DAD0",
-                  background: isActive ? "#F5F0E8" : "transparent",
-                  borderLeft: isActive ? "3px solid #0A0A0A" : "3px solid transparent",
+                  margin: 0,
                 }}
               >
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 6,
-                }}>
-                  <span style={{
-                    fontFamily: "var(--font-jetbrains), monospace",
-                    fontSize: 10,
-                    color: "#7A746E",
-                    letterSpacing: "0.06em",
+                <input type="hidden" name="match" value={m.id} />
+                <button
+                  type="submit"
+                  formAction="/app/matches"
+                  formMethod="get"
+                  style={{
+                    width: "100%",
+                    display: "block",
+                    padding: "16px 24px",
+                    borderBottom: "1px solid #E0DAD0",
+                    background: isActive ? "#F5F0E8" : "transparent",
+                    borderLeft: isActive ? "3px solid #0A0A0A" : "3px solid transparent",
+                    borderTop: "none",
+                    borderRight: "none",
+                    borderBottomStyle: "solid",
+                    borderBottomWidth: "1px",
+                    borderBottomColor: "#E0DAD0",
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 6,
                   }}>
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <StatusPill status={m.status} lang={lang} />
-                </div>
+                    <span style={{
+                      fontFamily: "var(--font-jetbrains), monospace",
+                      fontSize: 10,
+                      color: "#7A746E",
+                      letterSpacing: "0.06em",
+                    }}>
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <StatusPill status={m.status} lang={lang} />
+                  </div>
 
-                <div style={{
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "#0A0A0A",
-                  marginBottom: 4,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}>
-                  {opp?.title ?? t.untitled}
-                </div>
-
-                <div style={{
-                  fontFamily: "var(--font-dm-sans), sans-serif",
-                  fontSize: 11,
-                  color: "#7A746E",
-                  marginBottom: 10,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}>
-                  {[opp?.sector, opp?.geo].filter(Boolean).join(" · ") || "—"}
-                </div>
-
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}>
-                  <span style={{
+                  <div style={{
                     fontFamily: "var(--font-dm-sans), sans-serif",
-                    fontSize: 9,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#0A0A0A",
+                    marginBottom: 4,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}>
+                    {listOpp?.title ?? t.untitled}
+                  </div>
+
+                  <div style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 11,
                     color: "#7A746E",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
+                    marginBottom: 10,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   }}>
-                    M-Score
-                  </span>
-                  <span style={{
-                    fontFamily: "var(--font-jetbrains), monospace",
-                    fontSize: 18,
-                    fontWeight: 700,
-                    color: scoreColor(mScoreVal),
+                    {[listOpp?.sector, listOpp?.geo].filter(Boolean).join(" · ") || "—"}
+                  </div>
+
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                   }}>
-                    {mScoreVal}
-                  </span>
-                </div>
-              </Link>
+                    <span style={{
+                      fontFamily: "var(--font-dm-sans), sans-serif",
+                      fontSize: 9,
+                      color: "#7A746E",
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                    }}>
+                      M-Score
+                    </span>
+                    <span style={{
+                      fontFamily: "var(--font-jetbrains), monospace",
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: scoreColor(mScoreVal),
+                    }}>
+                      {mScoreVal}
+                    </span>
+                  </div>
+                </button>
+              </form>
             )
           })
         )}
