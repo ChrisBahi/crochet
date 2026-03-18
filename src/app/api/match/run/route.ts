@@ -11,7 +11,9 @@ const STRUCTURED_THRESHOLD = 30
 // Only create a match when the final M-Score reaches this level
 const MSCORE_THRESHOLD = 55
 // Max concurrent Claude calls per batch
-const BATCH_SIZE = 5
+const BATCH_SIZE = 10
+// Max Claude calls per run (avoid timeout with large datasets)
+const MAX_CLAUDE_PAIRS = 60
 
 type Opportunity = Record<string, unknown> & {
   id: string
@@ -85,19 +87,26 @@ export async function POST(req: Request) {
       const preScore = structuredScore(a, b)
       if (preScore < STRUCTURED_THRESHOLD) { skipped_structured++; continue }
 
-      const dScoreA: number = (a.opportunity_decks as { d_score?: number } | null)?.d_score ?? 0
-      const dScoreB: number = (b.opportunity_decks as { d_score?: number } | null)?.d_score ?? 0
+      // Skip pairs already matched (both directions)
+      const key1 = `${a.id}:${b.created_by}`
+      const key2 = `${b.id}:${a.created_by}`
+      if (existingPairs.has(key1) && existingPairs.has(key2)) { skipped_duplicate++; continue }
 
-      qualifying.push({ a, b, preScore, dScoreA, dScoreB })
+      qualifying.push({ a, b, preScore, dScoreA: (a.opportunity_decks as { d_score?: number } | null)?.d_score ?? 0, dScoreB: (b.opportunity_decks as { d_score?: number } | null)?.d_score ?? 0 })
     }
   }
 
-  // ── Step 2: score all qualifying pairs in parallel (batches of BATCH_SIZE) ──
+  // Sort by structured score desc, take top MAX_CLAUDE_PAIRS
+  qualifying.sort((x, y) => y.preScore - x.preScore)
+  const toScore = qualifying.slice(0, MAX_CLAUDE_PAIRS)
+  skipped_structured += qualifying.length - toScore.length  // count truncated pairs
+
+  // ── Step 2: score in parallel (batches of BATCH_SIZE) ─────────────
   type ScoredPair = QualifyingPair & { p_score: number; why: string[] }
   const scored: ScoredPair[] = []
 
-  for (let i = 0; i < qualifying.length; i += BATCH_SIZE) {
-    const batch = qualifying.slice(i, i + BATCH_SIZE)
+  for (let i = 0; i < toScore.length; i += BATCH_SIZE) {
+    const batch = toScore.slice(i, i + BATCH_SIZE)
     const results = await Promise.allSettled(
       batch.map(async (pair) => {
         const result = await scoreMatch(pair.a, pair.b)
@@ -203,7 +212,8 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     opportunities_scanned: opportunities.length,
-    pairs_evaluated: qualifying.length,
+    pairs_qualified: qualifying.length,
+    pairs_scored_with_ai: toScore.length,
     matches_created: created,
     skipped: {
       not_complementary: skipped_complement,
