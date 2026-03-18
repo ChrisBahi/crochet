@@ -116,6 +116,8 @@ export default async function MatchesPage({
     memoBody:       lang === "en"
       ? "The full MEMO is accessible through the file or the Secure Room."
       : "Le MEMO complet est accessible via le dossier ou la Secure Room.",
+    yourFile:       lang === "en" ? "Your file" : "Votre dossier",
+    counterpart:    lang === "en" ? "Counterpart" : "Contrepartie",
     openFile:       lang === "en" ? "Open file" : "Ouvrir le dossier",
     accessRoom:     lang === "en" ? "Access Room" : "Accéder à la Room",
     aiConfidential: lang === "en" ? "AI · Confidential" : "IA · Confidentiel",
@@ -150,6 +152,9 @@ export default async function MatchesPage({
   const selectedId = params.match ?? typedMatches[0]?.id
   const selected = typedMatches.find(m => m.id === selectedId)
   const selectedOpp = selected ? oppMap[selected.opportunity_id] : null
+  const selectedLinkedOpp = selected?.breakdown?.linked_opportunity_id
+    ? oppMap[selected.breakdown.linked_opportunity_id]
+    : null
 
   const empty = typedMatches.length === 0
 
@@ -375,8 +380,23 @@ export default async function MatchesPage({
                 letterSpacing: "-0.01em",
                 margin: "0 0 14px",
               }}>
-                {selectedOpp.title}
+                {selectedLinkedOpp ? `${selectedLinkedOpp.title} ↔ ${selectedOpp.title}` : selectedOpp.title}
               </h1>
+
+              {selectedLinkedOpp && (
+                <div style={{
+                  display: "flex",
+                  gap: 18,
+                  flexWrap: "wrap",
+                  marginBottom: 14,
+                  fontFamily: "var(--font-dm-sans), sans-serif",
+                  fontSize: 12,
+                  color: "#7A746E",
+                }}>
+                  <span><strong style={{ color: "#0A0A0A" }}>{t.yourFile}:</strong> {selectedLinkedOpp.title}</span>
+                  <span><strong style={{ color: "#0A0A0A" }}>{t.counterpart}:</strong> {selectedOpp.title}</span>
+                </div>
+              )}
 
               {selectedOpp.description && (
                 <p style={{
