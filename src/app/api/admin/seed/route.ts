@@ -190,12 +190,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 })
   }
 
-  // Check if already seeded (seed records: created_by=null + workspace_id=null)
+  // Look up admin's workspace_id so matches are visible in the matches view
+  const { data: settings } = await supabase
+    .from("user_settings")
+    .select("active_workspace_id")
+    .eq("user_id", user.id)
+    .maybeSingle()
+  let workspaceId: string | null = settings?.active_workspace_id ?? null
+  // Fallback: first workspace the admin belongs to
+  if (!workspaceId) {
+    const { data: member } = await supabase
+      .from("workspace_members")
+      .select("workspace_id")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle()
+    workspaceId = member?.workspace_id ?? null
+  }
+
+  // Check if already seeded (seed records: created_by=null)
   const { count } = await supabase
     .from("opportunities")
     .select("*", { count: "exact", head: true })
     .is("created_by", null)
-    .is("workspace_id", null)
 
   if ((count ?? 0) > 0) {
     return NextResponse.json({
@@ -205,10 +222,11 @@ export async function POST(req: Request) {
     }, { status: 409 })
   }
 
-  // Insert seed opportunities
+  // Insert seed opportunities with admin's workspace_id so matches are visible
+  const seedWithWorkspace = SEED_OPPORTUNITIES.map(o => ({ ...o, workspace_id: workspaceId }))
   const { data: inserted, error } = await supabase
     .from("opportunities")
-    .insert(SEED_OPPORTUNITIES)
+    .insert(seedWithWorkspace)
     .select("id")
 
   if (error) {
@@ -233,12 +251,11 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 })
   }
 
-  // Delete seed opportunities + their matches (seed records: created_by=null + workspace_id=null)
+  // Delete seed opportunities + their matches (seed records: created_by=null)
   const { data: seedOpps } = await supabase
     .from("opportunities")
     .select("id")
     .is("created_by", null)
-    .is("workspace_id", null)
 
   const seedIds = (seedOpps ?? []).map((o: { id: string }) => o.id)
 
