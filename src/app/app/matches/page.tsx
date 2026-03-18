@@ -5,6 +5,8 @@ import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 import { IntroButton } from "@/components/intro-button"
 import { OpenRoomButton } from "@/components/open-room-button"
 import { cookies } from "next/headers"
+import Link from "next/link"
+import { MatchListItemButton } from "./match-list-item-button"
 
 type Match = {
   id: string
@@ -228,34 +230,14 @@ export default async function MatchesPage({
             const isActive = m.id === selectedId
             const mScoreVal = Math.round(m.fit_score ?? 0)
             return (
-              <form
+              <div
                 key={m.id}
                 style={{
                   display: "block",
                   margin: 0,
                 }}
               >
-                <input type="hidden" name="match" value={m.id} />
-                <button
-                  type="submit"
-                  formAction="/app/matches"
-                  formMethod="get"
-                  style={{
-                    width: "100%",
-                    display: "block",
-                    padding: "16px 24px",
-                    borderBottom: "1px solid #E0DAD0",
-                    background: isActive ? "#F5F0E8" : "transparent",
-                    borderLeft: isActive ? "3px solid #0A0A0A" : "3px solid transparent",
-                    borderTop: "none",
-                    borderRight: "none",
-                    borderBottomStyle: "solid",
-                    borderBottomWidth: "1px",
-                    borderBottomColor: "#E0DAD0",
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
+                <MatchListItemButton matchId={m.id} active={isActive}>
                   <div style={{
                     display: "flex",
                     alignItems: "center",
@@ -321,8 +303,8 @@ export default async function MatchesPage({
                       {mScoreVal}
                     </span>
                   </div>
-                </button>
-              </form>
+                </MatchListItemButton>
+              </div>
             )
           })
         )}
