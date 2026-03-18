@@ -43,10 +43,18 @@ export function MatchEngineButton() {
       }
 
       const data: MatchResult = await res.json();
-      setResult({
-        success: true,
-        message: `${data.matches_created ?? 0} match(s) créé(s) sur ${data.opportunities_scanned ?? 0} opportunités analysées.`,
-      });
+      const parts = [`${data.matches_created ?? 0} match(s) créé(s) sur ${data.opportunities_scanned ?? 0} opportunités.`];
+      if (data.skipped) {
+        const s = data.skipped;
+        const details = [
+          s.duplicates > 0 && `${s.duplicates} doublons`,
+          s.not_complementary > 0 && `${s.not_complementary} non complémentaires`,
+          s.low_structured_score > 0 && `${s.low_structured_score} score structuré faible`,
+          s.low_mscore > 0 && `${s.low_mscore} M-Score insuffisant`,
+        ].filter(Boolean);
+        if (details.length) parts.push(`Ignorés : ${details.join(", ")}.`);
+      }
+      setResult({ success: true, message: parts.join(" ") });
     } catch (e: unknown) {
       setResult({ success: false, message: e instanceof Error ? e.message : "Erreur inconnue" });
     } finally {
