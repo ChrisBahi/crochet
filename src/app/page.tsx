@@ -7,10 +7,5 @@ export default async function Home() {
 
   const appHref = session ? "/app" : "/login";
 
-  return (
-    <>
-      <div data-build-marker="probe-20260318-1745" style={{ display: "none" }} />
-      <HomeClient appHref={appHref} />
-    </>
-  );
+  return <HomeClient appHref={appHref} />;
 }
