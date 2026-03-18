@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { requireUser } from "@/lib/auth/require-user"
 import { requireActiveWorkspaceId } from "@/lib/auth/require-workspace"
 import Link from "next/link"
@@ -137,8 +138,10 @@ export default async function MatchesPage({
 
   const opportunityIds = [...new Set(typedMatches.map(m => m.opportunity_id).filter(Boolean))]
 
+  // Use admin client to fetch opportunities — bypasses RLS for seed opps (created_by=null)
+  const adminSupabase = createAdminClient()
   const { data: opportunities } = opportunityIds.length
-    ? await supabase.from("opportunities").select("id,title,description,sector,geo,deal_type,stage").in("id", opportunityIds)
+    ? await adminSupabase.from("opportunities").select("id,title,description,sector,geo,deal_type,stage").in("id", opportunityIds)
     : { data: [] }
 
   const oppMap = Object.fromEntries((opportunities ?? []).map(o => [o.id, o as Opportunity]))
