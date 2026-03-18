@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { requireUser } from "@/lib/auth/require-user"
 import { notFound } from "next/navigation"
 import Link from "next/link"
@@ -19,11 +20,32 @@ export default async function NdaPage({
   const supabase = await createClient()
 
   // Opportunité
-  const { data: opp } = await supabase
+  let { data: opp } = await supabase
     .from("opportunities")
     .select("title, deal_type, sector, created_by")
     .eq("id", id)
     .maybeSingle()
+
+  // Fallback admin si RLS bloque (contrepartie matchée)
+  if (!opp) {
+    const adminSupabase = createAdminClient()
+    const { data: matchCheck } = await adminSupabase
+      .from("opportunity_matches")
+      .select("id")
+      .eq("opportunity_id", id)
+      .eq("member_id", user.id)
+      .limit(1)
+      .maybeSingle()
+
+    if (matchCheck) {
+      const { data: adminOpp } = await adminSupabase
+        .from("opportunities")
+        .select("title, deal_type, sector, created_by")
+        .eq("id", id)
+        .maybeSingle()
+      opp = adminOpp
+    }
+  }
 
   if (!opp) notFound()
 
@@ -55,11 +77,20 @@ export default async function NdaPage({
   const partyNames = [divulgateur.name, recepteur.name].filter(Boolean)
 
   // NDA en cache ou à générer
-  const { data: deck } = await supabase
+  let { data: deck } = await supabase
     .from("opportunity_decks")
     .select("nda_text, nda_reference, nda_date, created_at")
     .eq("opportunity_id", id)
     .maybeSingle()
+
+  if (!deck) {
+    const { data: adminDeck } = await createAdminClient()
+      .from("opportunity_decks")
+      .select("nda_text, nda_reference, nda_date, created_at")
+      .eq("opportunity_id", id)
+      .maybeSingle()
+    deck = adminDeck
+  }
 
   let ndaReference: string = deck?.nda_reference ?? ""
   let ndaDate: string = deck?.nda_date ?? ""
