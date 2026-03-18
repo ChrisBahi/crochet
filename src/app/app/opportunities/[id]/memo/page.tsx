@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { requireUser } from "@/lib/auth/require-user"
 import { notFound } from "next/navigation"
 import Link from "next/link"
@@ -18,19 +19,53 @@ export default async function MemoPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: opp } = await supabase
+  // First try with RLS (own opportunities)
+  let { data: opp } = await supabase
     .from("opportunities")
     .select("title, deal_type, sector, created_at")
     .eq("id", id)
     .maybeSingle()
 
+  // If not found via RLS, check if current user has a match with this opportunity
+  if (!opp) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const adminSupabase = createAdminClient()
+      const { data: matchCheck } = await adminSupabase
+        .from("opportunity_matches")
+        .select("id")
+        .eq("opportunity_id", id)
+        .eq("member_id", user.id)
+        .limit(1)
+        .maybeSingle()
+
+      if (matchCheck) {
+        const { data: adminOpp } = await adminSupabase
+          .from("opportunities")
+          .select("title, deal_type, sector, created_at")
+          .eq("id", id)
+          .maybeSingle()
+        opp = adminOpp
+      }
+    }
+  }
+
   if (!opp) notFound()
 
-  const { data: deck } = await supabase
+  let { data: deck } = await supabase
     .from("opportunity_decks")
     .select("summary, d_score, tags, status, created_at")
     .eq("opportunity_id", id)
     .maybeSingle()
+
+  if (!deck) {
+    const { data: adminDeck } = await createAdminClient()
+      .from("opportunity_decks")
+      .select("summary, d_score, tags, status, created_at")
+      .eq("opportunity_id", id)
+      .maybeSingle()
+    deck = adminDeck
+  }
 
   const memoText: string = deck?.summary ?? ""
   const dScore: number | null = deck?.d_score ?? null
