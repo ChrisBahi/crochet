@@ -163,12 +163,12 @@ const SEED_OPPORTUNITIES = [
   },
   {
     created_by: null,
-    title: "Investisseur immobilier commercial – IDF, tickets 3-15M€",
-    description: "Family office actif en immobilier commercial et résidentiel géré. Recherche actifs Île-de-France : bureaux, commerces, résidences gérées. Taux d'occupation min 80%, résiduel bail 3 ans+. Tickets 3 à 15M€. Approche long terme.",
-    sector: "immobilier",
+    title: "Family office immobilier & diversification – PME IDF, tickets 3-15M€",
+    description: "Family office parisien diversifié : portefeuille immobilier commercial + participations PME. Recherche opportunités de cession PME rentables en Île-de-France, tous secteurs (consumer, services, industrie légère). Tickets 3 à 15M€. Horizon long terme, pas de LBO agressif.",
+    sector: "consumer",
     geo: "france",
     stage: "mature",
-    deal_type: "immobilier",
+    deal_type: "equity",
     amount: 7000000,
     valuation: null,
     revenue: null,
@@ -233,9 +233,38 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  // Insert opportunity_decks with d_scores so M-Score formula uses full weights
+  // Scores reflect realistic AI-generated quality assessments
+  const D_SCORES = [78, 72, 68, 81, 65, 70, 74, 83, 76, 69, 63, 71]
+  const MEMOS = [
+    "SaaS RH profitable à fort taux de rétention (NRR 118%). Dossier structuré, croissance validée, accompagnement fondateur prévu.",
+    "Réseau boulangeries solide en IDF, baux sécurisés et équipes stables. Valorisation cohérente avec l'EBITDA de 14%.",
+    "Cabinet comptable à clientèle PME très fidèle (rétention 97%). Revenu récurrent, cession partielle avec maintien gérant.",
+    "PME industrielle certifiée EN9100, sous-traitant grands donneurs d'ordre. Actifs tangibles importants, EBITDA solide.",
+    "Clinique vétérinaire premium à clientèle fidèle. Succession progressive avec vétérinaire associé restant en place.",
+    "E-commerce mode haut de gamme à forte marge brute. Levée Série A documentée, métriques cohérentes avec la valorisation.",
+    "Family office actif avec track record 15 ans et 12 participations. Tickets bien dimensionnés pour LBO primaire PME.",
+    "Fonds PE transmission industrielle, équipe opérationnelle disponible. Horizon et ticket adaptés au marché cible.",
+    "Repreneur expérimenté avec 2 exits SaaS. Capacité LBO démontrée, profil opérationnel crédible.",
+    "Prêteur alternatif avec processus rapide (10j). Conditions de marché, secteurs ciblés cohérents avec l'offre PME.",
+    "Business angel actif avec portefeuille diversifié. Apport réseau VC Tier 1, tickets adaptés aux dossiers seed/série A.",
+    "Family office diversifié avec capacité de décision rapide. Approche long terme, tickets adaptés aux PME IDF.",
+  ]
+
+  if (inserted && inserted.length > 0) {
+    const decks = inserted.map((opp: { id: string }, idx: number) => ({
+      opportunity_id: opp.id,
+      d_score: D_SCORES[idx] ?? 70,
+      summary: MEMOS[idx] ?? "Dossier qualifié par l'équipe Crochett.",
+      tags: [],
+      status: "done",
+    }))
+    await supabase.from("opportunity_decks").insert(decks)
+  }
+
   return NextResponse.json({
     seeded: inserted?.length ?? 0,
-    message: `${inserted?.length ?? 0} dossiers de seed insérés. Lancez maintenant le Match Engine.`,
+    message: `${inserted?.length ?? 0} dossiers de seed insérés avec d_scores. Lancez maintenant le Match Engine.`,
   })
 }
 

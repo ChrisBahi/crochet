@@ -87,10 +87,10 @@ export async function POST(req: Request) {
       const preScore = structuredScore(a, b)
       if (preScore < STRUCTURED_THRESHOLD) { skipped_structured++; continue }
 
-      // Skip pairs already matched (both directions)
+      // Skip pairs already matched (at least one direction exists)
       const key1 = `${a.id}:${b.created_by}`
       const key2 = `${b.id}:${a.created_by}`
-      if (existingPairs.has(key1) && existingPairs.has(key2)) { skipped_duplicate++; continue }
+      if (existingPairs.has(key1) || existingPairs.has(key2)) { skipped_duplicate++; continue }
 
       qualifying.push({ a, b, preScore, dScoreA: (a.opportunity_decks as { d_score?: number } | null)?.d_score ?? 0, dScoreB: (b.opportunity_decks as { d_score?: number } | null)?.d_score ?? 0 })
     }
