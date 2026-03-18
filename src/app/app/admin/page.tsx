@@ -7,6 +7,7 @@ import { KycActions } from "./kyc-actions";
 import { runAiAnalysis } from "./actions";
 import { MatchEngineButton } from "./match-engine-button";
 import { SeedButton } from "./seed-button";
+import { TestEmailPanel } from "./test-email-panel";
 import { cookies } from "next/headers";
 
 function formatDate(iso: string, locale: string) {
@@ -353,6 +354,9 @@ export default async function AdminPage({
         </div>
         <SeedButton />
       </div>
+
+      {/* Test email panel */}
+      <TestEmailPanel />
 
       {/* View switcher */}
       <div style={{ display: "flex", gap: 0, marginBottom: 0, borderBottom: "1px solid #E0DAD0" }}>
