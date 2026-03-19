@@ -452,8 +452,8 @@ export default async function OpportunityDetailPage({
 
           {/* CTA */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            {/* Restart analysis if error or pending */}
-            {(deckStatus === "error" || deckStatus === "pending") && (
+            {/* Restart / Regenerate analysis */}
+            {(deckStatus === "error" || deckStatus === "pending" || deckStatus === "done") && (
               <form action={async () => {
                 "use server"
                 const { createClient } = await import("@/lib/supabase/server")
@@ -470,9 +470,9 @@ export default async function OpportunityDetailPage({
               }}>
                 <button type="submit" style={{
                   padding: "12px 28px",
-                  background: "#0A0A0A",
-                  color: "#FFFFFF",
-                  border: "none",
+                  background: deckStatus === "done" ? "transparent" : "#0A0A0A",
+                  color: deckStatus === "done" ? "#0A0A0A" : "#FFFFFF",
+                  border: deckStatus === "done" ? "1px solid #0A0A0A" : "none",
                   cursor: "pointer",
                   fontFamily: "var(--font-dm-sans), sans-serif",
                   fontSize: 12,
@@ -480,7 +480,7 @@ export default async function OpportunityDetailPage({
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                 }}>
-                  {t.restartAnalysis}
+                  {deckStatus === "done" ? "Regénérer le MEMO" : t.restartAnalysis}
                 </button>
               </form>
             )}
