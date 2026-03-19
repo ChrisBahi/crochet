@@ -14,6 +14,13 @@ interface QualAnswers {
   tunnel: Tunnel | null;
   intent_size: string;
   intent_horizon: string;
+  // Q4 + Q5 par tunnel
+  employees_range: string;  // cedant
+  financial_health: string; // cedant
+  target_sectors: string;   // repreneur
+  acq_budget: string;       // repreneur
+  investment_type: string;  // fonds
+  aum_range: string;        // fonds
 }
 
 // ── Traductions ───────────────────────────────────────────────────────────────
@@ -52,6 +59,68 @@ const tx = {
           { value: "6 – 18 mois", label: "6 – 18 mois", sub: "Projet en cours" },
           { value: "> 18 mois",   label: "> 18 mois",   sub: "Projet à terme" },
           { value: "Je découvre", label: "Je découvre",  sub: "Pas d'horizon défini" },
+        ],
+      },
+      // Q4 — spécifiques par tunnel
+      q4_cedant: {
+        label: "Quatrième question",
+        question: "Nombre de salariés",
+        options: [
+          { value: "< 5",     label: "< 5",     sub: "Micro-entreprise" },
+          { value: "5 – 20",  label: "5 – 20",  sub: "TPE" },
+          { value: "20 – 50", label: "20 – 50", sub: "PME" },
+          { value: "> 50",    label: "> 50",    sub: "Entreprise structurée" },
+        ],
+      },
+      q4_repreneur: {
+        label: "Quatrième question",
+        question: "Secteur(s) d'intérêt",
+        options: [
+          { value: "Industrie / BTP",   label: "Industrie / BTP",   sub: "Production, construction, logistique" },
+          { value: "Services B2B",      label: "Services B2B",      sub: "Conseil, IT, facility management" },
+          { value: "Commerce / Retail", label: "Commerce / Retail", sub: "Distribution, e-commerce, franchise" },
+          { value: "Tous secteurs",     label: "Tous secteurs",     sub: "Pas de filtre sectoriel" },
+        ],
+      },
+      q4_fonds: {
+        label: "Quatrième question",
+        question: "Type d'investissement",
+        options: [
+          { value: "Capital-développement", label: "Capital-développement", sub: "Croissance, expansion" },
+          { value: "LBO / Transmission",    label: "LBO / Transmission",    sub: "Rachat avec effet de levier" },
+          { value: "Dette privée",          label: "Dette privée",          sub: "Obligations, mezzanine" },
+          { value: "Tout type",             label: "Tout type",             sub: "Opportuniste" },
+        ],
+      },
+      // Q5 — spécifiques par tunnel
+      q5_cedant: {
+        label: "Cinquième question",
+        question: "Situation financière de l'entreprise",
+        options: [
+          { value: "En croissance",    label: "En croissance",    sub: "CA en hausse, rentable" },
+          { value: "Stable",           label: "Stable",           sub: "CA stable, résultat équilibré" },
+          { value: "En retournement",  label: "En retournement",  sub: "Difficultés passagères" },
+          { value: "Déficitaire",      label: "Déficitaire",      sub: "Pertes constatées" },
+        ],
+      },
+      q5_repreneur: {
+        label: "Cinquième question",
+        question: "Budget d'acquisition disponible",
+        options: [
+          { value: "< 500k€",    label: "< 500k€",    sub: "Apport personnel ou emprunt" },
+          { value: "500k – 2M€", label: "500k – 2M€", sub: "PME cible" },
+          { value: "2 – 10M€",   label: "2 – 10M€",   sub: "ETI / croissance externe" },
+          { value: "> 10M€",     label: "> 10M€",     sub: "Opération structurée" },
+        ],
+      },
+      q5_fonds: {
+        label: "Cinquième question",
+        question: "Encours géré (AUM)",
+        options: [
+          { value: "< 10M€",      label: "< 10M€",      sub: "Fonds émergent / family office" },
+          { value: "10 – 100M€",  label: "10 – 100M€",  sub: "Fonds mid-market" },
+          { value: "100 – 500M€", label: "100 – 500M€", sub: "Fonds institutionnel" },
+          { value: "> 500M€",     label: "> 500M€",     sub: "Grand fonds / infrastructure" },
         ],
       },
     },
@@ -143,14 +212,44 @@ function Field({
 function QualScreen({
   step, qual, onAnswer, onBack,
 }: {
-  step: 1 | 2 | 3;
+  step: 1 | 2 | 3 | 4 | 5;
   qual: QualAnswers;
   onAnswer: (value: string) => void;
   onBack: () => void;
 }) {
   const t = tx.fr.qual;
-  const q = step === 1 ? t.q1 : step === 2 ? t.q2 : t.q3;
-  const currentValue = step === 1 ? qual.tunnel : step === 2 ? qual.intent_size : qual.intent_horizon;
+
+  function getQ() {
+    if (step === 1) return t.q1;
+    if (step === 2) return t.q2;
+    if (step === 3) return t.q3;
+    if (step === 4) {
+      if (qual.tunnel === "cedant")    return t.q4_cedant;
+      if (qual.tunnel === "repreneur") return t.q4_repreneur;
+      return t.q4_fonds;
+    }
+    // step 5
+    if (qual.tunnel === "cedant")    return t.q5_cedant;
+    if (qual.tunnel === "repreneur") return t.q5_repreneur;
+    return t.q5_fonds;
+  }
+
+  function getCurrentValue() {
+    if (step === 1) return qual.tunnel;
+    if (step === 2) return qual.intent_size;
+    if (step === 3) return qual.intent_horizon;
+    if (step === 4) {
+      if (qual.tunnel === "cedant")    return qual.employees_range;
+      if (qual.tunnel === "repreneur") return qual.target_sectors;
+      return qual.investment_type;
+    }
+    if (qual.tunnel === "cedant")    return qual.financial_health;
+    if (qual.tunnel === "repreneur") return qual.acq_budget;
+    return qual.aum_range;
+  }
+
+  const q = getQ();
+  const currentValue = getCurrentValue();
 
   return (
     <div style={{
@@ -180,7 +279,7 @@ function QualScreen({
         </Link>
         {/* Progress dots */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {[1, 2, 3].map((n) => (
+          {[1, 2, 3, 4, 5].map((n) => (
             <div key={n} style={{
               width: n === step ? 20 : 6,
               height: 6,
@@ -210,7 +309,7 @@ function QualScreen({
           fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase",
           color: "#555", marginBottom: 24,
         }}>
-          {t.step(step, 3)}
+          {t.step(step, 5)}
         </div>
 
         {/* Question */}
@@ -295,8 +394,8 @@ function RegisterForm() {
   const refSource = searchParams.get("ref") || null;
   const roleParam = searchParams.get("role") || "";
 
-  // Step : 'qual1' | 'qual2' | 'qual3' | 'form'
-  const [step, setStep] = useState<"qual1" | "qual2" | "qual3" | "form">(
+  // Step : 'qual1' | 'qual2' | 'qual3' | 'qual4' | 'qual5' | 'form'
+  const [step, setStep] = useState<"qual1" | "qual2" | "qual3" | "qual4" | "qual5" | "form">(
     roleParam ? "form" : "qual1"
   );
 
@@ -304,6 +403,12 @@ function RegisterForm() {
     tunnel: null,
     intent_size: "",
     intent_horizon: "",
+    employees_range: "",
+    financial_health: "",
+    target_sectors: "",
+    acq_budget: "",
+    investment_type: "",
+    aum_range: "",
   });
 
   const [form, setForm] = useState({
@@ -332,6 +437,18 @@ function RegisterForm() {
   }
   function handleQ3(value: string) {
     setQual((q) => ({ ...q, intent_horizon: value }));
+    setStep("qual4");
+  }
+  function handleQ4(value: string) {
+    if (qual.tunnel === "cedant")    setQual((q) => ({ ...q, employees_range: value }));
+    if (qual.tunnel === "repreneur") setQual((q) => ({ ...q, target_sectors: value }));
+    if (qual.tunnel === "fonds")     setQual((q) => ({ ...q, investment_type: value }));
+    setStep("qual5");
+  }
+  function handleQ5(value: string) {
+    if (qual.tunnel === "cedant")    setQual((q) => ({ ...q, financial_health: value }));
+    if (qual.tunnel === "repreneur") setQual((q) => ({ ...q, acq_budget: value }));
+    if (qual.tunnel === "fonds")     setQual((q) => ({ ...q, aum_range: value }));
     setStep("form");
   }
 
@@ -352,6 +469,12 @@ function RegisterForm() {
       tunnel: qual.tunnel,
       intent_size: qual.intent_size || null,
       intent_horizon: qual.intent_horizon || null,
+      employees_range: qual.employees_range || null,
+      financial_health: qual.financial_health || null,
+      target_sectors: qual.target_sectors || null,
+      acq_budget: qual.acq_budget || null,
+      investment_type: qual.investment_type || null,
+      aum_range: qual.aum_range || null,
     });
     setLoading(false);
     if (error) {
@@ -387,6 +510,24 @@ function RegisterForm() {
         step={3} qual={qual}
         onAnswer={handleQ3}
         onBack={() => setStep("qual2")}
+      />
+    );
+  }
+  if (step === "qual4") {
+    return (
+      <QualScreen
+        step={4} qual={qual}
+        onAnswer={handleQ4}
+        onBack={() => setStep("qual3")}
+      />
+    );
+  }
+  if (step === "qual5") {
+    return (
+      <QualScreen
+        step={5} qual={qual}
+        onAnswer={handleQ5}
+        onBack={() => setStep("qual4")}
       />
     );
   }
