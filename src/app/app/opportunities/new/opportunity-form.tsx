@@ -139,6 +139,18 @@ const QUESTIONNAIRE: Record<string, QuestionField[]> = {
       ],
     },
     {
+      name: "q_levees_passees",
+      label: "Levées de fonds passées",
+      type: "select",
+      options: [
+        { value: "aucune", label: "Aucune — autofinancé" },
+        { value: "amorçage", label: "Amorçage (< 500 k€)" },
+        { value: "serie_a", label: "Série A (500 k€ – 3 M€)" },
+        { value: "serie_b_plus", label: "Série B+ (> 3 M€)" },
+        { value: "oui_non_precise", label: "Oui — montant non précisé" },
+      ],
+    },
+    {
       name: "q_revenue_model",
       label: "Modèle économique principal",
       type: "select",
