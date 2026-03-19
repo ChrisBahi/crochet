@@ -10,7 +10,8 @@ const t = {
     tagline: "Infrastructure · Transactions privées",
     h1a: "Le signal,",
     h1b: "pas le bruit.",
-    desc: "Crochet. organise les introductions qualifiées entre acteurs sérieux du marché privé. Accès sur invitation. Matching algorithmique. Discrétion absolue.",
+    desc: "Crochet. est une infrastructure privée qui facilite les introductions entre entrepreneurs et investisseurs.",
+    descItalic: "Discrétion absolue.",
     badge: "Accès sur invitation · Données confidentielles · Infrastructure sécurisée",
     cardHeader: "Signal actif — OPP-2847",
     cardTitle: "Services industriels · Lyon",
@@ -48,7 +49,8 @@ const t = {
     tagline: "Infrastructure · Private Transactions",
     h1a: "The signal,",
     h1b: "not the noise.",
-    desc: "Crochet. organises qualified introductions between serious private market participants. Invitation-only access. Algorithmic matching. Absolute discretion.",
+    desc: "Crochet. is a private infrastructure facilitating introductions between entrepreneurs and investors.",
+    descItalic: "Absolute discretion.",
     badge: "Invitation-only · Confidential data · Secure infrastructure",
     cardHeader: "Active signal — OPP-2847",
     cardTitle: "Industrial services · Lyon",
@@ -182,7 +184,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 16, color: "#5A5450", margin: "0 0 20px", lineHeight: 1.75, maxWidth: 480,
             }}>
-              {tx.desc}
+              {tx.desc}{" "}<em>{tx.descItalic}</em>
             </p>
             <div style={{
               marginTop: 16, fontFamily: "var(--font-jetbrains), monospace",
