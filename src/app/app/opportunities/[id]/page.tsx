@@ -458,16 +458,40 @@ export default async function OpportunityDetailPage({
               <form action={async () => {
                 "use server"
                 const { createClient } = await import("@/lib/supabase/server")
+                const { createAdminClient } = await import("@/lib/supabase/admin")
                 const { runQualification } = await import("@/lib/qualify/run")
                 const supabase = await createClient()
                 const { data: { user } } = await supabase.auth.getUser()
                 if (user) {
                   try {
-                    await runQualification(supabase, id, { id: user.id, email: user.email ?? undefined })
+                    let qualificationClient = supabase
+
+                    const { data: accessibleOpp } = await supabase
+                      .from("opportunities")
+                      .select("id")
+                      .eq("id", id)
+                      .maybeSingle()
+
+                    if (!accessibleOpp) {
+                      const adminSupabase = createAdminClient()
+                      const { data: matchCheck } = await adminSupabase
+                        .from("opportunity_matches")
+                        .select("id")
+                        .eq("opportunity_id", id)
+                        .eq("member_id", user.id)
+                        .limit(1)
+                        .maybeSingle()
+
+                      if (!matchCheck) return
+                      qualificationClient = adminSupabase
+                    }
+
+                    await runQualification(qualificationClient, id, { id: user.id, email: user.email ?? undefined })
                   } catch { /* error status set by runQualification */ }
                 }
                 const { revalidatePath } = await import("next/cache")
                 revalidatePath(`/app/opportunities/${id}`)
+                revalidatePath(`/app/opportunities/${id}/memo`)
               }}>
                 <button type="submit" style={{
                   padding: "12px 28px",
