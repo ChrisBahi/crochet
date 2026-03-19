@@ -11,6 +11,8 @@ import { LangProvider } from "@/lib/lang/context";
 export const metadata: Metadata = {
   title: "Crochet — Infrastructure privée de transactions",
   description: "CROCHET transforme un dossier brut en signal investissable.",
+  icons: { icon: "/favicon.svg", apple: "/apple-touch-icon.svg" },
+  openGraph: { images: [{ url: "/og-image.svg", width: 1200, height: 630 }] },
 };
 
 export default function RootLayout({
