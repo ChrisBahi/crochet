@@ -4,6 +4,17 @@ export const metadata: Metadata = {
   title: "Partenariat Sowefund × Crochet.",
   description: "One-pager partenariat — réunion co-distribution M&A PME",
   robots: "noindex",
+  openGraph: {
+    title: "Partenariat Sowefund × Crochet.",
+    description: "One-pager partenariat — réunion co-distribution M&A PME",
+    url: "/onepager/sowefund",
+    images: [],
+  },
+  twitter: {
+    title: "Partenariat Sowefund × Crochet.",
+    description: "One-pager partenariat — réunion co-distribution M&A PME",
+    images: [],
+  },
 }
 
 export default function OnePageSowefund() {

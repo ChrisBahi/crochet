@@ -4,6 +4,17 @@ export const metadata: Metadata = {
   title: "Programme Apporteur — Crochet. × Experts-comptables",
   description: "One-pager programme apporteur d'affaires — rev share 20%",
   robots: "noindex",
+  openGraph: {
+    title: "Programme Apporteur — Crochet. × Experts-comptables",
+    description: "One-pager programme apporteur d'affaires — rev share 20%",
+    url: "/onepager/experts-comptables",
+    images: [],
+  },
+  twitter: {
+    title: "Programme Apporteur — Crochet. × Experts-comptables",
+    description: "One-pager programme apporteur d'affaires — rev share 20%",
+    images: [],
+  },
 }
 
 export default function OnePageExpertsComptables() {
