@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#F5F3EE"/>
+  <rect x="180" y="165" width="300" height="300" rx="68" fill="#0A0A0A"/>
+  <circle cx="415" cy="240" r="46" fill="#F5F3EE"/>
+  <circle cx="415" cy="390" r="46" fill="#F5F3EE"/>
+  <circle cx="243" cy="315" r="64" fill="#F5F3EE"/>
+  <line x1="415" y1="240" x2="307" y2="315" stroke="#F5F3EE" stroke-width="52" stroke-linecap="round"/>
+  <line x1="415" y1="390" x2="307" y2="315" stroke="#F5F3EE" stroke-width="52" stroke-linecap="round"/>
+  <text x="530" y="340" font-family="Georgia, serif" font-weight="700" font-size="96" fill="#0A0A0A" letter-spacing="-2">Crochet.</text>
+  <text x="532" y="390" font-family="monospace" font-size="18" fill="#AAAAAA" letter-spacing="6">SIGNAL · SCORE · MATCH</text>
+</svg>
