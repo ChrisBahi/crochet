@@ -9,10 +9,20 @@ import "./globals.css";
 import { LangProvider } from "@/lib/lang/context";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://crochett.ai"),
   title: "Crochet — Infrastructure privée de transactions",
   description: "CROCHET transforme un dossier brut en signal investissable.",
-  icons: { icon: "/favicon.svg", apple: "/apple-touch-icon.svg" },
-  openGraph: { images: [{ url: "/og-image.svg", width: 1200, height: 630 }] },
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
+  },
+  openGraph: {
+    images: [{ url: "/og-image.svg", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.svg"],
+  },
 };
 
 export default function RootLayout({
