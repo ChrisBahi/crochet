@@ -50,7 +50,7 @@ export async function requestIntro(matchId: string, opportunityId: string) {
       type: "intro_requested",
       title: "Intro demandée",
       body: "Une contrepartie souhaite entrer en contact. Accédez à votre dossier pour confirmer.",
-      link: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/app/matches`,
+      link: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://crochett.ai"}/app/matches`,
       email: undefined,
     })
   }
@@ -127,7 +127,7 @@ export async function activateRoom(matchId: string, opportunityId: string) {
       type: "intro_requested",
       title: "Secure Room ouverte",
       body: "La Room sécurisée est désormais active. Accédez-y pour commencer l'échange.",
-      link: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/app/rooms/${room.id}`,
+      link: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://crochett.ai"}/app/rooms/${room.id}`,
       email: undefined,
     })
   }

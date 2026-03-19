@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://crochett.ai";
   const secret = process.env.MATCH_ENGINE_SECRET ?? "";
 
   const res = await fetch(`${baseUrl}/api/match/run`, {

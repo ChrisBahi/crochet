@@ -197,7 +197,7 @@ export async function setVerificationStatus(
 export async function runMatchEngine(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
   await requireAdmin();
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://crochett.ai";
   const secret = process.env.MATCH_ENGINE_SECRET ?? "";
 
   const res = await fetch(`${baseUrl}/api/match/run`, {

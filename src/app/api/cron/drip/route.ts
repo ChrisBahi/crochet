@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // Config in vercel.json
 export const maxDuration = 120;
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
+import { APP_URL } from "@/lib/app-url";
 
 // ── Email templates ───────────────────────────────────────────
 

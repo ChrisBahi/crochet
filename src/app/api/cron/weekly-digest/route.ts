@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   }
 
   const supabase = createAdminClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://crochett.ai";
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   // Fetch all members with at least 1 new match this week
