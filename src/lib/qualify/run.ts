@@ -16,6 +16,7 @@ const QUESTION_LABELS: Record<string, string> = {
   q_employees: "Nombre d'employés (ETP)",
   q_dette_bancaire: "Niveau de dette bancaire",
   q_non_concurrence: "Clause de non-concurrence souhaitée",
+  q_levees_passees: "Levées de fonds passées",
   q_revenue_model: "Modèle économique",
   q_revenue_trend: "Évolution du CA sur 3 ans",
   q_debt_purpose: "Objet du financement",
