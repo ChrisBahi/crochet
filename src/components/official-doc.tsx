@@ -25,29 +25,74 @@ interface OfficialDocProps {
   children?: React.ReactNode
 }
 
-// Rend le texte avec les noms de parties + termes contractuels en gras
-function renderContent(text: string, partyNames: string[]): React.ReactNode {
-  const contractTerms: string[] = []
-  const allTerms = [...new Set([...partyNames, ...contractTerms])].filter(Boolean)
-  if (allTerms.length === 0) return text
-  const escaped = allTerms.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+function normalizePartyNames(partyNames: string[]) {
+  return [...new Set(partyNames.map((name) => name.trim()).filter(Boolean))]
+}
+
+function isAllCapsWord(value: string) {
+  const letters = value.replace(/[^A-Za-zÀ-ÿ]/g, "")
+  return letters.length >= 3 && letters === letters.toUpperCase()
+}
+
+function renderInlineText(text: string, partyNames: string[]): React.ReactNode {
+  const normalizedPartyNames = normalizePartyNames(partyNames)
+  if (normalizedPartyNames.length === 0) return text
+
+  const escaped = normalizedPartyNames.map(escapeRegExp)
   const pattern = new RegExp(`(${escaped.join("|")})`, "gi")
   const parts = text.split(pattern)
   return (
     <>
       {parts.map((part, i) => {
-        const isPartyName = partyNames.find(n => n.toLowerCase() === part.toLowerCase())
-        const isContractTerm = contractTerms.find(n => n.toLowerCase() === part.toLowerCase())
-        if (isPartyName) {
-          return <strong key={i} style={{ fontWeight: 700 }}>{part.toUpperCase()}</strong>
-        }
-        if (isContractTerm) {
+        const partyName = normalizedPartyNames.find((name) => name.toLowerCase() === part.toLowerCase())
+        if (partyName) {
           return <strong key={i} style={{ fontWeight: 700 }}>{part}</strong>
         }
         return <span key={i}>{part}</span>
       })}
     </>
   )
+}
+
+function renderParagraphText(text: string, partyNames: string[]): React.ReactNode {
+  const normalizedPartyNames = normalizePartyNames(partyNames)
+  if (normalizedPartyNames.length === 0) return text
+
+  const sortedTerms = [...normalizedPartyNames].sort((a, b) => b.length - a.length)
+  const escaped = sortedTerms.map(escapeRegExp)
+  const pattern = new RegExp(`\\b(${escaped.join("|")})\\b|\\b([A-ZÀ-Ÿ][A-ZÀ-Ÿ\\s'’.-]{2,})\\b`, "g")
+
+  const nodes: React.ReactNode[] = []
+  let lastIndex = 0
+
+  for (const match of text.matchAll(pattern)) {
+    const fullMatch = match[0]
+    const start = match.index ?? 0
+    if (start > lastIndex) nodes.push(<span key={`text-${lastIndex}`}>{text.slice(lastIndex, start)}</span>)
+
+    const partyName = normalizedPartyNames.find((name) => name.toLowerCase() === fullMatch.toLowerCase())
+    if (partyName) {
+      nodes.push(<strong key={`party-${start}`} style={{ fontWeight: 700 }}>{fullMatch}</strong>)
+    } else if (isAllCapsWord(fullMatch)) {
+      nodes.push(<span key={`caps-${start}`}>{fullMatch}</span>)
+    } else {
+      nodes.push(<span key={`raw-${start}`}>{fullMatch}</span>)
+    }
+
+    lastIndex = start + fullMatch.length
+  }
+
+  if (lastIndex < text.length) nodes.push(<span key={`text-${lastIndex}`}>{text.slice(lastIndex)}</span>)
+  return <>{nodes}</>
+}
+
+// Rend le texte avec les noms de parties en gras, sans forcer les majuscules.
+function renderContent(text: string, partyNames: string[]): React.ReactNode {
+  return renderParagraphText(text, partyNames)
 }
 
 function formatGeneratedAt(iso: string): string {
@@ -318,7 +363,7 @@ export function OfficialDoc({
             marginBottom: 48,
             textAlign: "justify",
           }}>
-            {renderContent(sections[0].content, partyNames)}
+            {renderInlineText(sections[0].content, partyNames)}
           </p>
         )}
 

@@ -1,7 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk"
 import type { DocSection } from "@/components/official-doc"
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null
 
 export interface NdaParty {
   name: string
@@ -131,26 +133,115 @@ Règles :
 - Réponds UNIQUEMENT avec le JSON, sans markdown.`
 }
 
+function buildDeterministicSections(input: NdaInput): DocSection[] {
+  const opts = input.options ?? NDA_OPTIONS_DEFAULT
+  const divulgateur = partyLine(input.divulgateur)
+  const recepteur = partyLine(input.recepteur)
+  const perimetreLabel = {
+    financier: "les données financières, comptables, de valorisation et de projections",
+    complet: "les informations commerciales, financières, techniques et stratégiques relatives au dossier",
+    etendu: "toutes les informations commerciales, clients, RH, techniques, financières et stratégiques relatives au dossier",
+  }[opts.perimetre]
+  const exclusiviteLabel = opts.exclusivite === "non"
+    ? "Aucune exclusivité n'est consentie au titre du présent Accord."
+    : `La Partie Divulgatrice accorde à la Partie Réceptrice une exclusivité de ${opts.exclusivite} à compter de la signature du présent Accord.`
+  const partageLabel = {
+    accord: "La communication aux conseils de la Partie Réceptrice reste soumise à l'accord écrit préalable de la Partie Divulgatrice et à une obligation de confidentialité équivalente.",
+    libre: "La Partie Réceptrice peut partager les Informations Confidentielles avec ses conseils directs, sous réserve qu'ils soient eux-mêmes tenus à une obligation de confidentialité équivalente.",
+    interdit: "Aucune communication à un tiers n'est autorisée sans l'accord écrit préalable de la Partie Divulgatrice.",
+  }[opts.partage_tiers]
+
+  return [
+    {
+      number: "01",
+      title: "PARTIES",
+      content: `Le présent accord de confidentialité (l'« Accord ») est conclu entre ${divulgateur}, ci-après la « Partie Divulgatrice », et ${recepteur}, ci-après la « Partie Réceptrice ».\n\nLes Parties déclarent intervenir dans le cadre de l'étude confidentielle de l'opportunité « ${input.opportunityTitle} » et disposer de la capacité nécessaire pour s'engager au titre du présent Accord.`,
+    },
+    {
+      number: "02",
+      title: "OBJET",
+      content: `Le présent Accord a pour objet d'encadrer la communication d'informations confidentielles relatives à l'opportunité « ${input.opportunityTitle} », de type ${input.dealType ?? "non précisé"}, dans le secteur ${input.sector ?? "non précisé"}.\n\nLa Partie Réceptrice s'engage à n'utiliser les Informations Confidentielles qu'aux seules fins d'évaluer une éventuelle opération avec la Partie Divulgatrice.`,
+    },
+    {
+      number: "03",
+      title: "DÉFINITION DES INFORMATIONS CONFIDENTIELLES",
+      content: `Sont considérées comme Informations Confidentielles ${perimetreLabel}, ainsi que tout document, échange oral, fichier, accès plateforme, donnée ou renseignement communiqué directement ou indirectement par la Partie Divulgatrice.\n\nLes Informations Confidentielles couvrent également l'existence même des discussions, l'identité des Parties, les conditions envisagées de l'opération et tout document consulté dans la Secure Room Crochet.`,
+    },
+    {
+      number: "04",
+      title: "OBLIGATIONS DES PARTIES",
+      content: `La Partie Réceptrice s'engage à protéger strictement les Informations Confidentielles, à ne pas les divulguer, copier, reproduire ou exploiter en dehors de l'objet du présent Accord.\n\nElle mettra en oeuvre toutes les mesures raisonnables de sécurité, au moins équivalentes à celles utilisées pour ses propres informations sensibles, et limitera l'accès aux seules personnes ayant besoin d'en connaître.`,
+    },
+    {
+      number: "05",
+      title: "EXCEPTIONS",
+      content: `Ne constituent pas des Informations Confidentielles les informations qui étaient déjà légalement connues de la Partie Réceptrice, qui sont tombées dans le domaine public sans faute de sa part, ou qui lui ont été communiquées licitement par un tiers non tenu à confidentialité.\n\nLa charge de la preuve de l'une de ces exceptions incombe à la Partie Réceptrice.`,
+    },
+    {
+      number: "06",
+      title: "DURÉE ET EXCLUSIVITÉ",
+      content: `Les obligations de confidentialité s'appliquent pendant ${opts.duree} an${opts.duree > 1 ? "s" : ""} à compter de la signature du présent Accord.\n\n${exclusiviteLabel}`,
+    },
+    {
+      number: "07",
+      title: "COMMUNICATION AUX TIERS",
+      content: `${partageLabel}\n\nLa Partie Réceptrice demeure pleinement responsable de tout manquement commis par les tiers auxquels elle aurait valablement communiqué les Informations Confidentielles.`,
+    },
+    {
+      number: "08",
+      title: "SANCTIONS ET RESPONSABILITÉ",
+      content: `Toute violation du présent Accord pourra entraîner, sans préjudice de tous dommages et intérêts, la suspension immédiate des accès, la restitution ou destruction des informations transmises et toute mesure utile pour faire cesser le trouble.\n\nLes Parties reconnaissent que toute divulgation non autorisée pourrait causer un préjudice irréparable à la Partie Divulgatrice.`,
+    },
+    {
+      number: "09",
+      title: "DROIT APPLICABLE ET JURIDICTION",
+      content: `Le présent Accord est régi par le droit français.\n\nTout litige relatif à sa validité, son interprétation, son exécution ou sa cessation relèvera de la compétence exclusive des tribunaux de Paris, nonobstant pluralité de défendeurs ou appel en garantie.`,
+    },
+  ]
+}
+
 export async function generateNda(input: NdaInput): Promise<NdaResult> {
   const date = formatDate(new Date())
   const ref = `NDA-CROCHET-${input.opportunityId.slice(0, 8).toUpperCase()}`
   const opts = input.options ?? NDA_OPTIONS_DEFAULT
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 4096,
-    messages: [{ role: "user", content: buildNdaPrompt(input, date) }],
-  })
+  if (!client) {
+    return {
+      reference: ref,
+      date,
+      sections: buildDeterministicSections(input),
+      options: opts,
+    }
+  }
 
-  const rawText = (message.content[0] as { type: string; text: string }).text.trim()
-  const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw new Error("No JSON object found in NDA response")
-  const parsed = JSON.parse(jsonMatch[0]) as { sections?: DocSection[] }
+  try {
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 4096,
+      messages: [{ role: "user", content: buildNdaPrompt(input, date) }],
+    })
 
-  return {
-    reference: ref,
-    date,
-    sections: parsed.sections ?? [],
-    options: opts,
+    const rawText = (message.content[0] as { type: string; text: string }).text.trim()
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error("No JSON object found in NDA response")
+    const parsed = JSON.parse(jsonMatch[0]) as { sections?: DocSection[] }
+    const sections = (parsed.sections ?? []).filter((section) => section?.title && section?.content)
+
+    if (sections.length === 0) throw new Error("No sections returned in NDA response")
+
+    return {
+      reference: ref,
+      date,
+      sections,
+      options: opts,
+    }
+  } catch (error) {
+    console.error("[nda/generate:fallback]", error)
+    return {
+      reference: ref,
+      date,
+      sections: buildDeterministicSections(input),
+      options: opts,
+    }
   }
 }

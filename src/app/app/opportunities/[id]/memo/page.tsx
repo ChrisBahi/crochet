@@ -28,10 +28,69 @@ function normalizeMemoTitle(raw: string) {
   return map[cleaned.toUpperCase()] ?? cleaned
 }
 
-function parseMemoSections(memoText: string): DocSection[] {
-  const matches = [...memoText.matchAll(/§\s*(\d+)\s+([^:]+?)\s*:\s*([\s\S]*?)(?=(?:\n\s*§\s*\d+\s+)|$)/gu)]
+const KNOWN_MEMO_TITLES = [
+  "SYNTHÈSE EXÉCUTIVE",
+  "PROPOSITION DE VALEUR & MODÈLE ÉCONOMIQUE",
+  "TRACTION & DONNÉES FINANCIÈRES",
+  "STRUCTURATION DU DEAL",
+  "FACTEURS D'ATTRACTIVITÉ & RISQUES",
+  "VERDICT CROCHET",
+] as const
 
-  if (matches.length === 0) {
+function splitTitleAndContent(raw: string) {
+  const normalized = raw.trim()
+  const firstLineBreak = normalized.search(/\n/)
+  const firstLine = (firstLineBreak >= 0 ? normalized.slice(0, firstLineBreak) : normalized).trim()
+  const rest = (firstLineBreak >= 0 ? normalized.slice(firstLineBreak + 1) : "").trim()
+
+  if (firstLine.includes(":")) {
+    const [titlePart, ...contentParts] = firstLine.split(":")
+    return {
+      title: normalizeMemoTitle(titlePart),
+      content: [contentParts.join(":").trim(), rest].filter(Boolean).join("\n").trim(),
+    }
+  }
+
+  const upperFirstLine = firstLine.toUpperCase()
+  const gluedTitle = KNOWN_MEMO_TITLES.find((candidate) => upperFirstLine.startsWith(candidate))
+  if (gluedTitle) {
+    const inlineContent = firstLine.slice(gluedTitle.length).trim()
+    return {
+      title: normalizeMemoTitle(gluedTitle),
+      content: [inlineContent, rest].filter(Boolean).join("\n").trim(),
+    }
+  }
+
+  return {
+    title: normalizeMemoTitle(firstLine),
+    content: rest,
+  }
+}
+
+function parseMemoSections(memoText: string): DocSection[] {
+  const blocks = memoText
+    .split(/(?=\n?\s*§\s*\d+\s+)/u)
+    .map((block) => block.trim())
+    .filter(Boolean)
+
+  const parsedBlocks = blocks
+    .map((block) => {
+      const match = block.match(/^§\s*(\d+)\s+([\s\S]*)$/u)
+      if (!match) return null
+
+      const sectionNumber = Number.parseInt(match[1] ?? "", 10)
+      const remainder = (match[2] ?? "").trim()
+      const { title, content } = splitTitleAndContent(remainder)
+
+      return {
+        number: String(sectionNumber + 1).padStart(2, "0"),
+        title,
+        content,
+      }
+    })
+    .filter((section): section is DocSection => !!section && !!section.content)
+
+  if (parsedBlocks.length === 0) {
     return memoText
       .split(/\n\n+/)
       .map((p) => p.trim())
@@ -43,17 +102,7 @@ function parseMemoSections(memoText: string): DocSection[] {
       }))
   }
 
-  return matches.map((match) => {
-    const sectionNumber = Number.parseInt(match[1] ?? "", 10)
-    const title = normalizeMemoTitle(match[2] ?? "")
-    const content = (match[3] ?? "").trim()
-
-    return {
-      number: String(sectionNumber + 1).padStart(2, "0"),
-      title,
-      content,
-    }
-  })
+  return parsedBlocks
 }
 
 export default async function MemoPage({
