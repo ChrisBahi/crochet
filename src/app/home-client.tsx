@@ -184,7 +184,7 @@ export function HomeClient({ appHref }: { appHref: string }) {
               fontFamily: "var(--font-dm-sans), sans-serif",
               fontSize: 16, color: "#5A5450", margin: "0 0 20px", lineHeight: 1.75, maxWidth: 480,
             }}>
-              {tx.desc}{" "}<em>{tx.descItalic}</em>
+              {tx.desc}<br /><em>{tx.descItalic}</em>
             </p>
             <div style={{
               marginTop: 16, fontFamily: "var(--font-jetbrains), monospace",
