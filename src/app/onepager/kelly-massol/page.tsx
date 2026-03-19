@@ -4,6 +4,19 @@ export const metadata: Metadata = {
   title: "Partenariat Kelly Massol × Crochet.",
   description: "One-pager ambassadrice — programme d'affiliation Crochett.ai",
   robots: "noindex",
+  openGraph: {
+    title: "Partenariat Kelly Massol × Crochet.",
+    description: "One-pager ambassadrice — programme d'affiliation Crochett.ai",
+    type: "article",
+    url: "/onepager/kelly-massol",
+    images: [{ url: "/og-image.svg", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Partenariat Kelly Massol × Crochet.",
+    description: "One-pager ambassadrice — programme d'affiliation Crochett.ai",
+    images: ["/og-image.svg"],
+  },
 }
 
 export default function OnePagerKellyMassol() {

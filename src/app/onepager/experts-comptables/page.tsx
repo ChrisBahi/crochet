@@ -4,6 +4,19 @@ export const metadata: Metadata = {
   title: "Programme Apporteur — Crochet. × Experts-comptables",
   description: "One-pager programme apporteur d'affaires — rev share 20%",
   robots: "noindex",
+  openGraph: {
+    title: "Programme Apporteur — Crochet. × Experts-comptables",
+    description: "One-pager programme apporteur d'affaires — rev share 20%",
+    type: "article",
+    url: "/onepager/experts-comptables",
+    images: [{ url: "/og-image.svg", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Programme Apporteur — Crochet. × Experts-comptables",
+    description: "One-pager programme apporteur d'affaires — rev share 20%",
+    images: ["/og-image.svg"],
+  },
 }
 
 export default function OnePageExpertsComptables() {
