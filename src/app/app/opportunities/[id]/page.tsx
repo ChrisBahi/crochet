@@ -76,6 +76,7 @@ export default async function OpportunityDetailPage({
       ? "This file is subject to a confidentiality agreement. Any unauthorized disclosure is your responsibility. Access to full documents requires an NDA signature via the Secure Room."
       : "Ce dossier est soumis à un accord de confidentialité. Toute divulgation non autorisée engage votre responsabilité. L'accès aux documents complets nécessite une signature NDA via la Secure Room.",
     restartAnalysis:  lang === "en" ? "Restart analysis" : "Relancer l'analyse",
+    regenerateMemo:   lang === "en" ? "Regenerate memo" : "Régénérer le MEMO",
     officialMemo:     lang === "en" ? "Official Memo →" : "Mémo officiel →",
     generateNda:      lang === "en" ? "Generate NDA" : "Générer NDA",
     backToMatches:    lang === "en" ? "Back to matches" : "Retour aux matches",
@@ -452,7 +453,7 @@ export default async function OpportunityDetailPage({
 
           {/* CTA */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            {/* Restart / Regenerate analysis */}
+            {/* Restart analysis if error or pending */}
             {(deckStatus === "error" || deckStatus === "pending" || deckStatus === "done") && (
               <form action={async () => {
                 "use server"
@@ -463,7 +464,7 @@ export default async function OpportunityDetailPage({
                 if (user) {
                   try {
                     await runQualification(supabase, id, { id: user.id, email: user.email ?? undefined })
-                  } catch (_) { /* error status set by runQualification */ }
+                  } catch { /* error status set by runQualification */ }
                 }
                 const { revalidatePath } = await import("next/cache")
                 revalidatePath(`/app/opportunities/${id}`)
@@ -480,7 +481,7 @@ export default async function OpportunityDetailPage({
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                 }}>
-                  {deckStatus === "done" ? "Regénérer le MEMO" : t.restartAnalysis}
+                  {deckStatus === "done" ? t.regenerateMemo : t.restartAnalysis}
                 </button>
               </form>
             )}
