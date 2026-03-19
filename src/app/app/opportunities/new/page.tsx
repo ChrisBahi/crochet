@@ -134,7 +134,7 @@ export default async function NewOpportunityPage() {
 
     // Trigger qualification synchronously (user waits ~5s)
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://crochett.ai"
       const cookies = await (await import("next/headers")).cookies()
       const cookieHeader = cookies.getAll().map(c => `${c.name}=${c.value}`).join("; ")
 

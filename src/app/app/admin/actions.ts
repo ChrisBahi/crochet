@@ -41,21 +41,21 @@ export async function approveAdmission(id: string, email: string, name: string) 
 
   const tunnelContent: Record<string, TunnelContent> = {
     cedant: {
-      subject: "Votre dossier CROCHET est ouvert",
+      subject: "Votre dossier Crochet. est ouvert",
       headline: "Votre dossier est prêt à être soumis.",
       body: `Votre candidature a été examinée et retenue. En tant que cédant, vous accédez à un réseau privé de repreneurs et d'investisseurs sélectionnés — sans que votre nom ou votre entreprise ne soit jamais exposé publiquement.`,
       hint: `Votre première action : déposez votre dossier de cession. En moins de 60 secondes, le moteur IA génère votre MÉMO confidentiel et votre D-Score — le seul document que vous aurez à partager.`,
       cta: "Soumettre mon dossier →",
     },
     repreneur: {
-      subject: "Votre accès CROCHET est activé",
+      subject: "Votre accès Crochet. est activé",
       headline: "Votre deal flow commence maintenant.",
       body: `Votre candidature a été examinée et retenue. En tant que repreneur, vous accédez à un flux qualifié de dossiers de cession — analysés par IA, scorés, et présentés selon vos critères exacts.`,
       hint: `Votre première action : renseignez vos critères d'acquisition (secteur, taille, géo, ticket). Le moteur génère vos premiers matches dès la semaine suivante.`,
       cta: "Configurer mes critères →",
     },
     fonds: {
-      subject: "Votre pipeline CROCHET est activé",
+      subject: "Votre pipeline Crochet. est activé",
       headline: "Votre deal flow M&A PME est prêt.",
       body: `Votre accès a été validé. En tant que fonds ou family office, vous accédez à un pipeline de cessions PME qualifiées par IA — avec NDA automatique, scoring structuré, et rooms de négociation sécurisées.`,
       hint: `Votre première action : complétez votre profil investisseur (tickets, secteurs, géographies). Le moteur match en continu et vous notifie à chaque nouvelle opportunité pertinente.`,
@@ -64,9 +64,9 @@ export async function approveAdmission(id: string, email: string, name: string) 
   };
 
   const content: TunnelContent = tunnelContent[tunnel] ?? {
-    subject: "Votre accès CROCHET est confirmé",
+    subject: "Votre accès Crochet. est confirmé",
     headline: "Votre admission est validée.",
-    body: `Votre profil a été examiné et retenu. Vous faites désormais partie de l'infrastructure privée CROCHET — réservée aux professionnels sérieux du marché privé.`,
+    body: `Votre profil a été examiné et retenu. Vous faites désormais partie de l'infrastructure privée Crochet. — réservée aux professionnels sérieux du marché privé.`,
     hint: `Votre première action : complétez votre profil pour recevoir vos premiers matches.`,
     cta: "Accéder à la plateforme →",
   };
@@ -79,7 +79,7 @@ export async function approveAdmission(id: string, email: string, name: string) 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "CROCHET <contact@crochett.ai>",
+        from: "Crochet. <contact@crochett.ai>",
         to: [email],
         subject: content.subject,
         html: `<!DOCTYPE html>
@@ -87,7 +87,7 @@ export async function approveAdmission(id: string, email: string, name: string) 
 <body style="margin:0;padding:40px;background:#FDFAF6;font-family:Arial,sans-serif;color:#0A0A0A;">
   <div style="max-width:560px;margin:0 auto;background:#FFFFFF;border:1px solid #E0DAD0;padding:40px;">
     <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#7A746E;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #0A0A0A;">
-      CROCHET · Accès confirmé
+      Crochet. · Accès confirmé
     </div>
     <h2 style="font-size:28px;font-weight:700;font-style:italic;margin:0 0 20px;line-height:1.2;color:#0A0A0A;">${content.headline}</h2>
     <p style="font-size:14px;color:#5A5450;line-height:1.8;margin:0 0 12px;">Bonjour ${firstName},</p>
@@ -138,21 +138,21 @@ export async function rejectAdmission(id: string) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "CROCHET <contact@crochett.ai>",
+        from: "Crochet. <contact@crochett.ai>",
         to: [req.email],
-        subject: "Votre candidature CROCHET",
+        subject: "Votre candidature Crochet.",
         html: `<!DOCTYPE html>
 <html lang="fr">
 <body style="margin:0;padding:40px;background:#FDFAF6;font-family:Arial,sans-serif;color:#0A0A0A;">
   <div style="max-width:560px;margin:0 auto;background:#FFFFFF;border:1px solid #E0DAD0;padding:40px;">
     <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#7A746E;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #0A0A0A;">
-      CROCHET · Zone Sécurisée
+      Crochet. · Zone Sécurisée
     </div>
     <h2 style="font-size:22px;font-weight:700;font-style:italic;margin:0 0 16px;line-height:1.3;">Suite à votre candidature.</h2>
     <p style="font-size:14px;color:#7A746E;line-height:1.75;margin:0 0 24px;">
       Bonjour ${firstName},<br/><br/>
       Nous avons examiné votre dossier avec attention. Après analyse, nous ne sommes pas en mesure de donner suite à votre candidature à ce stade.<br/><br/>
-      CROCHET est une infrastructure privée à accès restreint. Nos critères d'admission évoluent en fonction du réseau et des opportunités actives.
+      Crochet. est une infrastructure privée à accès restreint. Nos critères d'admission évoluent en fonction du réseau et des opportunités actives.
     </p>
     <div style="margin-top:40px;padding-top:20px;border-top:1px solid #E0DAD0;font-size:10px;color:#7A746E;letter-spacing:0.08em;text-transform:uppercase;">
       NDA-CROCHET-V1 · Confidentiel · Droit français
@@ -197,7 +197,7 @@ export async function setVerificationStatus(
 export async function runMatchEngine(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
   await requireAdmin();
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://crochett.ai";
   const secret = process.env.MATCH_ENGINE_SECRET ?? "";
 
   const res = await fetch(`${baseUrl}/api/match/run`, {

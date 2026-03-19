@@ -183,7 +183,7 @@ export async function POST(req: Request) {
               type: "new_match",
               title: "Nouveau match disponible",
               body: `Un nouveau match avec un M-Score de ${fitScore} vient d'être identifié pour votre dossier.`,
-              link: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/app/matches?match=${insertedMatch.id}`,
+              link: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://crochett.ai"}/app/matches?match=${insertedMatch.id}`,
               email: authUser?.user?.email,
             })
           } catch (err) {

@@ -29,7 +29,7 @@ const tx = {
         label: "Première question",
         question: "Vous souhaitez…",
         options: [
-          { value: "cedant",    label: "Vendre mon entreprise",       sub: "Cession, transmission, départ à la retraite" },
+          { value: "cedant",    label: "Vendre mon entreprise",       sub: "Céder, transmettre, ouvrir mon capital" },
           { value: "repreneur", label: "Acquérir une entreprise",     sub: "Rachat, croissance externe, reprise" },
           { value: "fonds",     label: "Investir dans des entreprises", sub: "Fonds, family office, investisseur privé" },
         ],

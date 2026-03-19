@@ -137,7 +137,7 @@ export async function runQualification(
       userId: user.id,
       type: "qualification_done",
       title: `Dossier qualifié — D-Score ${parsed.d_score}`,
-      body: `Le moteur CROCHET a analysé "${opp.title}". Consultez le MEMO de qualification.`,
+      body: `Le moteur Crochet. a analysé "${opp.title}". Consultez le MEMO de qualification.`,
       link: `/app/opportunities/${opportunity_id}/memo`,
       email: user.email,
     })
