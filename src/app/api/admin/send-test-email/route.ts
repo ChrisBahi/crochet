@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://crochett.ai";
-const FROM_CONTACT = "CROCHET <contact@crochett.ai>";
-const FROM_SUPPORT = "CROCHET <support@crochett.ai>";
+const FROM_CONTACT = "Crochet. <contact@crochett.ai>";
+const FROM_SUPPORT = "Crochet. <support@crochett.ai>";
 
 // ── HTML helpers ─────────────────────────────────────────────
 
@@ -13,7 +13,7 @@ function wrap(header: string, inner: string, from: string): string {
 <body style="margin:0;padding:40px;background:#FDFAF6;font-family:Arial,sans-serif;color:#0A0A0A;">
   <div style="max-width:560px;margin:0 auto;background:#FFFFFF;border:1px solid #E0DAD0;padding:40px;">
     <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#7A746E;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #0A0A0A;">
-      CROCHET · ${header}
+      Crochet. · ${header}
     </div>
     ${inner}
     <div style="margin-top:40px;padding-top:20px;border-top:1px solid #E0DAD0;font-size:10px;color:#7A746E;letter-spacing:0.08em;text-transform:uppercase;">
@@ -54,7 +54,7 @@ function buildTestEmail(type: EmailType, firstName = "Chris"): { subject: string
     case "approve-cedant":
       return {
         from: FROM_CONTACT,
-        subject: "Votre dossier CROCHET est ouvert",
+        subject: "Votre dossier Crochet. est ouvert",
         html: wrap("Accès confirmé", `
           <h2 style="font-size:28px;font-weight:700;font-style:italic;margin:0 0 20px;line-height:1.2;">Votre dossier est prêt à être soumis.</h2>
           <p style="font-size:14px;color:#5A5450;line-height:1.8;margin:0 0 12px;">Bonjour ${firstName},</p>
@@ -69,7 +69,7 @@ function buildTestEmail(type: EmailType, firstName = "Chris"): { subject: string
     case "approve-repreneur":
       return {
         from: FROM_CONTACT,
-        subject: "Votre accès CROCHET est activé",
+        subject: "Votre accès Crochet. est activé",
         html: wrap("Accès confirmé", `
           <h2 style="font-size:28px;font-weight:700;font-style:italic;margin:0 0 20px;line-height:1.2;">Votre deal flow commence maintenant.</h2>
           <p style="font-size:14px;color:#5A5450;line-height:1.8;margin:0 0 12px;">Bonjour ${firstName},</p>
@@ -84,7 +84,7 @@ function buildTestEmail(type: EmailType, firstName = "Chris"): { subject: string
     case "approve-fonds":
       return {
         from: FROM_CONTACT,
-        subject: "Votre pipeline CROCHET est activé",
+        subject: "Votre pipeline Crochet. est activé",
         html: wrap("Accès confirmé", `
           <h2 style="font-size:28px;font-weight:700;font-style:italic;margin:0 0 20px;line-height:1.2;">Votre deal flow M&A PME est prêt.</h2>
           <p style="font-size:14px;color:#5A5450;line-height:1.8;margin:0 0 12px;">Bonjour ${firstName},</p>
@@ -100,13 +100,13 @@ function buildTestEmail(type: EmailType, firstName = "Chris"): { subject: string
     case "reject":
       return {
         from: FROM_CONTACT,
-        subject: "Votre candidature CROCHET",
+        subject: "Votre candidature Crochet.",
         html: wrap("Zone Sécurisée", `
           <h2 style="font-size:22px;font-weight:700;font-style:italic;margin:0 0 16px;line-height:1.3;">Suite à votre candidature.</h2>
           <p style="font-size:14px;color:#7A746E;line-height:1.75;margin:0 0 24px;">
             Bonjour ${firstName},<br/><br/>
             Nous avons examiné votre dossier avec attention. Après analyse, nous ne sommes pas en mesure de donner suite à votre candidature à ce stade.<br/><br/>
-            CROCHET est une infrastructure privée à accès restreint. Nos critères d'admission évoluent en fonction du réseau et des opportunités actives.
+            Crochet. est une infrastructure privée à accès restreint. Nos critères d'admission évoluent en fonction du réseau et des opportunités actives.
           </p>
         `, FROM_CONTACT),
       };
@@ -115,7 +115,7 @@ function buildTestEmail(type: EmailType, firstName = "Chris"): { subject: string
     case "drip-j1-cedant":
       return {
         from: FROM_SUPPORT,
-        subject: "Votre dossier CROCHET vous attend",
+        subject: "Votre dossier Crochet. vous attend",
         html: wrap("Premiers pas", `
           <h2 style="font-size:26px;font-weight:700;font-style:italic;margin:0 0 16px;line-height:1.25;">Une chose à faire aujourd'hui.</h2>
           <p style="font-size:14px;color:#5A5450;line-height:1.8;margin:0 0 12px;">Bonjour ${firstName},</p>
@@ -189,7 +189,7 @@ function buildTestEmail(type: EmailType, firstName = "Chris"): { subject: string
     case "drip-j7-cedant":
       return {
         from: FROM_SUPPORT,
-        subject: "Votre essai CROCHET — 7 jours déjà",
+        subject: "Votre essai Crochet. — 7 jours déjà",
         html: wrap("Offre essai", `
           <h2 style="font-size:26px;font-weight:700;font-style:italic;margin:0 0 16px;line-height:1.25;">7 jours. Votre dossier mérite mieux.</h2>
           <p style="font-size:14px;color:#5A5450;line-height:1.8;margin:0 0 12px;">Bonjour ${firstName},</p>
@@ -205,7 +205,7 @@ function buildTestEmail(type: EmailType, firstName = "Chris"): { subject: string
         html: wrap("Offre essai", `
           <h2 style="font-size:26px;font-weight:700;font-style:italic;margin:0 0 16px;line-height:1.25;">Le marché ne vous attend pas.</h2>
           <p style="font-size:14px;color:#5A5450;line-height:1.8;margin:0 0 12px;">Bonjour ${firstName},</p>
-          <p style="font-size:14px;color:#5A5450;line-height:1.8;margin:0 0 28px;">Les meilleures opportunités de reprise se closent en 4 à 8 semaines. Votre essai CROCHET vous donne accès à un flux qualifié, confidentiel, analysé par IA. Passez en accès complet pour ne manquer aucun deal.</p>
+          <p style="font-size:14px;color:#5A5450;line-height:1.8;margin:0 0 28px;">Les meilleures opportunités de reprise se closent en 4 à 8 semaines. Votre essai Crochet. vous donne accès à un flux qualifié, confidentiel, analysé par IA. Passez en accès complet pour ne manquer aucun deal.</p>
           ${btn(`${APP_URL}/app/billing`, "Voir les plans →")}
         `, FROM_SUPPORT),
       };
@@ -213,7 +213,7 @@ function buildTestEmail(type: EmailType, firstName = "Chris"): { subject: string
     case "drip-j7-fonds":
       return {
         from: FROM_SUPPORT,
-        subject: "Votre pipeline CROCHET — bilan J+7",
+        subject: "Votre pipeline Crochet. — bilan J+7",
         html: wrap("Offre essai", `
           <h2 style="font-size:26px;font-weight:700;font-style:italic;margin:0 0 16px;line-height:1.25;">Des dossiers PME vous ont échappé.</h2>
           <p style="font-size:14px;color:#5A5450;line-height:1.8;margin:0 0 12px;">Bonjour ${firstName},</p>
@@ -226,7 +226,7 @@ function buildTestEmail(type: EmailType, firstName = "Chris"): { subject: string
     case "weekly-digest":
       return {
         from: FROM_SUPPORT,
-        subject: "3 nouveaux matches CROCHET cette semaine",
+        subject: "3 nouveaux matches Crochet. cette semaine",
         html: wrap("Digest hebdomadaire", `
           <h2 style="font-size:26px;font-weight:700;font-style:italic;margin:0 0 8px;line-height:1.2;">3 nouveaux matches cette semaine.</h2>
           <p style="font-size:13px;color:#7A746E;margin:0 0 28px;">Meilleur M-Score : <strong style="color:#2D6A4F;">82</strong> — le moteur IA a scanné toutes les opportunités actives.</p>

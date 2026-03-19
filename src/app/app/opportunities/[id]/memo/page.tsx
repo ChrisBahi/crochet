@@ -97,11 +97,16 @@ export default async function MemoPage({
         `Référence : CROCHET-${id.slice(0, 8).toUpperCase()}`,
       ].filter(Boolean).join("\n"),
     },
-    ...rawParagraphs.map((para, i) => ({
-      number: String(i + 2).padStart(2, "0"),
-      title: i === 0 ? "Analyse" : i === rawParagraphs.length - 1 ? "Conclusion" : `Point ${i + 1}`,
-      content: para,
-    })),
+    ...rawParagraphs.map((para, i) => {
+      // Parse §N TITLE (optional parenthetical) : content
+      const m = para.match(/^§\d+\s+([^:(]+?)(?:\s*\([^)]*\))?\s*:\s*([\s\S]+)$/)
+      const fallback = i === 0 ? "Analyse" : i === rawParagraphs.length - 1 ? "Conclusion" : `Section ${i + 1}`
+      return {
+        number: String(i + 2).padStart(2, "0"),
+        title: m ? m[1].trim() : fallback,
+        content: m ? m[2].trim() : para,
+      }
+    }),
   ]
 
   const date = formatDate(new Date())

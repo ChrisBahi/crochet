@@ -64,7 +64,7 @@ export async function GET(req: Request) {
 <body style="margin:0;padding:40px;background:#FDFAF6;font-family:Arial,sans-serif;color:#0A0A0A;">
   <div style="max-width:580px;margin:0 auto;background:#FFFFFF;border:1px solid #E0DAD0;padding:40px;">
     <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#7A746E;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #0A0A0A;">
-      CROCHET · Digest hebdomadaire
+      Crochet. · Digest hebdomadaire
     </div>
     <h2 style="font-size:26px;font-weight:700;font-style:italic;margin:0 0 8px;line-height:1.2;color:#0A0A0A;">
       ${count} nouveau${count > 1 ? "x" : ""} match${count > 1 ? "es" : ""} cette semaine.
@@ -95,9 +95,9 @@ export async function GET(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "CROCHET <support@crochett.ai>",
+        from: "Crochet. <support@crochett.ai>",
         to: [email],
-        subject: `${count} nouveau${count > 1 ? "x" : ""} match${count > 1 ? "es" : ""} CROCHET cette semaine`,
+        subject: `${count} nouveau${count > 1 ? "x" : ""} match${count > 1 ? "es" : ""} Crochet. cette semaine`,
         html,
       }),
     }).catch((err) => console.error("[weekly-digest] resend failed:", err));

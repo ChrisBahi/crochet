@@ -23,7 +23,7 @@ function buildEmail(tunnel: string, step: DripStep, firstName: string): {
 <body style="margin:0;padding:40px;background:#FDFAF6;font-family:Arial,sans-serif;color:#0A0A0A;">
   <div style="max-width:560px;margin:0 auto;background:#FFFFFF;border:1px solid #E0DAD0;padding:40px;">
     <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#7A746E;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #0A0A0A;">
-      CROCHET · ${step === "j1" ? "Premiers pas" : step === "j3" ? "Relance J+3" : "Offre essai"}
+      Crochet. · ${step === "j1" ? "Premiers pas" : step === "j3" ? "Relance J+3" : "Offre essai"}
     </div>
     <h2 style="font-size:26px;font-weight:700;font-style:italic;margin:0 0 16px;line-height:1.25;color:#0A0A0A;">${headline}</h2>
     <p style="font-size:14px;color:#5A5450;line-height:1.8;margin:0 0 12px;">Bonjour ${firstName},</p>
@@ -46,7 +46,7 @@ const DRIP_CONTENT: Record<string, Record<DripStep, {
 }>> = {
   cedant: {
     j1: {
-      subject: "Votre dossier CROCHET vous attend",
+      subject: "Votre dossier Crochet. vous attend",
       headline: "Une chose à faire aujourd'hui.",
       body: "Votre accès est actif. La première étape pour une cession réussie : déposer votre dossier confidentiel. En moins de 60 secondes, le moteur génère votre MÉMO et votre D-Score — le seul document que vous partagerez avec les repreneurs.",
       cta: "/app/opportunities",
@@ -60,7 +60,7 @@ const DRIP_CONTENT: Record<string, Record<DripStep, {
       ctaLabel: "Déposer mon dossier maintenant →",
     },
     j7: {
-      subject: "Votre essai CROCHET — 7 jours déjà",
+      subject: "Votre essai Crochet. — 7 jours déjà",
       headline: "7 jours. Votre dossier mérite mieux.",
       body: "Votre essai est actif depuis une semaine. Les cédants qui ont soumis leur dossier dans les 7 premiers jours ont reçu en moyenne 3 matches qualifiés en moins de 14 jours. Ne laissez pas votre dossier sans acheteurs potentiels.",
       cta: "/app/billing",
@@ -85,7 +85,7 @@ const DRIP_CONTENT: Record<string, Record<DripStep, {
     j7: {
       subject: "Des dossiers de cession vous attendent",
       headline: "Le marché ne vous attend pas.",
-      body: "Les meilleures opportunités de reprise se closent en 4 à 8 semaines. Votre essai CROCHET vous donne accès à un flux qualifié, confidentiel, analysé par IA. Passez en accès complet pour ne manquer aucun deal.",
+      body: "Les meilleures opportunités de reprise se closent en 4 à 8 semaines. Votre essai Crochet. vous donne accès à un flux qualifié, confidentiel, analysé par IA. Passez en accès complet pour ne manquer aucun deal.",
       cta: "/app/billing",
       ctaLabel: "Voir les plans →",
     },
@@ -106,7 +106,7 @@ const DRIP_CONTENT: Record<string, Record<DripStep, {
       ctaLabel: "Configurer mon profil →",
     },
     j7: {
-      subject: "Votre pipeline CROCHET — bilan J+7",
+      subject: "Votre pipeline Crochet. — bilan J+7",
       headline: "Des dossiers PME vous ont échappé.",
       body: "Cette semaine, le moteur a analysé de nouveaux dossiers de cession. Votre profil incomplet vous en a privé. Activez votre accès complet : NDA automatique, scoring IA, rooms de négociation sécurisées — tout ce qu'un fonds sérieux attend.",
       cta: "/app/billing",
@@ -115,21 +115,21 @@ const DRIP_CONTENT: Record<string, Record<DripStep, {
   },
   default: {
     j1: {
-      subject: "Votre accès CROCHET — première étape",
+      subject: "Votre accès Crochet. — première étape",
       headline: "Bienvenue dans le réseau.",
       body: "Votre accès est actif. Complétez votre profil pour que le moteur IA puisse vous matcher avec les meilleures opportunités du réseau.",
       cta: "/app/profile",
       ctaLabel: "Compléter mon profil →",
     },
     j3: {
-      subject: "CROCHET — votre profil est incomplet",
+      subject: "Crochet. — votre profil est incomplet",
       headline: "Pas encore configuré ?",
       body: "3 jours depuis votre accès. Sans profil complet, le moteur de matching ne peut pas travailler pour vous. Prenez 2 minutes pour renseigner vos informations.",
       cta: "/app/profile",
       ctaLabel: "Compléter maintenant →",
     },
     j7: {
-      subject: "Votre essai CROCHET — dernière semaine",
+      subject: "Votre essai Crochet. — dernière semaine",
       headline: "Une semaine d'essai déjà.",
       body: "Votre période d'essai avance. Passez à un accès complet pour continuer à accéder aux opportunités, matches et rooms de négociation du réseau.",
       cta: "/app/billing",
@@ -211,7 +211,7 @@ export async function GET(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "CROCHET <support@crochett.ai>",
+        from: "Crochet. <support@crochett.ai>",
         to: [email],
         subject,
         html,
