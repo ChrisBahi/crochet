@@ -10,6 +10,52 @@ function formatDate(d: Date) {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
 }
 
+function normalizeMemoTitle(raw: string) {
+  const cleaned = raw
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\s+\(.*?\)\s*$/u, "")
+
+  const map: Record<string, string> = {
+    "SYNTHÈSE EXÉCUTIVE": "Synthèse exécutive",
+    "PROPOSITION DE VALEUR & MODÈLE ÉCONOMIQUE": "Proposition de valeur & modèle économique",
+    "TRACTION & DONNÉES FINANCIÈRES": "Traction & données financières",
+    "STRUCTURATION DU DEAL": "Structuration du deal",
+    "FACTEURS D'ATTRACTIVITÉ & RISQUES": "Facteurs d'attractivité & risques",
+    "VERDICT CROCHET": "Verdict Crochet.",
+  }
+
+  return map[cleaned.toUpperCase()] ?? cleaned
+}
+
+function parseMemoSections(memoText: string): DocSection[] {
+  const matches = [...memoText.matchAll(/§\s*(\d+)\s+([^:]+?)\s*:\s*([\s\S]*?)(?=(?:\n\s*§\s*\d+\s+)|$)/gu)]
+
+  if (matches.length === 0) {
+    return memoText
+      .split(/\n\n+/)
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((content, i, arr) => ({
+        number: String(i + 2).padStart(2, "0"),
+        title: i === 0 ? "Synthèse exécutive" : i === arr.length - 1 ? "Verdict Crochet." : `Point ${i + 1}`,
+        content,
+      }))
+  }
+
+  return matches.map((match) => {
+    const sectionNumber = Number.parseInt(match[1] ?? "", 10)
+    const title = normalizeMemoTitle(match[2] ?? "")
+    const content = (match[3] ?? "").trim()
+
+    return {
+      number: String(sectionNumber + 1).padStart(2, "0"),
+      title,
+      content,
+    }
+  })
+}
+
 export default async function MemoPage({
   params,
 }: {
@@ -73,11 +119,7 @@ export default async function MemoPage({
   const status = deck?.status ?? "pending"
   const generatedAt: string = deck?.created_at ?? new Date().toISOString()
 
-  // Parse memo paragraphs into numbered sections for the official layout
-  const rawParagraphs = memoText
-    .split(/\n\n+/)
-    .map(p => p.trim())
-    .filter(Boolean)
+  const parsedMemoSections = parseMemoSections(memoText)
 
   const sections: DocSection[] = [
     {
@@ -97,11 +139,7 @@ export default async function MemoPage({
         `Référence : CROCHET-${id.slice(0, 8).toUpperCase()}`,
       ].filter(Boolean).join("\n"),
     },
-    ...rawParagraphs.map((para, i) => ({
-      number: String(i + 2).padStart(2, "0"),
-      title: i === 0 ? "Analyse" : i === rawParagraphs.length - 1 ? "Conclusion" : `Point ${i + 1}`,
-      content: para,
-    })),
+    ...parsedMemoSections,
   ]
 
   const date = formatDate(new Date())
