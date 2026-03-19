@@ -17,11 +17,11 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
   },
   openGraph: {
-    images: [{ url: "/og-image.svg", width: 1200, height: 630 }],
+    images: [{ url: "/og-image.png", width: 1200, height: 1200 }],
   },
   twitter: {
     card: "summary_large_image",
-    images: ["/og-image.svg"],
+    images: ["/og-image.png"],
   },
 };
 
