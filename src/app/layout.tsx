@@ -10,6 +10,7 @@ import { LangProvider } from "@/lib/lang/context";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://crochett.ai"),
+  applicationName: "Infrastructure privée",
   title: "Crochet — Infrastructure privée de transactions",
   description: "CROCHET transforme un dossier brut en signal investissable.",
   icons: {
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
   },
   openGraph: {
+    siteName: "Infrastructure privée",
     images: [{ url: "/og-image.png", width: 1200, height: 1200 }],
   },
   twitter: {

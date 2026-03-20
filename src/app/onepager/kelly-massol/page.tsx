@@ -2,17 +2,18 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Partenariat Kelly Massol × Crochet.",
-  description: "One-pager ambassadrice — programme d'affiliation Crochett.ai",
+  description: "Infrastructure privée",
   robots: "noindex",
   openGraph: {
     title: "Partenariat Kelly Massol × Crochet.",
-    description: "One-pager ambassadrice — programme d'affiliation Crochett.ai",
+    description: "Infrastructure privée",
+    siteName: "Infrastructure privée",
     url: "/onepager/kelly-massol",
     images: [],
   },
   twitter: {
     title: "Partenariat Kelly Massol × Crochet.",
-    description: "One-pager ambassadrice — programme d'affiliation Crochett.ai",
+    description: "Infrastructure privée",
     images: [],
   },
 }

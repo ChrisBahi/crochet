@@ -2,17 +2,18 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Partenariat Sowefund × Crochet.",
-  description: "One-pager partenariat — réunion co-distribution M&A PME",
+  description: "Infrastructure privée",
   robots: "noindex",
   openGraph: {
     title: "Partenariat Sowefund × Crochet.",
-    description: "One-pager partenariat — réunion co-distribution M&A PME",
+    description: "Infrastructure privée",
+    siteName: "Infrastructure privée",
     url: "/onepager/sowefund",
     images: [],
   },
   twitter: {
     title: "Partenariat Sowefund × Crochet.",
-    description: "One-pager partenariat — réunion co-distribution M&A PME",
+    description: "Infrastructure privée",
     images: [],
   },
 }
