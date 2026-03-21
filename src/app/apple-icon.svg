@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180"><rect width="180" height="180" rx="40" fill="#F5F3EE"/><circle cx="132.890625" cy="54.140625" r="16.171875" fill="#0A0A0A"/><circle cx="132.890625" cy="125.859375" r="16.171875" fill="#0A0A0A"/><circle cx="54.84375" cy="90" r="22.5" fill="#0A0A0A"/><line x1="132.890625" y1="54.140625" x2="77.34375" y2="90" stroke="#0A0A0A" stroke-width="18.28125" stroke-linecap="round"/><line x1="132.890625" y1="125.859375" x2="77.34375" y2="90" stroke="#0A0A0A" stroke-width="18.28125" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <rect width="180" height="180" rx="40" fill="#0A0A0A"/>
+  <circle cx="132.890625" cy="54.140625" r="16.171875" fill="#F5F3EE"/>
+  <circle cx="132.890625" cy="125.859375" r="16.171875" fill="#F5F3EE"/>
+  <circle cx="54.84375" cy="90" r="22.5" fill="#F5F3EE"/>
+  <line x1="132.890625" y1="54.140625" x2="77.34375" y2="90" stroke="#F5F3EE" stroke-width="18.28125" stroke-linecap="round"/>
+  <line x1="132.890625" y1="125.859375" x2="77.34375" y2="90" stroke="#F5F3EE" stroke-width="18.28125" stroke-linecap="round"/>
+</svg>
