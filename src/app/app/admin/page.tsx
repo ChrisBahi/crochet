@@ -25,6 +25,7 @@ export default async function AdminPage({
   const { status: filterStatus, view } = await searchParams;
   const isMembersView = view === "members";
   const isStatsView = view === "stats";
+  const isPartnersView = view === "partners";
   const cookieStore = await cookies();
   const lang = (cookieStore.get("crochet_lang")?.value ?? "fr") as "fr" | "en";
   const dateLocale = lang === "en" ? "en-GB" : "fr-FR";
@@ -42,12 +43,17 @@ export default async function AdminPage({
     tabApplications: lang === "en" ? "Applications" : "Candidatures",
     tabMembers:     lang === "en" ? "Members" : "Membres",
     tabStats:       lang === "en" ? "Stats" : "Stats",
+    tabPartners:    lang === "en" ? "Partners" : "Partenaires",
     filterAll:      lang === "en" ? "All" : "Tout",
     filterPending:  lang === "en" ? "Pending" : "En attente",
     filterApproved: lang === "en" ? "Approved" : "Approuvés",
     filterRejected: lang === "en" ? "Rejected" : "Refusés",
     noApplications: lang === "en" ? "No application in this category." : "Aucune candidature dans cette catégorie.",
     noMembers:      lang === "en" ? "No registered member." : "Aucun membre inscrit.",
+    noPartners:     lang === "en" ? "No partner lead yet." : "Aucun lead partenaire pour le moment.",
+    partnersUnavailable: lang === "en"
+      ? "The partner leads table is not initialized yet."
+      : "La table partner_leads n'est pas encore initialisée.",
     colApplicant:   lang === "en" ? "Applicant" : "Candidat",
     colRole:        lang === "en" ? "Role" : "Rôle",
     colTicket:      "Ticket",
@@ -237,6 +243,42 @@ export default async function AdminPage({
     members = memberProfiles ?? [];
   }
 
+  type PartnerLead = {
+    id: string;
+    created_at: string | null;
+    name?: string | null;
+    full_name?: string | null;
+    email?: string | null;
+    company?: string | null;
+    firm?: string | null;
+    source?: string | null;
+    status?: string | null;
+    notes?: string | null;
+    message?: string | null;
+  };
+
+  let partnerLeads: PartnerLead[] = [];
+  let partnerLeadsAvailable = true;
+
+  if (isPartnersView) {
+    try {
+      const { data, error } = await admin
+        .from("partner_leads")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        partnerLeadsAvailable = false;
+        console.error("[admin] partner_leads query failed", error.message);
+      } else {
+        partnerLeads = (data ?? []) as PartnerLead[];
+      }
+    } catch (error) {
+      partnerLeadsAvailable = false;
+      console.error("[admin] partner_leads query threw", error);
+    }
+  }
+
   // AI auto-analysis — runs AFTER response is sent, without blocking render
   const unanalyzed = requests
     .filter((r: { ai_score: number | null }) => r.ai_score === null || r.ai_score === undefined)
@@ -360,13 +402,15 @@ export default async function AdminPage({
       {/* View switcher */}
       <div style={{ display: "flex", gap: 0, marginBottom: 0, borderBottom: "1px solid #E0DAD0" }}>
         {[
-          { label: t.tabApplications, href: "/app/admin", active: !isMembersView && !isStatsView },
+          { label: t.tabApplications, href: "/app/admin", active: !isMembersView && !isStatsView && !isPartnersView },
           { label: t.tabMembers, href: "/app/admin?view=members", active: isMembersView },
           { label: t.tabStats, href: "/app/admin?view=stats", active: isStatsView },
+          { label: t.tabPartners, href: "/app/admin?view=partners", active: isPartnersView },
         ].map(({ label, href, active }) => (
           <Link
             key={label}
             href={href}
+            scroll={false}
             style={{
               padding: "10px 20px",
               textDecoration: "none",
@@ -809,6 +853,124 @@ export default async function AdminPage({
             </div>
           )}
         </div>
+      ) : isPartnersView ? (
+        <div style={{ marginTop: 32 }}>
+          {!partnerLeadsAvailable ? (
+            <div style={{
+              padding: "32px 0",
+              textAlign: "center",
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 13,
+              color: "#7A746E",
+              fontStyle: "italic",
+            }}>
+              {t.partnersUnavailable}
+            </div>
+          ) : partnerLeads.length === 0 ? (
+            <div style={{
+              padding: "32px 0",
+              textAlign: "center",
+              fontFamily: "var(--font-dm-sans), sans-serif",
+              fontSize: 13,
+              color: "#7A746E",
+              fontStyle: "italic",
+            }}>
+              {t.noPartners}
+            </div>
+          ) : (
+            <div>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 2fr 1fr 1fr 1fr",
+                gap: 16,
+                padding: "8px 0 12px",
+                borderBottom: "1px solid #E0DAD0",
+              }}>
+                {[
+                  lang === "en" ? "Partner" : "Partenaire",
+                  lang === "en" ? "Company / Note" : "Société / Note",
+                  lang === "en" ? "Source" : "Source",
+                  t.colStatus,
+                  t.colDate,
+                ].map((h) => (
+                  <div key={h} style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 10,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: "#7A746E",
+                  }}>
+                    {h}
+                  </div>
+                ))}
+              </div>
+              {partnerLeads.map((lead) => (
+                <div
+                  key={lead.id}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "2fr 2fr 1fr 1fr 1fr",
+                    gap: 16,
+                    padding: "16px 0",
+                    borderBottom: "1px solid #E0DAD0",
+                    alignItems: "start",
+                  }}
+                >
+                  <div>
+                    <div style={{
+                      fontFamily: "var(--font-dm-sans), sans-serif",
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: "#0A0A0A",
+                      marginBottom: 2,
+                    }}>
+                      {lead.name ?? lead.full_name ?? "—"}
+                    </div>
+                    {lead.email && (
+                      <div style={{
+                        fontFamily: "var(--font-dm-sans), sans-serif",
+                        fontSize: 12,
+                        color: "#7A746E",
+                      }}>
+                        {lead.email}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 13,
+                    color: "#0A0A0A",
+                    lineHeight: 1.5,
+                  }}>
+                    <div>{lead.company ?? lead.firm ?? "—"}</div>
+                    {(lead.notes ?? lead.message) && (
+                      <div style={{ fontSize: 12, color: "#7A746E", marginTop: 4 }}>
+                        {lead.notes ?? lead.message}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{
+                    fontFamily: "var(--font-jetbrains), monospace",
+                    fontSize: 12,
+                    color: "#0A0A0A",
+                  }}>
+                    {lead.source ?? "direct"}
+                  </div>
+                  <div>
+                    <StatusBadge status={lead.status ?? "pending"} />
+                  </div>
+                  <div style={{
+                    fontFamily: "var(--font-dm-sans), sans-serif",
+                    fontSize: 12,
+                    color: "#7A746E",
+                  }}>
+                    {lead.created_at ? formatDate(lead.created_at, dateLocale) : "—"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
         <>
           {/* Application tabs */}
@@ -819,6 +981,7 @@ export default async function AdminPage({
                 <Link
                   key={String(tab.value)}
                   href={tab.value ? `/app/admin?status=${tab.value}` : "/app/admin"}
+                  scroll={false}
                   style={{
                     padding: "10px 20px",
                     textDecoration: "none",
