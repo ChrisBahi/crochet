@@ -11,16 +11,17 @@ import { LangProvider } from "@/lib/lang/context";
 export const metadata: Metadata = {
   metadataBase: new URL("https://crochett.ai"),
   applicationName: "Infrastructure privée",
+  manifest: "/manifest.webmanifest",
   title: "Crochet — Infrastructure privée de transactions",
   description: "CROCHET transforme un dossier brut en signal investissable.",
   icons: {
     icon: [
-      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
-      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+      { url: "/favicon-32x32-v2.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16x16-v2.png", type: "image/png", sizes: "16x16" },
       { url: "/icon.svg", type: "image/svg+xml" },
     ],
-    shortcut: ["/favicon-32x32.png"],
-    apple: [{ url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" }],
+    shortcut: ["/favicon-32x32-v2.png"],
+    apple: [{ url: "/apple-touch-icon-v2.png", type: "image/png", sizes: "180x180" }],
   },
   openGraph: {
     siteName: "Infrastructure privée",
