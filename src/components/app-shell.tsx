@@ -11,6 +11,7 @@ const NAV_FR = [
   { href: "/app/opportunities", label: "Opportunités" },
   { href: "/app/rooms",         label: "Rooms" },
   { href: "/app/profile",       label: "Profil" },
+  { href: "/mode-emploi-crochet.html", label: "Guide" },
   { href: "/app/billing",       label: "Abonnement" },
 ]
 
@@ -19,6 +20,7 @@ const NAV_EN = [
   { href: "/app/opportunities", label: "Opportunities" },
   { href: "/app/rooms",         label: "Rooms" },
   { href: "/app/profile",       label: "Profile" },
+  { href: "/mode-emploi-crochet.html", label: "Guide" },
   { href: "/app/billing",       label: "Billing" },
 ]
 

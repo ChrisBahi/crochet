@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mode d'emploi Crochet.</title>
+    <style>
+      :root {
+        --bg: #f5f2ee;
+        --paper: #ffffff;
+        --ink: #0a0a0a;
+        --muted: #7a746e;
+        --line: #e0dad0;
+        --soft: #f5f0e8;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: "DM Sans", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.65;
+      }
+
+      .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+
+      .hero {
+        background: var(--ink);
+        color: #fff;
+        padding: 32px;
+        border: 1px solid #1c1c1c;
+      }
+
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #9f9891;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr;
+        gap: 28px;
+        margin-top: 24px;
+      }
+
+      .hero-title {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(42px, 7vw, 70px);
+        font-weight: 700;
+        line-height: 1.02;
+        letter-spacing: -0.03em;
+        margin: 0 0 18px;
+      }
+
+      .hero-title em { font-style: italic; }
+
+      .hero-copy {
+        max-width: 620px;
+        color: #d5d0ca;
+        font-size: 15px;
+      }
+
+      .summary {
+        background: #111;
+        border: 1px solid #242424;
+        padding: 18px 20px;
+      }
+
+      .summary h2 {
+        margin: 0 0 10px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #9f9891;
+      }
+
+      .summary p {
+        margin: 0;
+        color: #efebe6;
+        font-size: 14px;
+      }
+
+      .toc {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        margin: 24px 0 40px;
+      }
+
+      .toc a {
+        display: block;
+        text-decoration: none;
+        color: var(--ink);
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 12px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
+
+      .section {
+        margin-top: 30px;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 28px;
+      }
+
+      .section-head {
+        padding-bottom: 14px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--ink);
+      }
+
+      .section-label {
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .section-title {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 32px;
+        font-style: italic;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .section-intro {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        background: var(--soft);
+        padding: 18px;
+      }
+
+      .card h3 {
+        margin: 0 0 10px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .card p {
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .steps {
+        display: grid;
+        gap: 12px;
+      }
+
+      .step {
+        border: 1px solid var(--line);
+        background: #faf8f5;
+        padding: 16px 18px;
+      }
+
+      .step strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 15px;
+      }
+
+      .note {
+        margin-top: 18px;
+        padding: 14px 16px;
+        background: var(--soft);
+        border-left: 3px solid var(--ink);
+        font-size: 14px;
+      }
+
+      .footer {
+        margin-top: 30px;
+        padding: 20px 24px;
+        background: var(--ink);
+        color: #d5d0ca;
+        border: 1px solid #1c1c1c;
+        font-size: 13px;
+      }
+
+      @media (max-width: 900px) {
+        .hero-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <section class="hero">
+        <div class="eyebrow">Crochet. · Guide client</div>
+        <div class="brand">CROCHET.</div>
+        <div class="hero-grid">
+          <div>
+            <h1 class="hero-title">Le signal,<br /><em>pas le bruit.</em></h1>
+            <div class="hero-copy">
+              Crochet. vous permet de qualifier un dossier, identifier les bonnes
+              contreparties et avancer dans un espace privé, simple et confidentiel.
+            </div>
+          </div>
+          <div class="summary">
+            <h2>En bref</h2>
+            <p>
+              Déposez un dossier, laissez l’IA produire un MEMO, consultez les
+              matches pertinents, puis échangez dans une Secure Room jusqu’au
+              closing.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <nav class="toc">
+        <a href="#home">Accueil</a>
+        <a href="#soumettre">Soumettre un dossier</a>
+        <a href="#pipeline">Opportunités</a>
+        <a href="#memo-nda">MEMO & NDA</a>
+        <a href="#matches">Matches</a>
+        <a href="#room">Secure Room</a>
+        <a href="#profil">Profil & abonnement</a>
+      </nav>
+
+      <section class="section" id="home">
+        <div class="section-head">
+          <div class="section-label">01</div>
+          <h2 class="section-title">Accueil.</h2>
+        <div class="section-intro">
+            La page d’accueil présente l’univers Crochet. et l’accès à la plateforme.
+          </div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <h3>Accès privé</h3>
+            <p>Entre dans l’application si votre compte est déjà actif.</p>
+          </div>
+          <div class="card">
+            <h3>+Signal</h3>
+            <p>Permet de rejoindre la plateforme ou de démarrer une candidature.</p>
+          </div>
+          <div class="card">
+            <h3>Ce que Crochet. fait</h3>
+            <p>Qualification IA, matching ciblé et Secure Room confidentielle.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="soumettre">
+        <div class="section-head">
+          <div class="section-label">02</div>
+          <h2 class="section-title">Soumettre un dossier.</h2>
+        <div class="section-intro">
+            Le dépôt d’un dossier crée un nouveau signal dans votre espace de travail.
+          </div>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <strong>Où cliquer</strong>
+            Depuis <em>Opportunities</em>, cliquez sur <strong>+ Soumettre</strong>.
+          </div>
+          <div class="step">
+            <strong>Ce que vous renseignez</strong>
+            Le titre, le contexte du dossier, le type d’opération et les liens utiles.
+          </div>
+          <div class="step">
+            <strong>Ce qu’il se passe ensuite</strong>
+            Crochet. crée le dossier, lance la qualification et vous redirige vers la fiche détaillée.
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="pipeline">
+        <div class="section-head">
+          <div class="section-label">03</div>
+          <h2 class="section-title">Opportunités.</h2>
+        <div class="section-intro">
+            Cette page rassemble vos dossiers et leur niveau d’avancement en un coup d’œil.
+          </div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <h3>Ce qu’on voit</h3>
+            <p>Dossier, secteur, géographie, statut d’avancement, D-Score et M-Score.</p>
+          </div>
+          <div class="card">
+            <h3>Statuts clés</h3>
+            <p>Analyse en cours, Qualifié, Matché, Intro demandée, Room ouverte.</p>
+          </div>
+          <div class="card">
+            <h3>Après clic</h3>
+            <p>Un clic sur une ligne ouvre la fiche complète du dossier.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="memo-nda">
+        <div class="section-head">
+          <div class="section-label">04</div>
+          <h2 class="section-title">MEMO & NDA.</h2>
+        <div class="section-intro">
+            Dès qu’un dossier est qualifié, Crochet. produit des documents structurés, prêts à lire et à partager dans le cadre autorisé.
+          </div>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <strong>MEMO officiel</strong>
+            Depuis la fiche dossier, cliquez sur <strong>Mémo officiel</strong> pour ouvrir la synthèse de qualification, imprimable en PDF.
+          </div>
+          <div class="step">
+            <strong>NDA</strong>
+            Cliquez sur <strong>Générer NDA</strong> pour configurer les clauses, puis ouvrir et signer l’accord de confidentialité.
+          </div>
+          <div class="step">
+            <strong>Ce que vous obtenez</strong>
+            Un document clair, confidentiel, structuré pour la lecture et le partage autorisé.
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="matches">
+        <div class="section-head">
+          <div class="section-label">05</div>
+          <h2 class="section-title">Matches.</h2>
+        <div class="section-intro">
+            Crochet. vous présente uniquement les contreparties jugées les plus pertinentes.
+          </div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <h3>Ce qu’on voit</h3>
+            <p>Une liste de matches avec score, statut et explication.</p>
+          </div>
+          <div class="card">
+            <h3>Où cliquer</h3>
+            <p>Sélectionnez un match dans la colonne de gauche.</p>
+          </div>
+          <div class="card">
+            <h3>Ce qu’on peut faire</h3>
+            <p>Ouvrir le dossier, demander une intro ou accéder à la Room.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="room">
+        <div class="section-head">
+          <div class="section-label">06</div>
+          <h2 class="section-title">Secure Room.</h2>
+        <div class="section-intro">
+            La Room rassemble l’échange, les documents et les prochaines étapes dans un espace privé.
+          </div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <h3>Chat</h3>
+            <p>Échangez avec la contrepartie et partagez des documents.</p>
+          </div>
+          <div class="card">
+            <h3>Dossier</h3>
+            <p>Retrouvez le MEMO, le NDA et les documents utiles.</p>
+          </div>
+          <div class="card">
+            <h3>Vision & RDV</h3>
+            <p>Préparez vos rendez-vous et vos échanges de présentation.</p>
+          </div>
+          <div class="card">
+            <h3>Closing</h3>
+            <p>Suivez l’avancement jusqu’à la validation finale.</p>
+          </div>
+        </div>
+        <div class="note">
+          L’accès aux éléments sensibles dépend de la signature NDA et du statut de la room.
+        </div>
+      </section>
+
+      <section class="section" id="profil">
+        <div class="section-head">
+          <div class="section-label">07</div>
+          <h2 class="section-title">Profil & abonnement.</h2>
+        <div class="section-intro">
+            Votre profil présente votre identité transactionnelle et votre activité au sein de Crochet.
+          </div>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <h3>Profil</h3>
+            <p>Nom, structure, rôle, vérification et activité investisseur.</p>
+          </div>
+          <div class="card">
+            <h3>Édition</h3>
+            <p>Le bouton <strong>Éditer le profil</strong> permet de mettre à jour vos informations.</p>
+          </div>
+          <div class="card">
+            <h3>Abonnement</h3>
+            <p>Choisissez un plan, démarrez l’essai et finalisez l’activation via Stripe.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div class="section-label">Important</div>
+          <h2 class="section-title">À retenir.</h2>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <strong>Crochet. suit une logique claire</strong>
+            Déposer un dossier, le qualifier, identifier les bons matches, puis avancer dans une Room privée jusqu’au closing.
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        Guide client Crochet. Clair, direct et pensé pour une prise en main immédiate.
+      </footer>
+    </div>
+  </body>
+</html>
