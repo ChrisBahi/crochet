@@ -30,34 +30,40 @@ type ParsedMessage = RawMessage & {
 }
 
 function parseMessage(m: RawMessage): ParsedMessage {
-  if (m.content.startsWith("__SYSTEM__:")) {
+  const content = typeof m.content === "string" ? m.content : ""
+
+  if (content.startsWith("__SYSTEM__:")) {
     return { ...m, kind: "system" }
   }
-  if (m.content.startsWith("__DOC__|")) {
-    const parts = m.content.split("|")
+  if (content.startsWith("__DOC__|")) {
+    const parts = content.split("|")
     return { ...m, kind: "doc", docUrl: parts[1], docTitle: parts[2] ?? parts[1] }
   }
-  if (m.content.startsWith("__MEETING__|")) {
-    const parts = m.content.split("|")
+  if (content.startsWith("__MEETING__|")) {
+    const parts = content.split("|")
     return {
       ...m, kind: "meeting",
       meeting: {
-        datetime: parts[1],
-        format: parts[2],
+        datetime: parts[1] ?? "",
+        format: parts[2] ?? "",
         duration: parseInt(parts[3] ?? "60"),
         status: parts[4] ?? "pending",
       },
     }
   }
-  return { ...m, kind: "text" }
+  return { ...m, content, kind: "text" }
 }
 
 function formatTime(iso: string, lang: "fr" | "en" = "fr") {
-  return new Date(iso).toLocaleTimeString(lang === "en" ? "en-GB" : "fr-FR", { hour: "2-digit", minute: "2-digit" })
+  const value = new Date(iso)
+  if (Number.isNaN(value.getTime())) return "--:--"
+  return value.toLocaleTimeString(lang === "en" ? "en-GB" : "fr-FR", { hour: "2-digit", minute: "2-digit" })
 }
 
 function formatDateFr(iso: string, lang: "fr" | "en" = "fr") {
-  return new Date(iso).toLocaleDateString(lang === "en" ? "en-GB" : "fr-FR", {
+  const value = new Date(iso)
+  if (Number.isNaN(value.getTime())) return lang === "en" ? "Date unavailable" : "Date indisponible"
+  return value.toLocaleDateString(lang === "en" ? "en-GB" : "fr-FR", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
     hour: "2-digit", minute: "2-digit",
   })
